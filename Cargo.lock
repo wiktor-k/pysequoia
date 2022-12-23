@@ -699,6 +699,7 @@ dependencies = [
  "anyhow",
  "pyo3",
  "sequoia-openpgp",
+ "testresult",
 ]
 
 [[package]]
@@ -926,6 +927,12 @@ dependencies = [
  "rustversion",
  "winapi",
 ]
+
+[[package]]
+name = "testresult"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81e74bc663d0d9e2caff4990ed3ea6b0cf9cde9ce42054f1e1fa46fb71ff216e"
 
 [[package]]
 name = "thiserror"

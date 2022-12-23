@@ -216,3 +216,21 @@ where
     let armored = armored.armored();
     Ok(String::from_utf8(armored.to_vec()?)?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use openpgp::cert::prelude::*;
+    use sequoia_openpgp as openpgp;
+    use testresult::TestResult;
+
+    #[test]
+    fn test_armoring() -> TestResult {
+        let cert = CertBuilder::general_purpose(None, Some("test@example.com"))
+            .generate()
+            .unwrap()
+            .0;
+        assert!(cert.armored().to_vec().is_ok());
+        Ok(())
+    }
+}

@@ -12,3 +12,4 @@ crate-type = ["cdylib"]
 anyhow = "1.0.66"
 pyo3 = { version = "0.17.3", features = ["extension-module", "anyhow"] }
 sequoia-openpgp = "1.11.0"
+testresult = "0.1"
