@@ -27,7 +27,6 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
-
 use sequoia_openpgp as openpgp;
 
 use openpgp::parse::Parse;
@@ -43,7 +42,6 @@ use openpgp::{
 };
 
 use anyhow::Context;
-
 
 use std::io::Write;
 
