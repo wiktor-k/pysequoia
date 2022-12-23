@@ -22,3 +22,18 @@ unit-tests:
     - apt clean
   script:
     - cargo test --all --verbose
+
+end-to-end-tests:
+  before_script:
+    - apt update -y -qq
+    - apt install -y -qq --no-install-recommends git emacs python3 python3-venv clang make pkg-config nettle-dev libssl-dev capnproto ca-certificates
+    - apt clean
+  script:
+    - emacs -Q --batch --eval "
+      (progn
+        (require 'ob-tangle)
+        (dolist (file command-line-args-left)
+          (with-current-buffer (find-file-noselect file)
+            (org-babel-tangle))))" README.org
+    - source README.sh
+    - python3 README.python
