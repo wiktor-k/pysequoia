@@ -1,5 +1,7 @@
 #+TITLE: PySequoia
+#+HTML_HEAD: <link rel="stylesheet" href="doc/tufte.min.css">
 #+PROPERTY: header-args :tangle yes :exports both
+#+OPTIONS: html-postamble:nil
 
 Note: This is a work in progress. The API is *not* stable!
 

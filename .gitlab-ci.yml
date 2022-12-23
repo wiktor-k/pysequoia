@@ -44,11 +44,21 @@ pages:
   script:
     - apt-get update -yqq
     - apt-get install -yqq --no-install-recommends emacs org-mode texlive-latex-extra texlive-latex-base texlive-fonts-recommended lmodern texlive-plain-generic
+    # PDF export
     - emacs -Q --batch README.org -f org-latex-export-to-pdf
-    - curl -o /etc/emacs/htmlize.el https://raw.githubusercontent.com/hniksic/emacs-htmlize/master/htmlize.el
-    - emacs -Q --batch README.org --eval "(load \"/etc/emacs/htmlize.el\")" -f org-html-export-to-html
-    - emacs -Q --batch CONTRIBUTING.org --eval "(load \"/etc/emacs/htmlize.el\")" -f org-html-export-to-html
+    # HTML export
+    - emacs -Q --batch README.org --eval "
+      (progn
+        (require 'package)
+        (add-to-list 'package-archives
+             '(\"melpa\" . \"http://melpa.org/packages/\") t)
+        (package-initialize)
+        (package-refresh-contents)
+        (package-install 'ox-tufte)
+        (package-install 'htmlize)
+        (require 'ox-tufte))" -f org-tufte-export-to-file
     - mkdir public
+    - mv doc public
     - mv README.html public/index.html
     - mv README.pdf public
   artifacts:
