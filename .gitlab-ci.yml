@@ -1,0 +1,24 @@
+image: rust
+
+check-format:
+  before_script:
+    - rustup component add rustfmt
+  script:
+    - cargo fmt -- --check
+
+check-lint:
+  before_script:
+    - apt update -y -qq
+    - apt install -y -qq --no-install-recommends git clang make pkg-config nettle-dev libssl-dev capnproto ca-certificates
+    - apt clean
+    - rustup component add clippy
+  script:
+    - cargo clippy --all
+
+unit-tests:
+  before_script:
+    - apt update -y -qq
+    - apt install -y -qq --no-install-recommends git clang make pkg-config nettle-dev libssl-dev capnproto ca-certificates
+    - apt clean
+  script:
+    - cargo test --all --verbose
