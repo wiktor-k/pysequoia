@@ -5,7 +5,7 @@ Note: This is a work in progress. The API is **not** stable!
 Building:
 
 ```bash
-set -x
+set -euxo pipefail
 python3 -m venv .env
 source .env/bin/activate
 pip install maturin

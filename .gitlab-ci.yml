@@ -1,50 +1,25 @@
-image: rust
+image: jdrouet/docker-with-buildx:stable
 
-check-format:
-  before_script:
-    - rustup component add rustfmt
-  script:
-    - cargo fmt -- --check
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
 
-check-lint:
-  before_script:
-    - apt update -y -qq
-    - apt install -y -qq --no-install-recommends git clang make pkg-config nettle-dev libssl-dev capnproto ca-certificates
-    - apt clean
-    - rustup component add clippy
-  script:
-    - cargo clippy --all
+services:
+  - docker:dind
 
-unit-tests:
-  before_script:
-    - apt update -y -qq
-    - apt install -y -qq --no-install-recommends git clang make pkg-config nettle-dev libssl-dev capnproto ca-certificates
-    - apt clean
+build:
   script:
-    - cargo test --all --verbose
+    - docker build --file ci/build.dockerfile .
 
-end-to-end-tests:
-  before_script:
-    - apt update -y -qq
-    - apt install -y -qq --no-install-recommends git python3 python3-venv clang make pkg-config nettle-dev libssl-dev capnproto ca-certificates
-    - apt clean
-    - cargo install tangler
+integration:
   script:
-    - tangler bash < README.md > README.sh
-    - tangler python < README.md > README.py
-    - source README.sh
-    - python3 README.py
+    - docker build --file ci/e2e.dockerfile .
 
 pages:
+  before_script:
+    - docker buildx create --use
   script:
-pages:
-  script:
-    - apt-get update -yqq
-    - apt-get install -yqq --no-install-recommends texlive-latex-extra texlive-latex-base texlive-fonts-recommended lmodern texlive-plain-generic pandoc
-    - pandoc --css=doc/tufte.min.css -s -f markdown+smart --metadata pagetitle="PySequoia" --toc --to=html5 README.md -o README.html
-    - mkdir public
-    - mv doc public
-    - mv README.html public/index.html
+    - docker buildx build --file ci/docs.dockerfile --output type=local,dest=public .
   artifacts:
     paths:
       - public
