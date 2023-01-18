@@ -1,0 +1,47 @@
+pipeline:
+  build:
+    # will execute group in parallel
+    group: build
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: ci/build.dockerfile
+      # do not push
+      dry_run: true
+
+  e2e:
+    group: build
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: ci/e2e.dockerfile
+      # do not push
+      dry_run: true
+
+  pages:
+    group: build
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: ci/docs.dockerfile
+      output: type=local,dest=public
+      # do not push, push cannot be used with output simultaneously anyway
+      dry_run: true
+
+  pages-publish:
+    image: bitnami/git
+    secrets: [ codeberg_token ]
+    commands:
+      - git config --global user.email woodpecker@codeberg.org
+      - git config --global user.name "Woodpecker CI"
+      - git clone -b pages https://$CODEBERG_TOKEN@codeberg.org/$CI_REPO.git $CI_REPO_NAME
+      - cp -ar public/. $CI_REPO_NAME/
+      # Needed for custom domains
+      - cp .domains $CI_REPO_NAME || true # Ignore if it doesn't exist
+      - cd $CI_REPO_NAME
+      - git add .
+      - git commit --allow-empty -m "Woodpecker CI ${CI_BUILD_CREATED}"
+      - git push
+
+    when:
+      event: push
+
+branches:
+  exclude: [ pages ]
