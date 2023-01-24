@@ -37,6 +37,10 @@ impl Cert {
         })
     }
 
+    pub fn merge(&self, new_cert: &Cert) -> PyResult<Cert> {
+        Ok(merge_certs(self, new_cert)?)
+    }
+
     pub fn __str__(&self) -> PyResult<String> {
         let armored = self.cert.armored();
         Ok(String::from_utf8(armored.to_vec()?)?)
@@ -50,11 +54,6 @@ fn encrypt(signing_cert: &Cert, recipient_certs: &Cert, content: String) -> PyRe
 }
 
 #[pyfunction]
-fn merge(existing_cert: &Cert, new_cert: &Cert) -> PyResult<Cert> {
-    Ok(merge_certs(existing_cert, new_cert)?)
-}
-
-#[pyfunction]
 fn minimize(cert: &Cert) -> PyResult<Cert> {
     Ok(minimize_cert(cert, Box::new(StandardPolicy::new()))?)
 }
@@ -62,7 +61,6 @@ fn minimize(cert: &Cert) -> PyResult<Cert> {
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encrypt, m)?)?;
-    m.add_function(wrap_pyfunction!(merge, m)?)?;
     m.add_function(wrap_pyfunction!(minimize, m)?)?;
     m.add_class::<Cert>()?;
     Ok(())

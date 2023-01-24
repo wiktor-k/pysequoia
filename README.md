@@ -38,7 +38,7 @@ Merges data from old certificate with new packets:
 ```python
 old = pysequoia.Cert.from_file("wiktor.asc")
 new = pysequoia.Cert.from_file("wiktor-fresh.asc")
-merged = pysequoia.merge(old, new)
+merged = old.merge(new)
 print(f"Merged, updated cert: {merged}")
 ```
 
