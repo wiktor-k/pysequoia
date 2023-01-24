@@ -1,66 +1,88 @@
 use pyo3::prelude::*;
 
-/// Formats the sum of two numbers as string.
+use anyhow::Context;
+
+use std::io::Write;
+
+use sequoia_openpgp as openpgp;
+
+use openpgp::policy::{Policy, StandardPolicy};
+use openpgp::serialize::stream::{Encryptor, LiteralWriter, Message};
+use openpgp::serialize::{
+    stream::{Armorer, Signer},
+    SerializeInto,
+};
+use openpgp::types::KeyFlags;
+
+#[pyclass]
+pub struct Cert {
+    cert: openpgp::cert::Cert,
+}
+
+#[pymethods]
+impl Cert {
+    #[staticmethod]
+    pub fn from_file(path: String) -> PyResult<Self> {
+        use openpgp::parse::Parse;
+        Ok(Self {
+            cert: openpgp::cert::Cert::from_file(path)?,
+        })
+    }
+
+    #[staticmethod]
+    pub fn from_bytes(bytes: &[u8]) -> PyResult<Self> {
+        use openpgp::parse::Parse;
+        Ok(Self {
+            cert: openpgp::cert::Cert::from_bytes(bytes)?,
+        })
+    }
+
+    pub fn __str__(&self) -> PyResult<String> {
+        let armored = self.cert.armored();
+        Ok(String::from_utf8(armored.to_vec()?)?)
+    }
+}
+
 #[pyfunction]
-fn encrypt(signing_cert: String, recipient_certs: String, content: String) -> PyResult<String> {
-    //Ok((a + b).to_string())
+fn encrypt(signing_cert: &Cert, recipient_certs: &Cert, content: String) -> PyResult<String> {
     let policy = Box::new(openpgp::policy::StandardPolicy::new());
     encrypt_for(signing_cert, recipient_certs, content, policy).map_err(|e| e.into())
 }
 
 #[pyfunction]
-fn merge(existing_cert: String, new_cert: String) -> PyResult<String> {
+fn merge(existing_cert: &Cert, new_cert: &Cert) -> PyResult<Cert> {
     Ok(merge_certs(existing_cert, new_cert)?)
 }
 
 #[pyfunction]
-fn minimize(cert: String) -> PyResult<String> {
+fn minimize(cert: &Cert) -> PyResult<Cert> {
     Ok(minimize_cert(cert, Box::new(StandardPolicy::new()))?)
 }
 
-/// A Python module implemented in Rust.
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encrypt, m)?)?;
     m.add_function(wrap_pyfunction!(merge, m)?)?;
     m.add_function(wrap_pyfunction!(minimize, m)?)?;
+    m.add_class::<Cert>()?;
     Ok(())
 }
 
-use sequoia_openpgp as openpgp;
-
-use openpgp::parse::Parse;
-use openpgp::policy::{Policy, StandardPolicy};
-use openpgp::serialize::stream::{Encryptor, LiteralWriter, Message};
-use openpgp::types::KeyFlags;
-use openpgp::{
-    serialize::{
-        stream::{Armorer, Signer},
-        SerializeInto,
-    },
-    Cert,
-};
-
-use anyhow::Context;
-
-use std::io::Write;
-
-pub fn encrypt_for<S, T, U>(
-    signing_cert: S,
-    recipient_certs: T,
+pub fn encrypt_for<U>(
+    signing_cert: &Cert,
+    recipient_certs: &Cert,
     content: U,
     policy: Box<dyn Policy>,
 ) -> openpgp::Result<String>
 where
-    S: AsRef<[u8]> + Send + Sync,
-    T: AsRef<[u8]> + Send + Sync,
     U: AsRef<[u8]> + Send + Sync,
 {
     let mode = KeyFlags::empty()
         .set_storage_encryption()
         .set_transport_encryption();
 
-    let signing_cert = Cert::from_bytes(&signing_cert)?
+    let signing_cert = signing_cert
+        .cert
         .keys()
         .unencrypted_secret()
         .with_policy(&*policy, None)
@@ -73,14 +95,8 @@ where
         .clone()
         .into_keypair()?;
 
-    let parser = openpgp::cert::CertParser::from_bytes(&recipient_certs)?;
-    let certs = parser
-        .into_iter()
-        .filter_map(|c| c.ok())
-        .collect::<Vec<_>>();
-
-    let mut recipients = Vec::new();
-    for cert in certs.iter() {
+    let mut recipients = vec![];
+    for cert in vec![&recipient_certs.cert].iter() {
         let mut found_one = false;
         for key in cert
             .keys()
@@ -138,26 +154,16 @@ where
     Ok(String::from_utf8(sink)?)
 }
 
-pub fn merge_certs<S, T>(existing_cert: S, new_cert: T) -> openpgp::Result<String>
-where
-    S: AsRef<[u8]> + Send + Sync,
-    T: AsRef<[u8]> + Send + Sync,
-{
-    let existing_cert = Cert::from_bytes(&existing_cert)?;
-    let new_cert = Cert::from_bytes(&new_cert)?;
-
-    let merged_cert = existing_cert.merge_public(new_cert)?;
-
-    let armored = merged_cert.armored();
-    Ok(String::from_utf8(armored.to_vec()?)?)
+pub fn merge_certs(existing_cert: &Cert, new_cert: &Cert) -> openpgp::Result<Cert> {
+    let merged_cert = existing_cert
+        .cert
+        .clone()
+        .merge_public(new_cert.cert.clone())?;
+    Ok(Cert { cert: merged_cert })
 }
 
-pub fn minimize_cert<S>(cert: S, policy: Box<dyn Policy>) -> openpgp::Result<String>
-where
-    S: AsRef<[u8]> + Sync + Send,
-{
-    let cert = Cert::from_bytes(&cert)?;
-    let cert = cert.with_policy(&*policy, None)?;
+pub fn minimize_cert(cert: &Cert, policy: Box<dyn Policy>) -> openpgp::Result<Cert> {
+    let cert = cert.cert.with_policy(&*policy, None)?;
 
     let mut acc = Vec::new();
 
@@ -212,9 +218,9 @@ where
         }
     }
 
-    let armored = Cert::try_from(acc)?;
-    let armored = armored.armored();
-    Ok(String::from_utf8(armored.to_vec()?)?)
+    Ok(Cert {
+        cert: openpgp::cert::Cert::try_from(acc)?,
+    })
 }
 
 #[cfg(test)]
