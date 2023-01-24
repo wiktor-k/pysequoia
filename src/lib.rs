@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 
-use anyhow::Context;
+use anyhow::Context as AnyhowContext;
 
 use std::io::Write;
 
@@ -47,22 +47,38 @@ impl Cert {
     }
 }
 
-#[pyfunction]
-fn encrypt(signing_cert: &Cert, recipient_certs: &Cert, content: String) -> PyResult<String> {
-    let policy = Box::new(openpgp::policy::StandardPolicy::new());
-    encrypt_for(signing_cert, recipient_certs, content, policy).map_err(|e| e.into())
+#[pyclass]
+struct Context {
+    policy: Box<dyn Policy + 'static>,
 }
 
-#[pyfunction]
-fn minimize(cert: &Cert) -> PyResult<Cert> {
-    Ok(minimize_cert(cert, Box::new(StandardPolicy::new()))?)
+#[pymethods]
+impl Context {
+    #[staticmethod]
+    pub fn standard() -> Self {
+        Self {
+            policy: Box::new(StandardPolicy::new()),
+        }
+    }
+
+    fn encrypt(
+        &self,
+        signing_cert: &Cert,
+        recipient_certs: &Cert,
+        content: String,
+    ) -> PyResult<String> {
+        encrypt_for(signing_cert, recipient_certs, content, &*self.policy).map_err(|e| e.into())
+    }
+
+    fn minimize(&self, cert: &Cert) -> PyResult<Cert> {
+        Ok(minimize_cert(cert, &*self.policy)?)
+    }
 }
 
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(encrypt, m)?)?;
-    m.add_function(wrap_pyfunction!(minimize, m)?)?;
     m.add_class::<Cert>()?;
+    m.add_class::<Context>()?;
     Ok(())
 }
 
@@ -70,7 +86,7 @@ pub fn encrypt_for<U>(
     signing_cert: &Cert,
     recipient_certs: &Cert,
     content: U,
-    policy: Box<dyn Policy>,
+    policy: &dyn Policy,
 ) -> openpgp::Result<String>
 where
     U: AsRef<[u8]> + Send + Sync,
@@ -83,7 +99,7 @@ where
         .cert
         .keys()
         .unencrypted_secret()
-        .with_policy(&*policy, None)
+        .with_policy(policy, None)
         .alive()
         .revoked(false)
         .for_signing()
@@ -160,7 +176,7 @@ pub fn merge_certs(existing_cert: &Cert, new_cert: &Cert) -> openpgp::Result<Cer
     Ok(Cert { cert: merged_cert })
 }
 
-pub fn minimize_cert(cert: &Cert, policy: Box<dyn Policy>) -> openpgp::Result<Cert> {
+pub fn minimize_cert(cert: &Cert, policy: &dyn Policy) -> openpgp::Result<Cert> {
     let cert = cert.cert.with_policy(&*policy, None)?;
 
     let mut acc = Vec::new();

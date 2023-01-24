@@ -15,7 +15,7 @@ maturin develop
 Now open the console with `python` and import the library:
 
 ```python
-import pysequoia
+from pysequoia import Cert, Context
 ```
 
 ## Available functions
@@ -25,9 +25,9 @@ import pysequoia
 Signs and encrypts a string to one or more recipients:
 
 ```python
-s = pysequoia.Cert.from_file("signing-key.asc")
-r = pysequoia.Cert.from_bytes(open("wiktor.asc", "rb").read())
-encrypted = pysequoia.encrypt(s, r, "content to encrypt")
+s = Cert.from_file("signing-key.asc")
+r = Cert.from_bytes(open("wiktor.asc", "rb").read())
+encrypted = Context.standard().encrypt(s, r, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -36,8 +36,8 @@ print(f"Encrypted data: {encrypted}")
 Merges data from old certificate with new packets:
 
 ```python
-old = pysequoia.Cert.from_file("wiktor.asc")
-new = pysequoia.Cert.from_file("wiktor-fresh.asc")
+old = Cert.from_file("wiktor.asc")
+new = Cert.from_file("wiktor-fresh.asc")
 merged = old.merge(new)
 print(f"Merged, updated cert: {merged}")
 ```
@@ -47,7 +47,7 @@ print(f"Merged, updated cert: {merged}")
 Discards expired subkeys and User IDs:
 
 ```python
-cert = pysequoia.Cert.from_file("wiktor.asc")
-minimized = pysequoia.minimize(cert)
+cert = Cert.from_file("wiktor.asc")
+minimized = Context.standard().minimize(cert)
 print(f"Minimized cert: {minimized}")
 ```
