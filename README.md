@@ -51,3 +51,15 @@ cert = Cert.from_file("wiktor.asc")
 minimized = Context.standard().minimize(cert)
 print(f"Minimized cert: {minimized}")
 ```
+
+### generate
+
+Creates new general purpose key with given User ID:
+
+```python
+alice = Cert.generate("alice@example.com")
+bob = Cert.generate("bob@example.com")
+
+encrypted = Context.standard().encrypt(alice, bob, "content to encrypt")
+print(f"Encrypted data: {encrypted}")
+```

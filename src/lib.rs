@@ -37,6 +37,15 @@ impl Cert {
         })
     }
 
+    #[staticmethod]
+    pub fn generate(user_id: &str) -> PyResult<Self> {
+        Ok(Self {
+            cert: openpgp::cert::CertBuilder::general_purpose(None, Some(user_id))
+                .generate()?
+                .0,
+        })
+    }
+
     pub fn merge(&self, new_cert: &Cert) -> PyResult<Cert> {
         Ok(merge_certs(self, new_cert)?)
     }
