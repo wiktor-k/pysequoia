@@ -89,10 +89,23 @@ impl Context {
     }
 }
 
+#[pyfunction]
+fn wkd(py: Python<'_>, email: String) -> PyResult<&PyAny> {
+    pyo3_asyncio::tokio::future_into_py(py, async move {
+        let certs = sequoia_net::wkd::get(email).await?;
+        if let Some(cert) = certs.first() {
+            Ok(Some(Cert { cert: cert.clone() }))
+        } else {
+            Ok(None)
+        }
+    })
+}
+
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Cert>()?;
     m.add_class::<Context>()?;
+    m.add_function(wrap_pyfunction!(wkd, m)?)?;
     Ok(())
 }
 

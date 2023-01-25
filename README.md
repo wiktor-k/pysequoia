@@ -72,3 +72,18 @@ bob = Cert.generate("bob@example.com")
 encrypted = Context.standard().encrypt(alice, bob, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
+
+### WKD
+
+Fetching certificates via Web Key Directory:
+
+```python
+from pysequoia import wkd
+import asyncio
+
+async def fetch_and_display():
+    cert = await wkd("test-wkd@metacode.biz")
+    print(f"Cert found via WKD: {cert}")
+
+asyncio.run(fetch_and_display())
+```
