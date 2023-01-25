@@ -62,6 +62,31 @@ impl Cert {
 }
 
 #[pyclass]
+pub struct KeyServer {
+    //ks: sequoia_net::KeyServer,
+    uri: String,
+}
+
+#[pymethods]
+impl KeyServer {
+    #[new]
+    pub fn new(uri: &str) -> PyResult<Self> {
+        Ok(Self { uri: uri.into() })
+    }
+
+    pub fn get<'a>(&self, py: Python<'a>, fpr: String) -> PyResult<&'a PyAny> {
+        let uri: String = self.uri.clone();
+        pyo3_asyncio::tokio::future_into_py(py, async move {
+            use openpgp::Fingerprint;
+            let fpr: Fingerprint = fpr.parse()?;
+            let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
+            let cert = ks.get(fpr);
+            Ok(Cert { cert: cert.await? })
+        })
+    }
+}
+
+#[pyclass]
 struct Context {
     policy: Box<dyn Policy + 'static>,
 }
@@ -105,6 +130,7 @@ fn wkd(py: Python<'_>, email: String) -> PyResult<&PyAny> {
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Cert>()?;
     m.add_class::<Context>()?;
+    m.add_class::<KeyServer>()?;
     m.add_function(wrap_pyfunction!(wkd, m)?)?;
     Ok(())
 }
