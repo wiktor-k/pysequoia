@@ -54,6 +54,11 @@ impl Cert {
         let armored = self.cert.armored();
         Ok(String::from_utf8(armored.to_vec()?)?)
     }
+
+    #[getter]
+    pub fn fingerprint(&self) -> PyResult<String> {
+        Ok(format!("{:x}", self.cert.fingerprint()))
+    }
 }
 
 #[pyclass]
@@ -123,7 +128,7 @@ where
         let mut found_one = false;
         for key in cert
             .keys()
-            .with_policy(&*policy, None)
+            .with_policy(policy, None)
             .supported()
             .alive()
             .revoked(false)
@@ -136,7 +141,7 @@ where
         if !found_one {
             for key in cert
                 .keys()
-                .with_policy(&*policy, None)
+                .with_policy(policy, None)
                 .supported()
                 .revoked(false)
                 .key_flags(&mode)
@@ -186,7 +191,7 @@ pub fn merge_certs(existing_cert: &Cert, new_cert: &Cert) -> openpgp::Result<Cer
 }
 
 pub fn minimize_cert(cert: &Cert, policy: &dyn Policy) -> openpgp::Result<Cert> {
-    let cert = cert.cert.with_policy(&*policy, None)?;
+    let cert = cert.cert.with_policy(policy, None)?;
 
     let mut acc = Vec::new();
 

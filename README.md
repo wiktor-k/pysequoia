@@ -58,6 +58,15 @@ Creates new general purpose key with given User ID:
 
 ```python
 alice = Cert.generate("alice@example.com")
+fpr = alice.fingerprint
+print(f"Generated cert with fingerprint {fpr}:\n{alice}")
+```
+
+Newly generated certificates are usable in both encryption and signing
+contexts:
+
+```python
+alice = Cert.generate("alice@example.com")
 bob = Cert.generate("bob@example.com")
 
 encrypted = Context.standard().encrypt(alice, bob, "content to encrypt")
