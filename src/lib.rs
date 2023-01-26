@@ -55,6 +55,10 @@ impl Cert {
         Ok(String::from_utf8(armored.to_vec()?)?)
     }
 
+    pub fn __repr__(&self) -> String {
+        format!("<Cert fingerprint={}>", self.cert.fingerprint())
+    }
+
     #[getter]
     pub fn fingerprint(&self) -> PyResult<String> {
         Ok(format!("{:x}", self.cert.fingerprint()))
