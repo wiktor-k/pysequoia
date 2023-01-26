@@ -95,6 +95,10 @@ impl KeyServer {
             Ok(Cert { cert: cert.await? })
         })
     }
+
+    pub fn __repr__(&self) -> String {
+        format!("<KeyServer uri={}>", self.uri)
+    }
 }
 
 #[pyclass]
@@ -150,6 +154,7 @@ use std::path::PathBuf;
 #[pyclass]
 struct Store {
     cert_d: CertD,
+    loc: PathBuf,
 }
 
 #[pymethods]
@@ -157,7 +162,8 @@ impl Store {
     #[new]
     pub fn new(loc: PathBuf) -> anyhow::Result<Self> {
         Ok(Self {
-            cert_d: CertD::with_base_dir(loc)?,
+            cert_d: CertD::with_base_dir(&loc)?,
+            loc,
         })
     }
 
@@ -192,6 +198,10 @@ impl Store {
         Ok(Cert {
             cert: openpgp::cert::Cert::from_bytes(&data)?,
         })
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!("<Store base={}>", self.loc.display())
     }
 }
 
