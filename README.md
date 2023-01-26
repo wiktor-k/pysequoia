@@ -57,7 +57,7 @@ print(f"Minimized cert: {minimized}")
 Creates new general purpose key with given User ID:
 
 ```python
-alice = Cert.generate("alice@example.com")
+alice = Cert.generate("Alice <alice@example.com>")
 fpr = alice.fingerprint
 print(f"Generated cert with fingerprint {fpr}:\n{alice}")
 ```
@@ -66,8 +66,8 @@ Newly generated certificates are usable in both encryption and signing
 contexts:
 
 ```python
-alice = Cert.generate("alice@example.com")
-bob = Cert.generate("bob@example.com")
+alice = Cert.generate("Alice <alice@example.com>")
+bob = Cert.generate("Bob <bob@example.com>")
 
 encrypted = Context.standard().encrypt(alice, bob, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
