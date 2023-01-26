@@ -78,11 +78,11 @@ print(f"Encrypted data: {encrypted}")
 Fetching certificates via Web Key Directory:
 
 ```python
-from pysequoia import wkd
+from pysequoia import WKD
 import asyncio
 
 async def fetch_and_display():
-    cert = await wkd("test-wkd@metacode.biz")
+    cert = await WKD.search(email = "test-wkd@metacode.biz")
     print(f"Cert found via WKD: {cert}")
 
 asyncio.run(fetch_and_display())
