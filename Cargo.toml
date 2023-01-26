@@ -10,6 +10,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0.66"
+openpgp-cert-d = "0.1.0"
 pyo3 = { version = "0.17", features = ["extension-module", "anyhow"] }
 pyo3-asyncio = { version = "0.17", features = ["tokio-runtime"] }
 sequoia-net = "0.26.0"

@@ -140,12 +140,64 @@ impl WKD {
     }
 }
 
+use openpgp_cert_d::CertD;
+use std::path::PathBuf;
+
+#[pyclass]
+struct Store {
+    cert_d: CertD,
+}
+
+#[pymethods]
+impl Store {
+    #[new]
+    pub fn new(loc: PathBuf) -> anyhow::Result<Self> {
+        Ok(Self {
+            cert_d: CertD::with_base_dir(loc)?,
+        })
+    }
+
+    pub fn get(&self, id: String) -> anyhow::Result<Option<Cert>> {
+        use openpgp::parse::Parse;
+        if let Some((_tag, data)) = self.cert_d.get(&id)? {
+            Ok(Some(Cert {
+                cert: openpgp::cert::Cert::from_bytes(&data)?,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn put(&mut self, cert: &Cert) -> anyhow::Result<Cert> {
+        use openpgp::parse::Parse;
+        use openpgp_cert_d::Data;
+        let f = |new: Data, old: Option<Data>| {
+            let merged = match old {
+                Some(old) => {
+                    let old = openpgp::cert::Cert::from_bytes(&old)?;
+                    let new = openpgp::cert::Cert::from_bytes(&new)?;
+                    old.merge_public(new)?.to_vec()?.into_boxed_slice()
+                }
+                None => new,
+            };
+            Ok(merged)
+        };
+        let (_tag, data) = self
+            .cert_d
+            .insert(cert.cert.to_vec()?.into_boxed_slice(), f)?;
+        Ok(Cert {
+            cert: openpgp::cert::Cert::from_bytes(&data)?,
+        })
+    }
+}
+
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Cert>()?;
     m.add_class::<Context>()?;
     m.add_class::<KeyServer>()?;
     m.add_class::<WKD>()?;
+    m.add_class::<Store>()?;
     Ok(())
 }
 

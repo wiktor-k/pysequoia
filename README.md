@@ -105,3 +105,31 @@ async def fetch_and_display():
 
 asyncio.run(fetch_and_display())
 ```
+
+### CertD integration
+
+The library exposes [OpenPGP Certificate Directory][CERT-D]
+integration which allows storing and retrieving OpenPGP certificates
+in a persistent way directly in the file system.
+
+Note that this will *not* allow you to read GnuPG-specific key
+directories.
+
+[CERT-D]: https://sequoia-pgp.gitlab.io/pgp-cert-d/
+
+```python
+from pysequoia import Store
+
+cert = Cert.from_file("wiktor.asc")
+s = Store("/tmp/store")
+s.put(cert)
+assert s.get(cert.fingerprint) != None
+```
+
+The certificate is now stored in the given directory and can be
+retrieved later by its fingerprint:
+
+```python
+s = Store("/tmp/store")
+assert s.get("653909a2f0e37c106f5faf546c8857e0d8e8f074") != None
+```
