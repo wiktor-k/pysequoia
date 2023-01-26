@@ -83,6 +83,7 @@ import asyncio
 
 async def fetch_and_display():
     cert = await WKD.search(email = "test-wkd@metacode.biz")
+    assert cert.fingerprint == "653909a2f0e37c106f5faf546c8857e0d8e8f074"
     print(f"Cert found via WKD: {cert}")
 
 asyncio.run(fetch_and_display())
@@ -99,6 +100,7 @@ import asyncio
 async def fetch_and_display():
     ks = KeyServer("hkps://keys.openpgp.org")
     cert = await ks.get("653909a2f0e37c106f5faf546c8857e0d8e8f074")
+    assert cert.fingerprint == "653909a2f0e37c106f5faf546c8857e0d8e8f074"
     print(f"Cert found via HKPS: {cert}")
 
 asyncio.run(fetch_and_display())
