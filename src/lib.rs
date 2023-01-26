@@ -63,15 +63,22 @@ impl Cert {
 
 #[pyclass]
 pub struct KeyServer {
-    //ks: sequoia_net::KeyServer,
     uri: String,
 }
 
 #[pymethods]
 impl KeyServer {
     #[new]
-    pub fn new(uri: &str) -> PyResult<Self> {
-        Ok(Self { uri: uri.into() })
+    pub fn new(uri: &str) -> Self {
+        Self { uri: uri.into() }
+    }
+
+    #[allow(clippy::should_implement_trait)]
+    #[staticmethod]
+    pub fn default() -> Self {
+        Self {
+            uri: "hkps://keys.openpgp.org".into(),
+        }
     }
 
     pub fn get<'a>(&self, py: Python<'a>, fpr: String) -> PyResult<&'a PyAny> {
