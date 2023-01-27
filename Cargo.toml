@@ -15,4 +15,4 @@ pyo3 = { version = "0.17", features = ["extension-module", "anyhow"] }
 pyo3-asyncio = { version = "0.17", features = ["tokio-runtime"] }
 sequoia-net = "0.26.0"
 sequoia-openpgp = "1.11.0"
-testresult = "0.1"
+testresult = "0.2"

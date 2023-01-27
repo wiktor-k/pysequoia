@@ -380,8 +380,7 @@ mod tests {
     #[test]
     fn test_armoring() -> TestResult {
         let cert = CertBuilder::general_purpose(None, Some("test@example.com"))
-            .generate()
-            .unwrap()
+            .generate()?
             .0;
         assert!(cert.armored().to_vec().is_ok());
         Ok(())
