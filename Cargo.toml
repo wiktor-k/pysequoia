@@ -1,6 +1,6 @@
 [package]
 name = "pysequoia"
-version = "0.1.4"
+version = "0.1.8"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -14,5 +14,5 @@ openpgp-cert-d = "0.1.0"
 pyo3 = { version = "0.17", features = ["extension-module", "anyhow"] }
 pyo3-asyncio = { version = "0.17", features = ["tokio-runtime"] }
 sequoia-net = "0.26.0"
-sequoia-openpgp = "1.11.0"
+sequoia-openpgp = { version = "1.13", default-features = false, features = ["crypto-rust", "allow-experimental-crypto", "allow-variable-time-crypto", "compression-deflate"] }
 testresult = "0.2"
