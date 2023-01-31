@@ -31,6 +31,17 @@ encrypted = Context.standard().encrypt(s, r, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
+### sign
+
+Signs the data and returns armored output:
+
+```python
+from pysequoia import sign
+
+s = Cert.from_file("signing-key.asc")
+signed = sign(s.signer(), "data to be signed")
+```
+
 ### merge
 
 Merges data from old certificate with new packets:
@@ -132,4 +143,26 @@ retrieved later by its fingerprint:
 ```python
 s = Store("/tmp/store")
 assert s.get("653909a2f0e37c106f5faf546c8857e0d8e8f074") != None
+```
+
+### OpenPGP Cards
+
+There's an experimental feature allowing communication with OpenPGP
+Cards (like Yubikey or Nitrokey).
+
+```py
+from pysequoia import Card
+
+# enumerate all cards
+all = Card.all()
+
+# open card by card ident
+card = Card.open("card ident")
+
+print(card.ident)
+print(card.cardholder)
+
+signer = card.signer(input("PIN: "))
+
+signed = sign(signer, "data to be signed")
 ```

@@ -63,6 +63,24 @@ impl Cert {
     pub fn fingerprint(&self) -> PyResult<String> {
         Ok(format!("{:x}", self.cert.fingerprint()))
     }
+
+    pub fn signer(&self) -> PyResult<PySigner> {
+        let policy = StandardPolicy::new();
+        let keypair = self
+            .cert
+            .keys()
+            .unencrypted_secret()
+            .with_policy(&policy, None)
+            .alive()
+            .revoked(false)
+            .for_signing()
+            .next()
+            .unwrap()
+            .key()
+            .clone()
+            .into_keypair()?;
+        Ok(PySigner::new(Box::new(keypair)))
+    }
 }
 
 #[pyclass]
@@ -98,6 +116,47 @@ impl KeyServer {
 
     pub fn __repr__(&self) -> String {
         format!("<KeyServer uri={}>", self.uri)
+    }
+}
+
+use std::sync::{Arc, Mutex};
+
+#[pyclass]
+#[derive(Clone)]
+pub struct PySigner {
+    inner: Arc<Mutex<Box<dyn openpgp::crypto::Signer + Send + Sync + 'static>>>,
+    public: openpgp::packet::Key<
+        openpgp::packet::key::PublicParts,
+        openpgp::packet::key::UnspecifiedRole,
+    >,
+}
+
+impl PySigner {
+    pub fn new(inner: Box<dyn openpgp::crypto::Signer + Send + Sync + 'static>) -> Self {
+        let public = inner.public().clone();
+        Self {
+            inner: Arc::new(Mutex::new(inner)),
+            public,
+        }
+    }
+}
+
+impl openpgp::crypto::Signer for PySigner {
+    fn public(
+        &self,
+    ) -> &openpgp::packet::Key<
+        openpgp::packet::key::PublicParts,
+        openpgp::packet::key::UnspecifiedRole,
+    > {
+        &self.public
+    }
+
+    fn sign(
+        &mut self,
+        hash_algo: openpgp::types::HashAlgorithm,
+        digest: &[u8],
+    ) -> openpgp::Result<openpgp::crypto::mpi::Signature> {
+        self.inner.lock().unwrap().sign(hash_algo, digest)
     }
 }
 
@@ -241,9 +300,89 @@ impl Card {
             .collect())
     }
 
+    pub fn signer(&mut self, pin: String) -> anyhow::Result<PySigner> {
+        use sequoia_openpgp::crypto::Signer;
+
+        struct CardSigner {
+            public: openpgp::packet::Key<
+                openpgp::packet::key::PublicParts,
+                openpgp::packet::key::UnspecifiedRole,
+            >,
+            ident: String,
+            pin: String,
+        }
+
+        impl openpgp::crypto::Signer for CardSigner {
+            fn public(
+                &self,
+            ) -> &openpgp::packet::Key<
+                openpgp::packet::key::PublicParts,
+                openpgp::packet::key::UnspecifiedRole,
+            > {
+                &self.public
+            }
+
+            fn sign(
+                &mut self,
+                hash_algo: openpgp::types::HashAlgorithm,
+                digest: &[u8],
+            ) -> openpgp::Result<openpgp::crypto::mpi::Signature> {
+                let backend = openpgp_card_pcsc::PcscBackend::open_by_ident(&self.ident, None)?;
+                let mut card: openpgp_card_sequoia::Card<openpgp_card_sequoia::state::Open> =
+                    backend.into();
+                let mut transaction = card.transaction()?;
+
+                transaction.verify_user_for_signing(self.pin.as_bytes())?;
+                let mut user = transaction.signing_card().expect("This should not fail");
+
+                let mut signer = user.signer(&|| {})?;
+                signer.sign(hash_algo, digest)
+            }
+        }
+
+        let public = {
+            let mut transaction = self.open.transaction()?;
+
+            transaction.verify_user_for_signing(pin.as_bytes())?;
+
+            let mut user = transaction.signing_card().expect("This should not fail");
+
+            let signer = user.signer(&|| {})?;
+            signer.public().clone()
+        };
+        Ok(PySigner::new(Box::new(CardSigner {
+            public,
+            ident: self.ident()?,
+            pin,
+        })))
+    }
+
     pub fn __repr__(&mut self) -> anyhow::Result<String> {
         Ok(format!("<Card ident={}>", self.ident()?))
     }
+}
+
+#[pyfunction]
+fn sign(signer: PySigner, data: String) -> PyResult<String> {
+    use openpgp::serialize::stream::Signer;
+
+    let mut sink = vec![];
+    {
+        let message = Message::new(&mut sink);
+
+        let message = Armorer::new(message)
+            .kind(openpgp::armor::Kind::Signature)
+            .build()?;
+        let message = Signer::new(message, signer).build()?;
+
+        let mut message = LiteralWriter::new(message).build()?;
+
+        message.write_all(data.as_bytes())?;
+
+        message.finalize()?;
+    }
+
+    Ok(String::from_utf8_lossy(&sink).into())
 }
 
 #[pymodule]
@@ -254,6 +393,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<WKD>()?;
     m.add_class::<Store>()?;
     m.add_class::<Card>()?;
+    m.add_function(wrap_pyfunction!(sign, m)?)?;
     Ok(())
 }
 
