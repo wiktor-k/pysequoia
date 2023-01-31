@@ -205,6 +205,47 @@ impl Store {
     }
 }
 
+use openpgp_card_pcsc::PcscBackend;
+
+#[pyclass]
+struct Card {
+    open: openpgp_card_sequoia::Card<openpgp_card_sequoia::state::Open>,
+}
+
+#[pymethods]
+impl Card {
+    #[staticmethod]
+    pub fn open(ident: &str) -> anyhow::Result<Self> {
+        Ok(Self {
+            open: PcscBackend::open_by_ident(ident, None)?.into(),
+        })
+    }
+
+    #[getter]
+    pub fn cardholder(&mut self) -> anyhow::Result<Option<String>> {
+        let mut transaction = self.open.transaction()?;
+        Ok(transaction.cardholder_name()?)
+    }
+
+    #[getter]
+    pub fn ident(&mut self) -> anyhow::Result<String> {
+        let transaction = self.open.transaction()?;
+        Ok(transaction.application_identifier()?.ident())
+    }
+
+    #[staticmethod]
+    pub fn all() -> anyhow::Result<Vec<Card>> {
+        Ok(PcscBackend::cards(None)?
+            .into_iter()
+            .map(|card| Self { open: card.into() })
+            .collect())
+    }
+
+    pub fn __repr__(&mut self) -> anyhow::Result<String> {
+        Ok(format!("<Card ident={}>", self.ident()?))
+    }
+}
+
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Cert>()?;
@@ -212,6 +253,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<KeyServer>()?;
     m.add_class::<WKD>()?;
     m.add_class::<Store>()?;
+    m.add_class::<Card>()?;
     Ok(())
 }
 

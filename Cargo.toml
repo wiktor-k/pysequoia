@@ -10,9 +10,11 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0.66"
+openpgp-card-pcsc = "0.3.0"
+openpgp-card-sequoia = "0.1.0"
 openpgp-cert-d = "0.1.0"
 pyo3 = { version = "0.17", features = ["extension-module", "anyhow"] }
 pyo3-asyncio = { version = "0.17", features = ["tokio-runtime"] }
 sequoia-net = "0.26.0"
-sequoia-openpgp = { version = "1.13", default-features = false, features = ["crypto-rust", "allow-experimental-crypto", "allow-variable-time-crypto", "compression-deflate"] }
+sequoia-openpgp = { version = "1.13" }
 testresult = "0.2"
