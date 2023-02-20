@@ -172,34 +172,6 @@ impl openpgp::crypto::Signer for PySigner {
     }
 }
 
-#[pyclass]
-struct Context {
-    policy: Box<dyn Policy + 'static>,
-}
-
-#[pymethods]
-impl Context {
-    #[staticmethod]
-    pub fn standard() -> Self {
-        Self {
-            policy: Box::new(StandardPolicy::new()),
-        }
-    }
-
-    fn encrypt(
-        &self,
-        signer: PySigner,
-        recipient_certs: &Cert,
-        content: String,
-    ) -> PyResult<String> {
-        encrypt_for(signer, recipient_certs, content, &*self.policy).map_err(|e| e.into())
-    }
-
-    fn minimize(&self, cert: &Cert) -> PyResult<Cert> {
-        Ok(minimize_cert(cert, &*self.policy)?)
-    }
-}
-
 #[allow(clippy::upper_case_acronyms)]
 #[pyclass]
 struct WKD;
@@ -394,15 +366,26 @@ fn sign(signer: PySigner, data: String) -> PyResult<String> {
     Ok(String::from_utf8_lossy(&sink).into())
 }
 
+#[pyfunction]
+fn encrypt(signer: PySigner, recipient_certs: &Cert, content: String) -> PyResult<String> {
+    encrypt_for(signer, recipient_certs, content).map_err(|e| e.into())
+}
+
+#[pyfunction]
+fn minimize(cert: &Cert) -> PyResult<Cert> {
+    Ok(minimize_cert(cert, &*cert.policy)?)
+}
+
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Cert>()?;
-    m.add_class::<Context>()?;
     m.add_class::<KeyServer>()?;
     m.add_class::<WKD>()?;
     m.add_class::<Store>()?;
     m.add_class::<Card>()?;
     m.add_function(wrap_pyfunction!(sign, m)?)?;
+    m.add_function(wrap_pyfunction!(encrypt, m)?)?;
+    m.add_function(wrap_pyfunction!(minimize, m)?)?;
     Ok(())
 }
 
@@ -410,7 +393,6 @@ pub fn encrypt_for<U>(
     signer: PySigner,
     recipient_certs: &Cert,
     content: U,
-    policy: &dyn Policy,
 ) -> openpgp::Result<String>
 where
     U: AsRef<[u8]> + Send + Sync,
@@ -420,11 +402,12 @@ where
         .set_transport_encryption();
 
     let mut recipients = vec![];
-    for cert in vec![&recipient_certs.cert].iter() {
+    for cert in vec![recipient_certs].iter() {
         let mut found_one = false;
         for key in cert
+            .cert
             .keys()
-            .with_policy(policy, None)
+            .with_policy(&*cert.policy, None)
             .supported()
             .alive()
             .revoked(false)
@@ -436,8 +419,9 @@ where
 
         if !found_one {
             for key in cert
+                .cert
                 .keys()
-                .with_policy(policy, None)
+                .with_policy(&*cert.policy, None)
                 .supported()
                 .revoked(false)
                 .key_flags(&mode)
@@ -450,7 +434,7 @@ where
         if !found_one {
             return Err(anyhow::anyhow!(
                 "No suitable encryption subkey for {}",
-                cert
+                cert.cert
             ));
         }
     }

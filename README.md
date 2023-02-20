@@ -15,7 +15,7 @@ maturin develop
 Now open the console with `python` and import the library:
 
 ```python
-from pysequoia import Cert, Context
+from pysequoia import Cert
 ```
 
 Assume this file has been generated:
@@ -32,9 +32,11 @@ gpg --batch --pinentry-mode loopback --passphrase hunter22 --export-secret-key u
 Signs and encrypts a string to one or more recipients:
 
 ```python
+from pysequoia import encrypt
+
 s = Cert.from_file("user.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-encrypted = Context.standard().encrypt(s.signer("hunter22"), r, "content to encrypt")
+encrypted = encrypt(s.signer("hunter22"), r, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -62,11 +64,15 @@ print(f"Merged, updated cert: {merged}")
 
 ### minimize
 
+Note: This function is experimental and may be removed in the future.
+
 Discards expired subkeys and User IDs:
 
 ```python
+from pysequoia import minimize
+
 cert = Cert.from_file("wiktor.asc")
-minimized = Context.standard().minimize(cert)
+minimized = minimize(cert)
 print(f"Minimized cert: {minimized}")
 ```
 
@@ -87,7 +93,7 @@ contexts:
 alice = Cert.generate("Alice <alice@example.com>")
 bob = Cert.generate("Bob <bob@example.com>")
 
-encrypted = Context.standard().encrypt(alice.signer(), bob, "content to encrypt")
+encrypted = encrypt(alice.signer(), bob, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
