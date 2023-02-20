@@ -18,11 +18,21 @@ Now open the console with `python` and import the library:
 from pysequoia import Cert
 ```
 
-Assume this file has been generated:
+Assuming these keys and cards exist:
 
 ```bash
-gpg --batch --pinentry-mode loopback --passphrase hunter22 --quick-gen-key user@example.com
-gpg --batch --pinentry-mode loopback --passphrase hunter22 --export-secret-key user@example.com > user.pgp
+# generate a key with password
+gpg --batch --pinentry-mode loopback --passphrase hunter22 --quick-gen-key passwd@example.com
+gpg --batch --pinentry-mode loopback --passphrase hunter22 --export-secret-key passwd@example.com > passwd.pgp
+
+# generate a key without password
+gpg --batch --pinentry-mode loopback --passphrase '' --quick-gen-key no-passwd@example.com future-default
+gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-passwd@example.com > no-passwd.pgp
+
+# initialize dummy OpenPGP Card
+sh /start.sh
+echo 12345678 > pin
+/root/.cargo/bin/opgpcard admin --card 0000:00000000 --admin-pin pin import no-passwd.pgp
 ```
 
 ## Available functions
@@ -34,7 +44,7 @@ Signs and encrypts a string to one or more recipients:
 ```python
 from pysequoia import encrypt
 
-s = Cert.from_file("user.pgp")
+s = Cert.from_file("passwd.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
 encrypted = encrypt(signer = s.signer("hunter22"), recipients = [r], content = "content to encrypt")
 print(f"Encrypted data: {encrypted}")
@@ -49,6 +59,7 @@ from pysequoia import sign
 
 s = Cert.from_file("signing-key.asc")
 signed = sign(s.signer(), "data to be signed")
+print(f"Signed data: {signed}")
 ```
 
 ### merge
@@ -164,19 +175,20 @@ assert s.get("653909a2f0e37c106f5faf546c8857e0d8e8f074") != None
 There's an experimental feature allowing communication with OpenPGP
 Cards (like Yubikey or Nitrokey).
 
-```py
+```python
 from pysequoia import Card
 
 # enumerate all cards
 all = Card.all()
 
 # open card by card ident
-card = Card.open("card ident")
+card = Card.open("0000:00000000")
 
-print(card.ident)
-print(card.cardholder)
+print(f"Card ident: {card.ident}")
+print(f"Cardholder: {card.cardholder}")
 
-signer = card.signer(input("PIN: "))
+signer = card.signer("123456")
 
 signed = sign(signer, "data to be signed")
+print(f"Signed data: {signed}")
 ```
