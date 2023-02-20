@@ -17,6 +17,16 @@ use openpgp::types::KeyFlags;
 #[pyclass]
 pub struct Cert {
     cert: openpgp::cert::Cert,
+    policy: Box<dyn Policy>,
+}
+
+impl From<openpgp::cert::Cert> for Cert {
+    fn from(cert: openpgp::cert::Cert) -> Self {
+        Self {
+            cert,
+            policy: Box::new(StandardPolicy::new()),
+        }
+    }
 }
 
 #[pymethods]
@@ -24,26 +34,23 @@ impl Cert {
     #[staticmethod]
     pub fn from_file(path: String) -> PyResult<Self> {
         use openpgp::parse::Parse;
-        Ok(Self {
-            cert: openpgp::cert::Cert::from_file(path)?,
-        })
+        Ok(openpgp::cert::Cert::from_file(path)?.into())
     }
 
     #[staticmethod]
     pub fn from_bytes(bytes: &[u8]) -> PyResult<Self> {
         use openpgp::parse::Parse;
-        Ok(Self {
-            cert: openpgp::cert::Cert::from_bytes(bytes)?,
-        })
+        Ok(openpgp::cert::Cert::from_bytes(bytes)?.into())
     }
 
     #[staticmethod]
     pub fn generate(user_id: &str) -> PyResult<Self> {
-        Ok(Self {
-            cert: openpgp::cert::CertBuilder::general_purpose(None, Some(user_id))
+        Ok(
+            openpgp::cert::CertBuilder::general_purpose(None, Some(user_id))
                 .generate()?
-                .0,
-        })
+                .0
+                .into(),
+        )
     }
 
     pub fn merge(&self, new_cert: &Cert) -> PyResult<Cert> {
@@ -65,12 +72,11 @@ impl Cert {
     }
 
     pub fn signer(&self, password: Option<String>) -> PyResult<PySigner> {
-        let policy = StandardPolicy::new();
         if let Some(key) = self
             .cert
             .keys()
             .secret()
-            .with_policy(&policy, None)
+            .with_policy(&*self.policy, None)
             .alive()
             .revoked(false)
             .for_signing()
@@ -115,7 +121,8 @@ impl KeyServer {
             let fpr: Fingerprint = fpr.parse()?;
             let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
             let cert = ks.get(fpr);
-            Ok(Cert { cert: cert.await? })
+            let cert: Cert = cert.await?.into();
+            Ok(cert)
         })
     }
 
@@ -204,7 +211,8 @@ impl WKD {
         pyo3_asyncio::tokio::future_into_py(py, async move {
             let certs = sequoia_net::wkd::get(email).await?;
             if let Some(cert) = certs.first() {
-                Ok(Some(Cert { cert: cert.clone() }))
+                let cert: Cert = cert.clone().into();
+                Ok(Some(cert))
             } else {
                 Ok(None)
             }
@@ -234,9 +242,7 @@ impl Store {
     pub fn get(&self, id: String) -> anyhow::Result<Option<Cert>> {
         use openpgp::parse::Parse;
         if let Some((_tag, data)) = self.cert_d.get(&id)? {
-            Ok(Some(Cert {
-                cert: openpgp::cert::Cert::from_bytes(&data)?,
-            }))
+            Ok(Some(openpgp::cert::Cert::from_bytes(&data)?.into()))
         } else {
             Ok(None)
         }
@@ -259,9 +265,7 @@ impl Store {
         let (_tag, data) = self
             .cert_d
             .insert(cert.cert.to_vec()?.into_boxed_slice(), f)?;
-        Ok(Cert {
-            cert: openpgp::cert::Cert::from_bytes(&data)?,
-        })
+        Ok(openpgp::cert::Cert::from_bytes(&data)?.into())
     }
 
     pub fn __repr__(&self) -> String {
@@ -479,7 +483,7 @@ pub fn merge_certs(existing_cert: &Cert, new_cert: &Cert) -> openpgp::Result<Cer
         .cert
         .clone()
         .merge_public(new_cert.cert.clone())?;
-    Ok(Cert { cert: merged_cert })
+    Ok(merged_cert.into())
 }
 
 pub fn minimize_cert(cert: &Cert, policy: &dyn Policy) -> openpgp::Result<Cert> {
@@ -538,9 +542,7 @@ pub fn minimize_cert(cert: &Cert, policy: &dyn Policy) -> openpgp::Result<Cert> 
         }
     }
 
-    Ok(Cert {
-        cert: openpgp::cert::Cert::try_from(acc)?,
-    })
+    Ok(openpgp::cert::Cert::try_from(acc)?.into())
 }
 
 #[cfg(test)]
