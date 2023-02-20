@@ -18,6 +18,13 @@ Now open the console with `python` and import the library:
 from pysequoia import Cert, Context
 ```
 
+Assume this file has been generated:
+
+```bash
+gpg --batch --pinentry-mode loopback --passphrase hunter22 --quick-gen-key user@example.com
+gpg --batch --pinentry-mode loopback --passphrase hunter22 --export-secret-key user@example.com > user.pgp
+```
+
 ## Available functions
 
 ### encrypt
@@ -25,9 +32,9 @@ from pysequoia import Cert, Context
 Signs and encrypts a string to one or more recipients:
 
 ```python
-s = Cert.from_file("signing-key.asc")
+s = Cert.from_file("user.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-encrypted = Context.standard().encrypt(s.signer(), r, "content to encrypt")
+encrypted = Context.standard().encrypt(s.signer("hunter22"), r, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
