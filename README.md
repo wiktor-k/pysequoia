@@ -124,9 +124,10 @@ integration which allows storing and retrieving OpenPGP certificates
 in a persistent way directly in the file system.
 
 Note that this will *not* allow you to read GnuPG-specific key
-directories.
+directories. Cert-D [does not allow certificate removal][NO-REMOV].
 
 [CERT-D]: https://sequoia-pgp.gitlab.io/pgp-cert-d/
+[NO-REMOV]: https://gitlab.com/sequoia-pgp/pgp-cert-d/-/issues/33
 
 ```python
 from pysequoia import Store
