@@ -1819,7 +1819,7 @@ dependencies = [
 
 [[package]]
 name = "pysequoia"
-version = "0.1.8"
+version = "0.1.12"
 dependencies = [
  "anyhow",
  "openpgp-card-pcsc",

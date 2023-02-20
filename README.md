@@ -27,7 +27,7 @@ Signs and encrypts a string to one or more recipients:
 ```python
 s = Cert.from_file("signing-key.asc")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-encrypted = Context.standard().encrypt(s, r, "content to encrypt")
+encrypted = Context.standard().encrypt(s.signer(), r, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -80,7 +80,7 @@ contexts:
 alice = Cert.generate("Alice <alice@example.com>")
 bob = Cert.generate("Bob <bob@example.com>")
 
-encrypted = Context.standard().encrypt(alice, bob, "content to encrypt")
+encrypted = Context.standard().encrypt(alice.signer(), bob, "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 

@@ -64,22 +64,27 @@ impl Cert {
         Ok(format!("{:x}", self.cert.fingerprint()))
     }
 
-    pub fn signer(&self) -> PyResult<PySigner> {
+    pub fn signer(&self, password: Option<String>) -> PyResult<PySigner> {
         let policy = StandardPolicy::new();
-        let keypair = self
+        if let Some(key) = self
             .cert
             .keys()
-            .unencrypted_secret()
+            .secret()
             .with_policy(&policy, None)
             .alive()
             .revoked(false)
             .for_signing()
             .next()
-            .unwrap()
-            .key()
-            .clone()
-            .into_keypair()?;
-        Ok(PySigner::new(Box::new(keypair)))
+        {
+            let mut key = key.key().clone();
+            if let Some(password) = password {
+                key = key.decrypt_secret(&(password[..]).into())?;
+            }
+            let keypair = key.into_keypair()?;
+            Ok(PySigner::new(Box::new(keypair)))
+        } else {
+            Err(anyhow::anyhow!("No suitable signing subkey for {}", self.cert).into())
+        }
     }
 }
 
@@ -176,11 +181,11 @@ impl Context {
 
     fn encrypt(
         &self,
-        signing_cert: &Cert,
+        signer: PySigner,
         recipient_certs: &Cert,
         content: String,
     ) -> PyResult<String> {
-        encrypt_for(signing_cert, recipient_certs, content, &*self.policy).map_err(|e| e.into())
+        encrypt_for(signer, recipient_certs, content, &*self.policy).map_err(|e| e.into())
     }
 
     fn minimize(&self, cert: &Cert) -> PyResult<Cert> {
@@ -398,7 +403,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
 }
 
 pub fn encrypt_for<U>(
-    signing_cert: &Cert,
+    signer: PySigner,
     recipient_certs: &Cert,
     content: U,
     policy: &dyn Policy,
@@ -409,20 +414,6 @@ where
     let mode = KeyFlags::empty()
         .set_storage_encryption()
         .set_transport_encryption();
-
-    let signing_cert = signing_cert
-        .cert
-        .keys()
-        .unencrypted_secret()
-        .with_policy(policy, None)
-        .alive()
-        .revoked(false)
-        .for_signing()
-        .next()
-        .unwrap()
-        .key()
-        .clone()
-        .into_keypair()?;
 
     let mut recipients = vec![];
     for cert in vec![&recipient_certs.cert].iter() {
@@ -470,7 +461,7 @@ where
         .build()
         .context("Failed to create encryptor")?;
 
-    let message = Signer::new(message, signing_cert).build()?;
+    let message = Signer::new(message, signer).build()?;
 
     let mut message = LiteralWriter::new(message)
         .build()
