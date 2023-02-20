@@ -367,8 +367,8 @@ fn sign(signer: PySigner, data: String) -> PyResult<String> {
 }
 
 #[pyfunction]
-fn encrypt(signer: PySigner, recipient_certs: &Cert, content: String) -> PyResult<String> {
-    encrypt_for(signer, recipient_certs, content).map_err(|e| e.into())
+fn encrypt(signer: PySigner, recipients: Vec<PyRef<Cert>>, content: String) -> PyResult<String> {
+    encrypt_for(signer, recipients, content).map_err(|e| e.into())
 }
 
 #[pyfunction]
@@ -391,7 +391,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
 
 pub fn encrypt_for<U>(
     signer: PySigner,
-    recipient_certs: &Cert,
+    recipient_certs: Vec<PyRef<Cert>>,
     content: U,
 ) -> openpgp::Result<String>
 where
@@ -402,7 +402,7 @@ where
         .set_transport_encryption();
 
     let mut recipients = vec![];
-    for cert in vec![recipient_certs].iter() {
+    for cert in recipient_certs.iter() {
         let mut found_one = false;
         for key in cert
             .cert

@@ -36,7 +36,7 @@ from pysequoia import encrypt
 
 s = Cert.from_file("user.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-encrypted = encrypt(s.signer("hunter22"), r, "content to encrypt")
+encrypted = encrypt(signer = s.signer("hunter22"), recipients = [r], content = "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -93,7 +93,7 @@ contexts:
 alice = Cert.generate("Alice <alice@example.com>")
 bob = Cert.generate("Bob <bob@example.com>")
 
-encrypted = encrypt(alice.signer(), bob, "content to encrypt")
+encrypted = encrypt(signer = alice.signer(), recipients = [bob], content = "content to encrypt")
 print(f"Encrypted data: {encrypted}")
 ```
 
