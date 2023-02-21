@@ -243,4 +243,4 @@ Note that while this package allows using cards for signing and
 decryption the provisioning process is not supported.
 [OpenPGP card tools][] can be used to initialize the card.
 
-[OpenPGP card tools][]: https://crates.io/crates/openpgp-card-tools
+[OpenPGP card tools]: https://crates.io/crates/openpgp-card-tools
