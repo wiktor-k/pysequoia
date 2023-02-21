@@ -16,5 +16,11 @@ openpgp-cert-d = "0.1.0"
 pyo3 = { version = "0.17", features = ["extension-module", "anyhow"] }
 pyo3-asyncio = { version = "0.17", features = ["tokio-runtime"] }
 sequoia-net = "0.26.0"
-sequoia-openpgp = { version = "1.13", default-features = false, features = ["crypto-rust", "allow-variable-time-crypto", "allow-experimental-crypto"] }
+sequoia-openpgp = { version = "1.13", default-features = false, features = ["compression"]  }
 testresult = "0.2"
+
+[target.'cfg(not(windows))'.dependencies]
+sequoia-openpgp = { version = "1", default-features = false, features = ["crypto-nettle"]  }
+
+[target.'cfg(windows)'.dependencies]
+sequoia-openpgp = { version = "1", default-features = false, features = ["crypto-cng"] }

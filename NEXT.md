@@ -8,6 +8,7 @@ Changed:
   - `Cert` objects are now always viewed through Sequoia's `StandardPolicy`. This makes it filter out weak algorithms.
   - `encrypt` supports multiple recipients.
   - `Card` usage examples are now tested in CI.
+  - `sequoia_openpgp` now uses CNG on Windows and Nettle otherwise.
 
 Deleted:
   - `Context` object removed since now each `Cert` object contains its own policy.
