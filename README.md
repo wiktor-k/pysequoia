@@ -129,6 +129,8 @@ encrypted = encrypt(signer = alice.signer(), recipients = [bob], content = "cont
 print(f"Encrypted data: {encrypted}")
 ```
 
+## Certificate management
+
 ### WKD
 
 Fetching certificates via Web Key Directory:
@@ -191,7 +193,7 @@ s = Store("/tmp/store")
 assert s.get("653909a2f0e37c106f5faf546c8857e0d8e8f074") != None
 ```
 
-### OpenPGP Cards
+## OpenPGP Cards
 
 There's an experimental feature allowing communication with OpenPGP
 Cards (like Yubikey or Nitrokey).
