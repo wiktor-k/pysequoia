@@ -14,6 +14,8 @@ use openpgp::serialize::{
 };
 use openpgp::types::KeyFlags;
 
+mod decrypt;
+
 #[pyclass]
 pub struct Cert {
     cert: openpgp::cert::Cert,
@@ -90,6 +92,29 @@ impl Cert {
             Ok(PySigner::new(Box::new(keypair)))
         } else {
             Err(anyhow::anyhow!("No suitable signing subkey for {}", self.cert).into())
+        }
+    }
+
+    pub fn decryptor(&self, password: Option<String>) -> PyResult<decrypt::PyDecryptor> {
+        if let Some(key) = self
+            .cert
+            .keys()
+            .secret()
+            .with_policy(&*self.policy, None)
+            .alive()
+            .revoked(false)
+            .for_transport_encryption()
+            .for_storage_encryption()
+            .next()
+        {
+            let mut key = key.key().clone();
+            if let Some(password) = password {
+                key = key.decrypt_secret(&(password[..]).into())?;
+            }
+            let keypair = key.into_keypair()?;
+            Ok(decrypt::PyDecryptor::new(Box::new(keypair)))
+        } else {
+            Err(anyhow::anyhow!("No suitable decryption subkey for {}", self.cert).into())
         }
     }
 }
@@ -338,6 +363,62 @@ impl Card {
         })))
     }
 
+    pub fn decryptor(&mut self, pin: String) -> anyhow::Result<decrypt::PyDecryptor> {
+        use sequoia_openpgp::crypto::Decryptor;
+
+        struct CardDecryptor {
+            public: openpgp::packet::Key<
+                openpgp::packet::key::PublicParts,
+                openpgp::packet::key::UnspecifiedRole,
+            >,
+            ident: String,
+            pin: String,
+        }
+
+        impl openpgp::crypto::Decryptor for CardDecryptor {
+            fn public(
+                &self,
+            ) -> &openpgp::packet::Key<
+                openpgp::packet::key::PublicParts,
+                openpgp::packet::key::UnspecifiedRole,
+            > {
+                &self.public
+            }
+            fn decrypt(
+                &mut self,
+                ciphertext: &openpgp::crypto::mpi::Ciphertext,
+                plaintext_len: Option<usize>,
+            ) -> openpgp::Result<openpgp::crypto::SessionKey> {
+                let backend = openpgp_card_pcsc::PcscBackend::open_by_ident(&self.ident, None)?;
+                let mut card: openpgp_card_sequoia::Card<openpgp_card_sequoia::state::Open> =
+                    backend.into();
+                let mut transaction = card.transaction()?;
+
+                transaction.verify_user(self.pin.as_bytes())?;
+                let mut user = transaction.user_card().expect("user_card should not fail");
+
+                let mut decryptor = user.decryptor(&|| {})?;
+                decryptor.decrypt(ciphertext, plaintext_len)
+            }
+        }
+
+        let public = {
+            let mut transaction = self.open.transaction()?;
+
+            transaction.verify_user_for_signing(pin.as_bytes())?;
+
+            let mut user = transaction.user_card().expect("user_card should not fail");
+
+            let decryptor = user.decryptor(&|| {})?;
+            decryptor.public().clone()
+        };
+        Ok(decrypt::PyDecryptor::new(Box::new(CardDecryptor {
+            public,
+            ident: self.ident()?,
+            pin,
+        })))
+    }
+
     pub fn __repr__(&mut self) -> anyhow::Result<String> {
         Ok(format!("<Card ident={}>", self.ident()?))
     }
@@ -386,6 +467,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sign, m)?)?;
     m.add_function(wrap_pyfunction!(encrypt, m)?)?;
     m.add_function(wrap_pyfunction!(minimize, m)?)?;
+    m.add_function(wrap_pyfunction!(decrypt::decrypt, m)?)?;
     Ok(())
 }
 

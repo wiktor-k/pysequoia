@@ -62,6 +62,27 @@ signed = sign(s.signer(), "data to be signed")
 print(f"Signed data: {signed}")
 ```
 
+### decrypt
+
+Decrypts data:
+
+```python
+from pysequoia import decrypt
+
+sender = Cert.from_file("no-passwd.pgp")
+receiver = Cert.from_file("passwd.pgp")
+
+content = "Red Green Blue"
+
+encrypted = encrypt(signer = sender.signer(), recipients = [receiver], content = content)
+
+print(f"Encrypted data: {encrypted}")
+
+decrypted = decrypt(decryptor = receiver.decryptor("hunter22"), data = encrypted)
+
+assert content == decrypted.content;
+```
+
 ### merge
 
 Merges data from old certificate with new packets:
@@ -186,9 +207,38 @@ card = Card.open("0000:00000000")
 
 print(f"Card ident: {card.ident}")
 print(f"Cardholder: {card.cardholder}")
+```
 
+Cards can be used for signing data:
+
+```python
 signer = card.signer("123456")
 
 signed = sign(signer, "data to be signed")
 print(f"Signed data: {signed}")
 ```
+
+As well as for decryption:
+
+```python
+decryptor = card.decryptor("123456")
+
+sender = Cert.from_file("passwd.pgp")
+receiver = Cert.from_file("no-passwd.pgp")
+
+content = "Red Green Blue"
+
+encrypted = encrypt(signer = sender.signer("hunter22"), recipients = [receiver], content = content)
+
+print(f"Encrypted data: {encrypted}")
+
+decrypted = decrypt(decryptor = decryptor, data = encrypted)
+
+assert content == decrypted.content;
+```
+
+Note that while this package allows using cards for signing and
+decryption the provisioning process is not supported.
+[OpenPGP card tools][] can be used to initialize the card.
+
+[OpenPGP card tools][]: https://crates.io/crates/openpgp-card-tools

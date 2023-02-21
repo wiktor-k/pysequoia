@@ -3,6 +3,9 @@
 
 New:
   - `Cert.signer()` now accepts a password argument for password protected files.
+  - `decrypt` function.
+  - `Cert.decryptor()` function for getting decryptor out of software keys.
+  - `Card.decryptor()` function for getting decryptor for OpenPGP cards.
 
 Changed:
   - `Cert` objects are now always viewed through Sequoia's `StandardPolicy`. This makes it filter out weak algorithms.
