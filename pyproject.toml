@@ -6,7 +6,17 @@ build-backend = "maturin"
 name = "pysequoia"
 requires-python = ">=3.7"
 classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules"
 ]
+authors = [
+  {name = "Wiktor Kwapisiewicz", email = "wiktor@metacode.biz"}
+]
+keywords = ["openpgp", "pgp", "gpg", "gnupg", "sequoia"]
+license = {file = "LICENSE"}
+description = "Provides OpenPGP facilities using Sequoia-PGP library"

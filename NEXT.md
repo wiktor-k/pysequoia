@@ -6,7 +6,7 @@ New:
   - `decrypt` function.
   - `Cert.decryptor()` function for getting decryptor out of software keys.
   - `Card.decryptor()` function for getting decryptor for OpenPGP cards.
-  - Add Apache 2.0 license file.
+  - Add Apache 2.0 license file and project metadata.
 
 Changed:
   - `Cert` objects are now always viewed through Sequoia's `StandardPolicy`. This makes it filter out weak algorithms.
