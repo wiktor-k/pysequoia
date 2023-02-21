@@ -8,7 +8,4 @@ RUN rustup component add rustfmt clippy
 COPY . /build
 WORKDIR /build
 
-# Run fastest tests first before running longer checks
-RUN cargo fmt -- --check
-RUN cargo clippy --all
-RUN cargo test --all --verbose
+RUN ci/quick-checks.sh
