@@ -85,7 +85,11 @@ decrypted = decrypt(decryptor = receiver.decryptor("hunter22"), data = encrypted
 assert content == decrypted.content;
 ```
 
-### merge
+### Certificates API
+
+The `Cert` class exposes the following functions.
+
+#### merge
 
 Merges data from old certificate with new packets:
 
@@ -96,7 +100,7 @@ merged = old.merge(new)
 print(f"Merged, updated cert: {merged}")
 ```
 
-### generate
+#### generate
 
 Creates new general purpose key with given User ID:
 
