@@ -1,6 +1,6 @@
 # PySequoia
 
-[![PyPI version](https://badge.fury.io/py/pysequoia.svg)](https://pypi.org/project/pysequoia/)
+[![PyPI version](https://badge.fury.io/py/pysequoia.svg)](https://pypi.org/project/pysequoia/) [![status-badge](https://ci.codeberg.org/api/badges/wiktor/pysequoia/status.svg)](https://ci.codeberg.org/wiktor/pysequoia)
 
 Note: This is a work in progress. The API is **not** stable!
 
