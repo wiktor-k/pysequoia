@@ -16,6 +16,14 @@ pipeline:
       # do not push
       dry_run: true
 
+  audit:
+    group: build
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: ci/audit.dockerfile
+      # do not push
+      dry_run: true
+
   pages:
     group: build
     image: woodpeckerci/plugin-docker-buildx

@@ -15,6 +15,10 @@ integration:
   script:
     - docker build --file ci/e2e.dockerfile .
 
+audit:
+  script:
+    - docker build --file ci/audit.dockerfile .
+
 pages:
   before_script:
     - docker buildx create --use
