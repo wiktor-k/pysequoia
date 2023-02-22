@@ -35,15 +35,6 @@ pub fn sign(signer: PySigner, data: String) -> PyResult<String> {
 }
 
 #[pyfunction]
-pub fn encrypt(
-    signer: PySigner,
-    recipients: Vec<PyRef<Cert>>,
-    content: String,
-) -> PyResult<String> {
-    encrypt_for(signer, recipients, content).map_err(|e| e.into())
-}
-
-#[pyfunction]
 pub fn minimize(cert: &Cert) -> PyResult<Cert> {
     Ok(minimize_cert(cert, cert.policy())?)
 }
@@ -115,20 +106,18 @@ pub fn minimize_cert(cert: &Cert, policy: &dyn Policy) -> openpgp::Result<Cert> 
     Ok(openpgp::cert::Cert::try_from(acc)?.into())
 }
 
-pub fn encrypt_for<U>(
+#[pyfunction]
+pub fn encrypt(
     signer: PySigner,
-    recipient_certs: Vec<PyRef<Cert>>,
-    content: U,
-) -> openpgp::Result<String>
-where
-    U: AsRef<[u8]> + Send + Sync,
-{
+    recipients: Vec<PyRef<Cert>>,
+    content: String,
+) -> PyResult<String> {
     let mode = KeyFlags::empty()
         .set_storage_encryption()
         .set_transport_encryption();
 
-    let mut recipients = vec![];
-    for cert in recipient_certs.iter() {
+    let mut recipient_keys = vec![];
+    for cert in recipients.iter() {
         let mut found_one = false;
         for key in cert
             .cert()
@@ -139,7 +128,7 @@ where
             .revoked(false)
             .key_flags(&mode)
         {
-            recipients.push(key);
+            recipient_keys.push(key);
             found_one = true;
         }
 
@@ -152,16 +141,15 @@ where
                 .revoked(false)
                 .key_flags(&mode)
             {
-                recipients.push(key);
+                recipient_keys.push(key);
                 found_one = true;
             }
         }
 
         if !found_one {
-            return Err(anyhow::anyhow!(
-                "No suitable encryption subkey for {}",
-                cert.cert()
-            ));
+            return Err(
+                anyhow::anyhow!("No suitable encryption subkey for {}", cert.cert()).into(),
+            );
         }
     }
 
@@ -171,7 +159,7 @@ where
 
     let message = Armorer::new(message).build()?;
 
-    let message = Encryptor::for_recipients(message, recipients)
+    let message = Encryptor::for_recipients(message, recipient_keys)
         .build()
         .context("Failed to create encryptor")?;
 
