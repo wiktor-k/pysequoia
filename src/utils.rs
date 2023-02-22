@@ -39,14 +39,6 @@ pub fn minimize(cert: &Cert) -> PyResult<Cert> {
     Ok(minimize_cert(cert, cert.policy())?)
 }
 
-pub fn merge_certs(existing_cert: &Cert, new_cert: &Cert) -> openpgp::Result<Cert> {
-    let merged_cert = existing_cert
-        .cert()
-        .clone()
-        .merge_public(new_cert.cert().clone())?;
-    Ok(merged_cert.into())
-}
-
 pub fn minimize_cert(cert: &Cert, policy: &dyn Policy) -> openpgp::Result<Cert> {
     let cert = cert.cert().with_policy(policy, None)?;
 

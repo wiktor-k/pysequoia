@@ -56,7 +56,8 @@ impl Cert {
     }
 
     pub fn merge(&self, new_cert: &Cert) -> PyResult<Cert> {
-        Ok(crate::utils::merge_certs(self, new_cert)?)
+        let merged_cert = self.cert().clone().merge_public(new_cert.cert().clone())?;
+        Ok(merged_cert.into())
     }
 
     pub fn __str__(&self) -> PyResult<String> {
