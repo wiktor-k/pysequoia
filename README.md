@@ -1,5 +1,7 @@
 # PySequoia
 
+[![PyPI version](https://badge.fury.io/py/pysequoia.svg)](https://pypi.org/project/pysequoia/)
+
 Note: This is a work in progress. The API is **not** stable!
 
 Building:
@@ -244,3 +246,11 @@ decryption the provisioning process is not supported.
 [OpenPGP card tools][] can be used to initialize the card.
 
 [OpenPGP card tools]: https://crates.io/crates/openpgp-card-tools
+
+## Sponsors
+
+My work is being supported by these generous organizations
+(alphabetical order):
+  - [nlnet.nl](https://nlnet.nl/)
+  - [pep.foundation](https://pep.foundation/)
+  - [sovereigntechfund.de](https://sovereigntechfund.de/)
