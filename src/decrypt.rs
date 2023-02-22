@@ -1,15 +1,11 @@
-use pyo3::prelude::*;
-
-use sequoia_openpgp as openpgp;
+use std::sync::{Arc, Mutex};
 
 use openpgp::crypto::SessionKey;
 use openpgp::parse::{stream::*, Parse};
-
 use openpgp::policy::StandardPolicy as P;
-
 use openpgp::types::SymmetricAlgorithm;
-
-use std::sync::{Arc, Mutex};
+use pyo3::prelude::*;
+use sequoia_openpgp as openpgp;
 
 #[pyclass]
 #[derive(Clone)]
