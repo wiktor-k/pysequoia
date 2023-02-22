@@ -5,6 +5,7 @@ use sequoia_openpgp as openpgp;
 
 use crate::decrypt;
 use crate::signer::PySigner;
+use crate::user_id::UserId;
 
 #[pyclass]
 pub struct Cert {
@@ -72,6 +73,12 @@ impl Cert {
     #[getter]
     pub fn fingerprint(&self) -> PyResult<String> {
         Ok(format!("{:x}", self.cert.fingerprint()))
+    }
+
+    #[getter]
+    pub fn user_ids(&self) -> PyResult<Vec<UserId>> {
+        let cert = self.cert.with_policy(&*self.policy, None)?;
+        Ok(cert.userids().map(UserId::new).collect())
     }
 
     pub fn signer(&self, password: Option<String>) -> PyResult<PySigner> {

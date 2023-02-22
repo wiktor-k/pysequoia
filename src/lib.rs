@@ -5,9 +5,11 @@ mod cert;
 mod decrypt;
 mod encrypt;
 mod ks;
+mod notation;
 mod sign;
 mod signer;
 mod store;
+mod user_id;
 mod wkd;
 
 #[pymodule]

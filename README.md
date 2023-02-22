@@ -110,6 +110,27 @@ merged = old.merge(new)
 print(f"Merged, updated cert: {merged}")
 ```
 
+#### User IDs
+
+```python
+cert = Cert.from_file("wiktor.asc")
+user_id = cert.user_ids[0]
+assert str(user_id).startswith("Wiktor Kwapisiewicz")
+```
+
+#### Notations
+
+Notations are small pieces of data that can be attached to signatures (and, indirectly, to User IDs).
+
+```python
+cert = Cert.from_file("wiktor.asc")
+user_id = cert.user_ids[0]
+notation = user_id.notations[0]
+
+assert notation.key == "proof@metacode.biz";
+assert notation.value == "dns:metacode.biz?type=TXT";
+```
+
 #### generate
 
 Creates new general purpose key with given User ID:
