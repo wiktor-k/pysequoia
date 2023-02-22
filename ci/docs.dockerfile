@@ -1,8 +1,8 @@
 FROM rust AS build
 
-RUN apt update -y -qq && \
-    apt install -y -qq --no-install-recommends ca-certificates pandoc && \
-    apt clean
+RUN apt-get update -y -qq && \
+    apt-get install -y -qq --no-install-recommends ca-certificates pandoc && \
+    apt-get clean
 
 COPY doc /public
 COPY README.md /public
