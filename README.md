@@ -87,7 +87,17 @@ assert content == decrypted.content;
 
 ### Certificates API
 
-The `Cert` class exposes the following functions.
+The `Cert` class represents one OpenPGP certificate (commonly called a
+"public key").
+
+This package additionally verifies the ceritificate using Sequoia
+PGP's [`StandardPolicy`][SP]. This means that cerificates using weak
+cryptography can fail to load or present different view than the one
+in other OpenPGP software (e.g. if the User ID uses SHA-1 in
+back-signatures it may be missing from the list returned by this
+package).
+
+[SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
 
 #### merge
 
