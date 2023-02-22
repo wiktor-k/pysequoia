@@ -3,10 +3,11 @@ use pyo3::prelude::*;
 mod card;
 mod cert;
 mod decrypt;
+mod encrypt;
 mod ks;
+mod sign;
 mod signer;
 mod store;
-mod utils;
 mod wkd;
 
 #[pymodule]
@@ -16,8 +17,8 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<wkd::WKD>()?;
     m.add_class::<store::Store>()?;
     m.add_class::<card::Card>()?;
-    m.add_function(wrap_pyfunction!(utils::sign, m)?)?;
-    m.add_function(wrap_pyfunction!(utils::encrypt, m)?)?;
+    m.add_function(wrap_pyfunction!(sign::sign, m)?)?;
+    m.add_function(wrap_pyfunction!(encrypt::encrypt, m)?)?;
     m.add_function(wrap_pyfunction!(decrypt::decrypt, m)?)?;
     Ok(())
 }

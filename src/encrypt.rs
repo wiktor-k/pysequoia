@@ -11,29 +11,6 @@ use crate::cert::Cert;
 use crate::signer::PySigner;
 
 #[pyfunction]
-pub fn sign(signer: PySigner, data: String) -> PyResult<String> {
-    use openpgp::serialize::stream::Signer;
-
-    let mut sink = vec![];
-    {
-        let message = Message::new(&mut sink);
-
-        let message = Armorer::new(message)
-            .kind(openpgp::armor::Kind::Signature)
-            .build()?;
-        let message = Signer::new(message, signer).build()?;
-
-        let mut message = LiteralWriter::new(message).build()?;
-
-        message.write_all(data.as_bytes())?;
-
-        message.finalize()?;
-    }
-
-    Ok(String::from_utf8_lossy(&sink).into())
-}
-
-#[pyfunction]
 pub fn encrypt(
     signer: PySigner,
     recipients: Vec<PyRef<Cert>>,
