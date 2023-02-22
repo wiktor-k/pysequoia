@@ -20,3 +20,7 @@ authors = [
 keywords = ["openpgp", "pgp", "gpg", "gnupg", "sequoia"]
 license = {file = "LICENSE"}
 description = "Provides OpenPGP facilities using Sequoia-PGP library"
+
+[project.urls]
+"Homepage" = "https://codeberg.org/wiktor/pysequoia"
+"Bug Tracker" = "https://codeberg.org/wiktor/pysequoia/issues"
