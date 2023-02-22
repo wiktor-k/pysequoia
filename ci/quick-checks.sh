@@ -8,3 +8,4 @@ set -euxo pipefail
 cargo fmt -- --check
 cargo clippy --all
 cargo test --all
+codespell --skip '.env,.git,*.asc,target' --ignore-words-list fpr,crate,keypair

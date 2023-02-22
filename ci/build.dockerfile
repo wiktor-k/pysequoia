@@ -1,7 +1,7 @@
 FROM rust
 
 RUN apt update -y -qq && \
-    apt install -y -qq --no-install-recommends python3 python3-venv clang make pkg-config nettle-dev libssl-dev ca-certificates pip pcscd libpcsclite-dev && \
+    apt install -y -qq --no-install-recommends python3 python3-venv clang make pkg-config nettle-dev libssl-dev ca-certificates pip pcscd libpcsclite-dev codespell && \
     apt clean
 RUN rustup component add rustfmt clippy
 
