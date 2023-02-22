@@ -18,7 +18,6 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<card::Card>()?;
     m.add_function(wrap_pyfunction!(utils::sign, m)?)?;
     m.add_function(wrap_pyfunction!(utils::encrypt, m)?)?;
-    m.add_function(wrap_pyfunction!(utils::minimize, m)?)?;
     m.add_function(wrap_pyfunction!(decrypt::decrypt, m)?)?;
     Ok(())
 }

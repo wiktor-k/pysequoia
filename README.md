@@ -96,20 +96,6 @@ merged = old.merge(new)
 print(f"Merged, updated cert: {merged}")
 ```
 
-### minimize
-
-Note: This function is experimental and may be removed in the future.
-
-Discards expired subkeys and User IDs:
-
-```python
-from pysequoia import minimize
-
-cert = Cert.from_file("wiktor.asc")
-minimized = minimize(cert)
-print(f"Minimized cert: {minimized}")
-```
-
 ### generate
 
 Creates new general purpose key with given User ID:
