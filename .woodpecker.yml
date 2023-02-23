@@ -51,7 +51,7 @@ pipeline:
           echo "No changes"
         else
           git add .
-          git commit -m "Update rendered page" -m "Source: $CI_COMMIT_SHA" -m "See: CI_BUILD_LINK"
+          git commit -m "Update rendered page" -m "Source: $CI_COMMIT_SHA" -m "See: $CI_BUILD_LINK"
           git push
         fi
     when:
