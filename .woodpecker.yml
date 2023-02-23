@@ -23,6 +23,8 @@ pipeline:
       dockerfile: ci/audit.dockerfile
       # do not push
       dry_run: true
+    when:
+      event: [push, cron]
 
   pages:
     group: build
