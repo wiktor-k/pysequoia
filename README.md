@@ -122,6 +122,10 @@ assert str(user_id).startswith("Wiktor Kwapisiewicz")
 
 Notations are small pieces of data that can be attached to signatures (and, indirectly, to User IDs).
 
+The following example reads and displays [Keyoxide][KX] proof URI:
+
+[KX]: https://keyoxide.org/
+
 ```python
 cert = Cert.from_file("wiktor.asc")
 user_id = cert.user_ids[0]
