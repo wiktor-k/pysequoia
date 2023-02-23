@@ -17,7 +17,8 @@ audit:
 
 pages:
   before_script:
-    - docker buildx create --use
+    - docker context create builders
+    - docker buildx create --use builders
   script:
     - docker buildx build --file ci/docs.dockerfile --output type=local,dest=public .
   artifacts:
