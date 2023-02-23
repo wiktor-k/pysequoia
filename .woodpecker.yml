@@ -46,10 +46,14 @@ pipeline:
       # Needed for custom domains
       - cp .domains $CI_REPO_NAME || true # Ignore if it doesn't exist
       - cd $CI_REPO_NAME
-      - git add .
-      - git commit --allow-empty -m "Woodpecker CI ${CI_BUILD_CREATED}"
-      - git push
-
+      - >
+        if [ -z "$(git status --porcelain)" ]; then
+          echo "No changes"
+        else
+          git add .
+          git commit -m "Update rendered page" -m "Source: $CI_COMMIT_SHA" -m "See: CI_BUILD_LINK"
+          git push
+        fi
     when:
       event: push
 
