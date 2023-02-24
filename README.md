@@ -52,18 +52,6 @@ encrypted = encrypt(signer = s.signer("hunter22"), recipients = [r], content = "
 print(f"Encrypted data: {encrypted}")
 ```
 
-### sign
-
-Signs the data and returns armored output:
-
-```python
-from pysequoia import sign
-
-s = Cert.from_file("signing-key.asc")
-signed = sign(s.signer(), "data to be signed")
-print(f"Signed data: {signed}")
-```
-
 ### decrypt
 
 Decrypts data:
@@ -83,6 +71,18 @@ print(f"Encrypted data: {encrypted}")
 decrypted = decrypt(decryptor = receiver.decryptor("hunter22"), data = encrypted)
 
 assert content == decrypted.content;
+```
+
+### sign
+
+Signs the data and returns armored output:
+
+```python
+from pysequoia import sign
+
+s = Cert.from_file("signing-key.asc")
+signed = sign(s.signer(), "data to be signed")
+print(f"Signed data: {signed}")
 ```
 
 ### Certificates API
