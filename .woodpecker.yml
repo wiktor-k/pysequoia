@@ -24,7 +24,7 @@ pipeline:
       # do not push
       dry_run: true
     when:
-      event: [push, cron]
+      event: [push, cron, pull_request]
 
   pages:
     group: build
