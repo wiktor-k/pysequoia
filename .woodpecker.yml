@@ -65,20 +65,23 @@ pipeline:
       - git config --global user.email woodpecker@codeberg.org
       - git config --global user.name "Woodpecker CI"
       - cargo install cargo-edit
-      - cargo upgrade --incompatible
       - >
+        REPORT=$(cargo upgrade --incompatible | sed -ne 's/.*/    &/p')
         if [ -z "$(git status --porcelain)" ]; then
           echo "No changes"
         else
           git checkout -b update-deps
           git add .
-          git commit -m "Update dependencies" -m "Build: $CI_SYSTEM_LINK/$CI_REPO/pipeline/$CI_BUILD_NUMBER"
+          git commit -m "Update dependencies" -m "$REPORT" -m "Build: $CI_SYSTEM_LINK/$CI_REPO/pipeline/$CI_BUILD_NUMBER"
           # Force update overwriting last changes
           git push --force https://$CODEBERG_TOKEN@codeberg.org/$CI_REPO.git update-deps
 
           # See if we need to open a PR
           if [ -z "$(curl -sSL 'https://codeberg.org/api/v1/repos/$CI_REPO/pulls?state=open' | grep 'Update dependencies')" ]; then
-            curl -H "Authorization: token $CODEBERG_TOKEN" -d head=update-deps -d base=main -d title="Update dependencies" -d description="This is automated PR created by bot." "https://codeberg.org/api/v1/repos/$CI_REPO/pulls"
+            echo "This is automated PR created by bot." > /tmp/body
+            echo "$REPORT" >> /tmp/body
+            echo "Build: $CI_SYSTEM_LINK/$CI_REPO/pipeline/$CI_BUILD_NUMBER" >> /tmp/body
+            curl -sSL -H "Authorization: token $CODEBERG_TOKEN" -d head=update-deps -d base=main -d title="Update dependencies" -d body=@/tmp/body "https://codeberg.org/api/v1/repos/$CI_REPO/pulls"
             echo "PR created"
           else
             echo "PR is already open"
