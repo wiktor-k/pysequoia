@@ -99,6 +99,27 @@ package).
 
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
 
+#### generate
+
+Creates new general purpose key with given User ID:
+
+```python
+alice = Cert.generate("Alice <alice@example.com>")
+fpr = alice.fingerprint
+print(f"Generated cert with fingerprint {fpr}:\n{alice}")
+```
+
+Newly generated certificates are usable in both encryption and signing
+contexts:
+
+```python
+alice = Cert.generate("Alice <alice@example.com>")
+bob = Cert.generate("Bob <bob@example.com>")
+
+encrypted = encrypt(signer = alice.signer(), recipients = [bob], content = "content to encrypt")
+print(f"Encrypted data: {encrypted}")
+```
+
 #### merge
 
 Merges data from old certificate with new packets:
@@ -156,27 +177,6 @@ notation = cert.user_ids[0].notations[0]
 
 assert notation.key == "proof@metacode.biz";
 assert notation.value == "dns:metacode.biz";
-```
-
-#### generate
-
-Creates new general purpose key with given User ID:
-
-```python
-alice = Cert.generate("Alice <alice@example.com>")
-fpr = alice.fingerprint
-print(f"Generated cert with fingerprint {fpr}:\n{alice}")
-```
-
-Newly generated certificates are usable in both encryption and signing
-contexts:
-
-```python
-alice = Cert.generate("Alice <alice@example.com>")
-bob = Cert.generate("Bob <bob@example.com>")
-
-encrypted = encrypt(signer = alice.signer(), recipients = [bob], content = "content to encrypt")
-print(f"Encrypted data: {encrypted}")
 ```
 
 ## Certificate management
