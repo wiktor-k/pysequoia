@@ -39,8 +39,8 @@ pipeline:
     image: bitnami/git
     secrets: [ codeberg_token ]
     commands:
-      - git config --global user.email woodpecker@codeberg.org
-      - git config --global user.name "Woodpecker CI"
+      - git config --global user.email bot+pages@metacode.biz
+      - git config --global user.name "Page Renderer"
       - git clone -b pages https://$CODEBERG_TOKEN@codeberg.org/$CI_REPO.git $CI_REPO_NAME
       - cp -ar public/. $CI_REPO_NAME/
       # Needed for custom domains
@@ -62,11 +62,12 @@ pipeline:
     image: rust
     secrets: [ codeberg_token ]
     commands:
-      - git config --global user.email woodpecker@codeberg.org
-      - git config --global user.name "Woodpecker CI"
+      - git config --global user.email bot+deps@metacode.biz
+      - git config --global user.name "Dependency Updater"
       - cargo install cargo-edit
       - >
         REPORT=$(cargo upgrade --incompatible | sed -ne 's/.*/    &/p')
+
         if [ -z "$(git status --porcelain)" ]; then
           echo "No changes"
         else
