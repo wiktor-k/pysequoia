@@ -1,10 +1,20 @@
 # PySequoia
 
-[![PyPI version](https://badge.fury.io/py/pysequoia.svg)](https://pypi.org/project/pysequoia/) [![status-badge](https://ci.codeberg.org/api/badges/wiktor/pysequoia/status.svg)](https://ci.codeberg.org/wiktor/pysequoia)
+[![PyPI version](https://badge.fury.io/py/pysequoia.svg)](https://pypi.org/project/pysequoia/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/pysequoia.svg?label=PyPI%20downloads)](
+https://pypi.org/project/pysequoia/)
+[![status-badge](https://ci.codeberg.org/api/badges/wiktor/pysequoia/status.svg)](https://ci.codeberg.org/wiktor/pysequoia)
+
+Provides [OpenPGP][] facilities in Python through [Sequoia PGP][SQ] library. If
+you need to work with encryption and digital signatures using IETF
+standard this package is for you!
+
+[OpenPGP]: https://en.wikipedia.org/wiki/Pretty_Good_Privacy#OpenPGP
+[SQ]: https://sequoia-pgp.org/
 
 Note: This is a work in progress. The API is **not** stable!
 
-Building:
+## Building
 
 ```bash
 set -euxo pipefail
@@ -14,13 +24,20 @@ pip install maturin
 maturin develop
 ```
 
-Now open the console with `python` and import the library:
+## Installing
 
-```python
-from pysequoia import Cert
+PySequoia can be installed through `pip`:
+
+```sh
+pip install pysequoia
 ```
 
-Assuming these keys and cards exist:
+## Testing
+
+This entire document is used for end-to-end, integration tests that
+exercise package's API surface.
+
+Tests assume these keys and cards exist:
 
 ```bash
 # generate a key with password
@@ -38,6 +55,12 @@ echo 12345678 > pin
 ```
 
 ## Available functions
+
+All examples assume these basic classes have been imported:
+
+```python
+from pysequoia import Cert
+```
 
 ### encrypt
 
@@ -90,8 +113,8 @@ print(f"Signed data: {signed}")
 The `Cert` class represents one OpenPGP certificate (commonly called a
 "public key").
 
-This package additionally verifies the ceritificate using Sequoia
-PGP's [`StandardPolicy`][SP]. This means that cerificates using weak
+This package additionally verifies the certificate using Sequoia PGP's
+[`StandardPolicy`][SP]. This means that certificates using weak
 cryptography can fail to load or present different view than the one
 in other OpenPGP software (e.g. if the User ID uses SHA-1 in
 back-signatures it may be missing from the list returned by this
@@ -294,6 +317,19 @@ decryption the provisioning process is not supported.
 [OpenPGP card tools][] can be used to initialize the card.
 
 [OpenPGP card tools]: https://crates.io/crates/openpgp-card-tools
+
+## License
+
+This project is licensed under [Apache License, Version 2.0][APL].
+
+[APL]: https://www.apache.org/licenses/LICENSE-2.0.htmlq
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally
+submitted for inclusion in the package by you shall be under the terms
+and conditions of this license, without any additional terms or
+conditions.
 
 ## Sponsors
 
