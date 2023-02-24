@@ -1,9 +1,13 @@
+use openpgp::cert::prelude::*;
+use openpgp::packet::signature::subpacket::NotationDataFlags;
+use openpgp::packet::signature::SignatureBuilder;
 use openpgp::policy::{Policy, StandardPolicy};
 use openpgp::serialize::SerializeInto;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
 use crate::decrypt;
+use crate::notation::Notation;
 use crate::signer::PySigner;
 use crate::user_id::UserId;
 
@@ -79,6 +83,39 @@ impl Cert {
     pub fn user_ids(&self) -> PyResult<Vec<UserId>> {
         let cert = self.cert.with_policy(&*self.policy, None)?;
         Ok(cert.userids().map(UserId::new).collect())
+    }
+
+    pub fn set_notations(&self, mut signer: PySigner, notations: Vec<Notation>) -> PyResult<Self> {
+        let cert = self.cert.with_policy(&*self.policy, None)?;
+
+        let ua = cert.userids().next().unwrap();
+        let mut builder = SignatureBuilder::from(ua.binding_signature().clone());
+
+        let cert = if !notations.is_empty() {
+            builder = builder.set_notation(
+                notations[0].key(),
+                notations[0].value(),
+                NotationDataFlags::empty().set_human_readable(),
+                false,
+            )?;
+
+            for notation in &notations[1..] {
+                builder = builder.add_notation(
+                    notation.key(),
+                    notation.value(),
+                    NotationDataFlags::empty().set_human_readable(),
+                    false,
+                )?;
+            }
+
+            let new_sig = builder.sign_userid_binding(&mut signer, None, ua.userid())?;
+
+            self.cert.clone().insert_packets(vec![new_sig])?
+        } else {
+            self.cert.clone()
+        };
+
+        Ok(cert.into())
     }
 
     pub fn signer(&self, password: Option<String>) -> PyResult<PySigner> {

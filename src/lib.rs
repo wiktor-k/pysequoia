@@ -19,6 +19,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<wkd::WKD>()?;
     m.add_class::<store::Store>()?;
     m.add_class::<card::Card>()?;
+    m.add_class::<notation::Notation>()?;
     m.add_function(wrap_pyfunction!(sign::sign, m)?)?;
     m.add_function(wrap_pyfunction!(encrypt::encrypt, m)?)?;
     m.add_function(wrap_pyfunction!(decrypt::decrypt, m)?)?;

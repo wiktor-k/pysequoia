@@ -135,6 +135,29 @@ assert notation.key == "proof@metacode.biz";
 assert notation.value == "dns:metacode.biz?type=TXT";
 ```
 
+Notations can also be added:
+
+```python
+from pysequoia import Notation
+
+cert = Cert.from_file("signing-key.asc")
+
+# No notations initially
+assert len(cert.user_ids[0].notations) == 0;
+
+cert = cert.set_notations(cert.signer(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
+
+# Has one notation now
+print(str(cert.user_ids[0].notations))
+assert len(cert.user_ids[0].notations) == 1;
+
+# Check the notation data
+notation = cert.user_ids[0].notations[0]
+
+assert notation.key == "proof@metacode.biz";
+assert notation.value == "dns:metacode.biz";
+```
+
 #### generate
 
 Creates new general purpose key with given User ID:

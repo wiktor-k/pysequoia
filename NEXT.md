@@ -4,6 +4,7 @@
 New:
   - `Cert.user_ids` for retrieving a list of User IDs that the certificate has.
   - `UserId.notations` for retrieving a list of notations on a User ID.
+  - `Cert.set_notations` for updating the list of notations.
 
 Changed:
 

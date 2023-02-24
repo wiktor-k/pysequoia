@@ -9,8 +9,8 @@ pub struct Notation {
     value: String,
 }
 
-impl Notation {
-    pub fn new(notation: &NotationData) -> Self {
+impl From<&NotationData> for Notation {
+    fn from(notation: &NotationData) -> Self {
         Self {
             key: notation.name().into(),
             value: String::from_utf8_lossy(notation.value()).into(),
@@ -20,6 +20,11 @@ impl Notation {
 
 #[pymethods]
 impl Notation {
+    #[new]
+    pub fn new(key: String, value: String) -> Self {
+        Self { key, value }
+    }
+
     #[getter]
     pub fn key(&self) -> &String {
         &self.key
@@ -28,6 +33,10 @@ impl Notation {
     #[getter]
     pub fn value(&self) -> &String {
         &self.value
+    }
+
+    fn __str__(&self) -> String {
+        format!("{}={}", self.key, self.value)
     }
 
     fn __repr__(&self) -> String {

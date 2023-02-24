@@ -17,7 +17,11 @@ impl UserId {
         let last_signature = user.self_signatures().next().unwrap();
         Self {
             value: String::from_utf8_lossy(user.value()).into(),
-            notations: last_signature.notation_data().map(Notation::new).collect(),
+            notations: last_signature
+                .notation_data()
+                .filter(|n| n.flags().human_readable())
+                .map(Notation::from)
+                .collect(),
         }
     }
 }
