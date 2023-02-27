@@ -13,15 +13,15 @@ name = "pysequoia"
 crate-type = ["cdylib"]
 
 [dependencies]
-anyhow = "1.0.66"
+anyhow = "1.0.69"
 openpgp-card-pcsc = "0.3.0"
 openpgp-card-sequoia = { version = "0.1.1", default-features = false }
 openpgp-cert-d = "0.1.0"
-pyo3 = { version = "0.17", features = ["extension-module", "anyhow"] }
-pyo3-asyncio = { version = "0.17", features = ["tokio-runtime"] }
+pyo3 = { version = "0.18", features = ["extension-module", "anyhow"] }
+pyo3-asyncio = { version = "0.18", features = ["tokio-runtime"] }
 sequoia-net = "0.26.0"
 sequoia-openpgp = { version = "1.13", default-features = false, features = ["compression"]  }
-testresult = "0.2"
+testresult = "0.3"
 
 [target.'cfg(not(windows))'.dependencies]
 sequoia-openpgp = { version = "1", default-features = false, features = ["crypto-nettle"]  }
