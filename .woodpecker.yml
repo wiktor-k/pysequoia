@@ -26,6 +26,12 @@ pipeline:
     when:
       event: [push, cron, pull_request]
 
+  check-links:
+    group: build
+    image: rust
+    commands:
+      - bash ./ci/url-validator.sh README.md
+
   pages:
     group: build
     image: woodpeckerci/plugin-docker-buildx

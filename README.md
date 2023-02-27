@@ -322,7 +322,7 @@ decryption the provisioning process is not supported.
 
 This project is licensed under [Apache License, Version 2.0][APL].
 
-[APL]: https://www.apache.org/licenses/LICENSE-2.0.htmlq
+[APL]: https://www.apache.org/licenses/LICENSE-2.0.html
 
 ## Contribution
 
