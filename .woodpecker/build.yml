@@ -1,7 +1,17 @@
+matrix:
+  RUST_TOOLCHAIN:
+    # Temporarily explicitly use 1.65 version due to a compiler bug:
+    # https://github.com/rust-lang/rust/issues/108970
+    # - stable
+    - 1.65
+    - beta
+    - nightly
+
 pipeline:
-  build:
+  build-${RUST_TOOLCHAIN}:
     image: woodpeckerci/plugin-docker-buildx
     settings:
       dockerfile: ci/build.dockerfile
       # do not push
       dry_run: true
+      build_args: RUST_TOOLCHAIN=${RUST_TOOLCHAIN}

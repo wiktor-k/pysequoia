@@ -1,11 +1,20 @@
-# Temporarily explicitly use this version due to a compiler bug:
-# https://github.com/rust-lang/rust/issues/108970
-FROM rust:1.65
+FROM debian
+
+# "stable", "beta" or "nightly"
+ARG RUST_TOOLCHAIN=stable
 
 RUN apt-get update -y -qq && \
-    apt-get install -y -qq --no-install-recommends python3 python3-venv clang make pkg-config nettle-dev libssl-dev ca-certificates pip pcscd libpcsclite-dev codespell && \
+    apt-get install -y -qq --no-install-recommends curl python3 python3-venv clang make pkg-config nettle-dev libssl-dev ca-certificates pip pcscd libpcsclite-dev codespell > /dev/null && \
     apt-get clean
-RUN rustup component add rustfmt clippy
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
+    sh -s -- -y --no-modify-path --default-toolchain none
+
+RUN rustup toolchain install $RUST_TOOLCHAIN
 
 COPY . /build
 WORKDIR /build
