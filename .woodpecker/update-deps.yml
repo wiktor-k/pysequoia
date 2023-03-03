@@ -1,0 +1,30 @@
+pipeline:
+  update-deps:
+    image: rust
+    secrets: [ codeberg_token ]
+    commands:
+      - git config --global user.email bot+deps@metacode.biz
+      - git config --global user.name "Dependency Updater"
+      - cargo install cargo-edit
+      - >
+        REPORT=$(cargo upgrade --incompatible | sed -ne 's/.*/    &/p')
+
+        if [ -z "$(git status --porcelain)" ]; then
+          echo "No changes"
+        else
+          git checkout -b update-deps
+          git add .
+          git commit -m "Update dependencies" -m "The following dependencies will be upgraded:" -m "$REPORT" -m "Build: $CI_SYSTEM_LINK/$CI_REPO/pipeline/$CI_BUILD_NUMBER" --signoff
+          # Force update overwriting last changes
+          git push --force https://$CODEBERG_TOKEN@codeberg.org/$CI_REPO.git update-deps
+
+          if [ -z "$(curl -sSL 'https://codeberg.org/api/v1/repos/$CI_REPO/pulls?state=open' | grep 'Update dependencies')" ]; then
+            echo "Build: $CI_SYSTEM_LINK/$CI_REPO/pipeline/$CI_BUILD_NUMBER" >> /tmp/body
+            curl -sSL -H "Authorization: token $CODEBERG_TOKEN" -d head=update-deps -d base=main -d title="Update dependencies" -d body="See commit message for exact dependencies that have been upgraded. (This is automated PR from a bot)." "https://codeberg.org/api/v1/repos/$CI_REPO/pulls"
+            echo "PR created"
+          else
+            echo "PR is already open"
+          fi
+        fi
+    when:
+      event: cron

@@ -1,0 +1,7 @@
+pipeline:
+  build:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: ci/build.dockerfile
+      # do not push
+      dry_run: true
