@@ -1,0 +1,30 @@
+pipeline:
+  pages:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: ci/docs.dockerfile
+      output: type=local,dest=public
+      # do not push, push cannot be used with output simultaneously anyway
+      dry_run: true
+
+  pages-publish:
+    image: bitnami/git
+    secrets: [ codeberg_token ]
+    commands:
+      - git config --global user.email bot+pages@metacode.biz
+      - git config --global user.name "Page Renderer"
+      - git clone -b pages https://$CODEBERG_TOKEN@codeberg.org/$CI_REPO.git $CI_REPO_NAME
+      - cp -ar public/. $CI_REPO_NAME/
+      # Needed for custom domains
+      - cp .domains $CI_REPO_NAME || true # Ignore if it doesn't exist
+      - cd $CI_REPO_NAME
+      - >
+        if [ -z "$(git status --porcelain)" ]; then
+          echo "No changes"
+        else
+          git add .
+          git commit -m "Update rendered page" -m "Source: $CI_COMMIT_SHA" -m "See: $CI_BUILD_LINK"
+          git push
+        fi
+    when:
+      event: push

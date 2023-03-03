@@ -1,0 +1,9 @@
+pipeline:
+  audit:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: ci/audit.dockerfile
+      # do not push
+      dry_run: true
+    when:
+      event: [push, cron, pull_request]
