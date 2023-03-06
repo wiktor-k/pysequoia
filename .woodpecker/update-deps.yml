@@ -9,6 +9,8 @@ pipeline:
       - >
         REPORT=$(cargo upgrade --incompatible | sed -ne 's/.*/    &/p')
 
+        cargo update
+
         if [ -z "$(git status --porcelain)" ]; then
           echo "No changes"
         else
