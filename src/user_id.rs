@@ -1,3 +1,4 @@
+use openpgp::policy::Policy;
 use openpgp::{cert::prelude::ValidComponentAmalgamation, packet::UserID};
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
@@ -11,18 +12,18 @@ pub struct UserId {
 }
 
 impl UserId {
-    pub fn new(user: ValidComponentAmalgamation<UserID>) -> Self {
+    pub fn new(user: ValidComponentAmalgamation<UserID>, policy: &dyn Policy) -> PyResult<Self> {
         // The component is Valid and as such needs to have at least
         // one self signature. The first one will be the most recent.
-        let last_signature = user.self_signatures().next().unwrap();
-        Self {
+        let signature = user.binding_signature(policy, None)?;
+        Ok(Self {
             value: String::from_utf8_lossy(user.value()).into(),
-            notations: last_signature
+            notations: signature
                 .notation_data()
                 .filter(|n| n.flags().human_readable())
                 .map(Notation::from)
                 .collect(),
-        }
+        })
     }
 }
 
