@@ -35,6 +35,15 @@ impl KeyServer {
         })
     }
 
+    pub fn put<'a>(&self, py: Python<'a>, cert: Cert) -> PyResult<&'a PyAny> {
+        let uri: String = self.uri.clone();
+        pyo3_asyncio::tokio::future_into_py(py, async move {
+            let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
+            ks.send(cert.cert()).await?;
+            Ok(())
+        })
+    }
+
     pub fn __repr__(&self) -> String {
         format!("<KeyServer uri={}>", self.uri)
     }
