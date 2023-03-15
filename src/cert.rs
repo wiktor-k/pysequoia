@@ -82,7 +82,9 @@ impl Cert {
     #[getter]
     pub fn user_ids(&self) -> PyResult<Vec<UserId>> {
         let cert = self.cert.with_policy(&*self.policy, None)?;
-        Ok(cert.userids().map(UserId::new).collect())
+        cert.userids()
+            .map(|ui| UserId::new(ui, &*self.policy))
+            .collect()
     }
 
     pub fn set_notations(&self, mut signer: PySigner, notations: Vec<Notation>) -> PyResult<Self> {
