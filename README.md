@@ -237,6 +237,20 @@ async def fetch_and_display():
 asyncio.run(fetch_and_display())
 ```
 
+Keys can also be uploaded:
+
+```python
+from pysequoia import KeyServer
+import asyncio
+
+async def upload_key(cert):
+    ks = KeyServer("hkps://keys.openpgp.org")
+    await ks.put(cert)
+    print("Cert uploaded successfully")
+
+asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
+```
+
 ### CertD integration
 
 The library exposes [OpenPGP Certificate Directory][CERT-D]

@@ -17,6 +17,7 @@ use crate::user_id::UserId;
 static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
     Lazy::new(|| Arc::new(Mutex::new(Box::new(StandardPolicy::new()))));
 
+#[derive(Clone)]
 #[pyclass]
 pub struct Cert {
     cert: openpgp::cert::Cert,
