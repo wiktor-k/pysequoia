@@ -1729,6 +1729,7 @@ name = "pysequoia"
 version = "0.1.16"
 dependencies = [
  "anyhow",
+ "once_cell",
  "openpgp-card-pcsc",
  "openpgp-card-sequoia",
  "openpgp-cert-d",

@@ -23,16 +23,18 @@ pub fn encrypt(
     let mut recipient_keys = vec![];
     for cert in recipients.iter() {
         let mut found_one = false;
+        let policy = cert.policy();
+
         for key in cert
             .cert()
             .keys()
-            .with_policy(cert.policy(), None)
+            .with_policy(&**policy, None)
             .supported()
             .alive()
             .revoked(false)
             .key_flags(&mode)
         {
-            recipient_keys.push(key);
+            recipient_keys.push(key.key().clone());
             found_one = true;
         }
 
@@ -40,12 +42,12 @@ pub fn encrypt(
             for key in cert
                 .cert()
                 .keys()
-                .with_policy(cert.policy(), None)
+                .with_policy(&**policy, None)
                 .supported()
                 .revoked(false)
                 .key_flags(&mode)
             {
-                recipient_keys.push(key);
+                recipient_keys.push(key.key().clone());
                 found_one = true;
             }
         }
@@ -63,9 +65,14 @@ pub fn encrypt(
 
     let message = Armorer::new(message).build()?;
 
-    let message = Encryptor::for_recipients(message, recipient_keys)
-        .build()
-        .context("Failed to create encryptor")?;
+    let message = Encryptor::for_recipients(
+        message,
+        recipient_keys
+            .iter()
+            .map(openpgp::serialize::stream::Recipient::from),
+    )
+    .build()
+    .context("Failed to create encryptor")?;
 
     let message = Signer::new(message, signer).build()?;
 
