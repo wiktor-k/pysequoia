@@ -1,3 +1,6 @@
+use std::sync::{Arc, Mutex, MutexGuard};
+
+use once_cell::sync::Lazy;
 use openpgp::cert::prelude::*;
 use openpgp::packet::signature::subpacket::NotationDataFlags;
 use openpgp::packet::signature::SignatureBuilder;
@@ -11,17 +14,20 @@ use crate::notation::Notation;
 use crate::signer::PySigner;
 use crate::user_id::UserId;
 
+static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(Box::new(StandardPolicy::new()))));
+
 #[pyclass]
 pub struct Cert {
     cert: openpgp::cert::Cert,
-    policy: Box<dyn Policy>,
+    policy: Arc<Mutex<Box<dyn Policy>>>,
 }
 
 impl From<openpgp::cert::Cert> for Cert {
     fn from(cert: openpgp::cert::Cert) -> Self {
         Self {
             cert,
-            policy: Box::new(StandardPolicy::new()),
+            policy: Arc::clone(&DEFAULT_POLICY),
         }
     }
 }
@@ -31,8 +37,8 @@ impl Cert {
         &self.cert
     }
 
-    pub fn policy(&self) -> &dyn Policy {
-        &*self.policy
+    pub fn policy(&self) -> MutexGuard<Box<dyn Policy>> {
+        self.policy.lock().unwrap()
     }
 }
 
@@ -81,14 +87,14 @@ impl Cert {
 
     #[getter]
     pub fn user_ids(&self) -> PyResult<Vec<UserId>> {
-        let cert = self.cert.with_policy(&*self.policy, None)?;
-        cert.userids()
-            .map(|ui| UserId::new(ui, &*self.policy))
-            .collect()
+        let policy = &**self.policy();
+        let cert = self.cert.with_policy(policy, None)?;
+        cert.userids().map(|ui| UserId::new(ui, policy)).collect()
     }
 
     pub fn set_notations(&self, mut signer: PySigner, notations: Vec<Notation>) -> PyResult<Self> {
-        let cert = self.cert.with_policy(&*self.policy, None)?;
+        let policy = self.policy();
+        let cert = self.cert.with_policy(&**policy, None)?;
 
         let ua = cert.userids().next().unwrap();
         let mut builder = SignatureBuilder::from(ua.binding_signature().clone());
@@ -125,7 +131,7 @@ impl Cert {
             .cert
             .keys()
             .secret()
-            .with_policy(&*self.policy, None)
+            .with_policy(&**self.policy(), None)
             .alive()
             .revoked(false)
             .for_signing()
@@ -147,7 +153,7 @@ impl Cert {
             .cert
             .keys()
             .secret()
-            .with_policy(&*self.policy, None)
+            .with_policy(&**self.policy(), None)
             .alive()
             .revoked(false)
             .for_transport_encryption()
