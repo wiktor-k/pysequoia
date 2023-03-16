@@ -237,7 +237,7 @@ from pysequoia import KeyServer
 import asyncio
 
 async def fetch_and_display():
-    ks = KeyServer("hkps://keys.openpgp.org")
+    ks = KeyServer("hkps://keyserver.ubuntu.com")
     cert = await ks.get("653909a2f0e37c106f5faf546c8857e0d8e8f074")
     print(f"Cert found via HKPS: {cert}")
     assert cert.fingerprint == "653909a2f0e37c106f5faf546c8857e0d8e8f074"
@@ -252,7 +252,7 @@ from pysequoia import KeyServer
 import asyncio
 
 async def upload_key(cert):
-    ks = KeyServer("hkps://keys.openpgp.org")
+    ks = KeyServer("hkps://keyserver.ubuntu.com")
     await ks.put(cert)
     print("Cert uploaded successfully")
 
@@ -262,7 +262,9 @@ asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
 #### VKS
 
 [Verifying Key Server protocol][VKS] is a custom protocol used
-currently by keys.openpgp.org key server.
+currently by keys.openpgp.org key server. Keys retrieved via this
+protocol will contain only User IDs that have been verified (via
+e-mail) by the server operator.
 
 [VKS]: https://keys.openpgp.org/about/api
 
