@@ -6,6 +6,7 @@ New:
   - `KeyServer.put` for uploading keys to keyservers.
   - `KeyServer.get` supports `vks` protocol now.
   - `KeyServer.put` supports `vks` protocol now.
+  - `Cert.certifier` for getting key usable for certifications.
 
 Changed:
 

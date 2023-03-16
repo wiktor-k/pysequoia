@@ -93,7 +93,11 @@ impl Cert {
         cert.userids().map(|ui| UserId::new(ui, policy)).collect()
     }
 
-    pub fn set_notations(&self, mut signer: PySigner, notations: Vec<Notation>) -> PyResult<Self> {
+    pub fn set_notations(
+        &self,
+        mut certifier: PySigner,
+        notations: Vec<Notation>,
+    ) -> PyResult<Self> {
         let policy = self.policy();
         let cert = self.cert.with_policy(&**policy, None)?;
 
@@ -117,7 +121,7 @@ impl Cert {
                 )?;
             }
 
-            let new_sig = builder.sign_userid_binding(&mut signer, None, ua.userid())?;
+            let new_sig = builder.sign_userid_binding(&mut certifier, None, ua.userid())?;
 
             self.cert.clone().insert_packets(vec![new_sig])?
         } else {
@@ -146,6 +150,28 @@ impl Cert {
             Ok(PySigner::new(Box::new(keypair)))
         } else {
             Err(anyhow::anyhow!("No suitable signing subkey for {}", self.cert).into())
+        }
+    }
+
+    pub fn certifier(&self, password: Option<String>) -> PyResult<PySigner> {
+        if let Some(key) = self
+            .cert
+            .keys()
+            .secret()
+            .with_policy(&**self.policy(), None)
+            .alive()
+            .revoked(false)
+            .for_certification()
+            .next()
+        {
+            let mut key = key.key().clone();
+            if let Some(password) = password {
+                key = key.decrypt_secret(&(password[..]).into())?;
+            }
+            let keypair = key.into_keypair()?;
+            Ok(PySigner::new(Box::new(keypair)))
+        } else {
+            Err(anyhow::anyhow!("No suitable certifying key for {}", self.cert).into())
         }
     }
 

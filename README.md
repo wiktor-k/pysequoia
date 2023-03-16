@@ -189,7 +189,7 @@ cert = Cert.from_file("signing-key.asc")
 # No notations initially
 assert len(cert.user_ids[0].notations) == 0;
 
-cert = cert.set_notations(cert.signer(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
+cert = cert.set_notations(cert.certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
 
 # Has one notation now
 print(str(cert.user_ids[0].notations))
