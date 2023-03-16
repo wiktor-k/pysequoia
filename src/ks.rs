@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
@@ -49,8 +51,20 @@ impl KeyServer {
     pub fn put<'a>(&self, py: Python<'a>, cert: Cert) -> PyResult<&'a PyAny> {
         let uri: String = self.uri.clone();
         pyo3_asyncio::tokio::future_into_py(py, async move {
-            let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
-            ks.send(cert.cert()).await?;
+            if let Some(addr) = uri.strip_prefix("vks://") {
+                let mut map = HashMap::new();
+                map.insert("keytext", cert.__str__()?);
+                let client = reqwest::Client::new();
+                client
+                    .post(format!("https://{addr}/vks/v1/upload"))
+                    .json(&map)
+                    .send()
+                    .await
+                    .map_err(anyhow::Error::from)?;
+            } else {
+                let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
+                ks.send(cert.cert()).await?;
+            }
             Ok(())
         })
     }
