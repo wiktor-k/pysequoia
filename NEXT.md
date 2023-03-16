@@ -4,6 +4,7 @@ v
 
 New:
   - `KeyServer.put` for uploading keys to keyservers.
+  - `KeyServer.get` supports `vks` protocol now.
 
 Changed:
 

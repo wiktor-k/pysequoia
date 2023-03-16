@@ -251,6 +251,23 @@ async def upload_key(cert):
 asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
 ```
 
+[VKS protocol][VKS] is also supported:
+
+[VKS]: https://keys.openpgp.org/about/api
+
+```python
+from pysequoia import KeyServer
+import asyncio
+
+async def fetch_and_display():
+    ks = KeyServer("vks://keys.openpgp.org")
+    cert = await ks.get("653909a2f0e37c106f5faf546c8857e0d8e8f074")
+    print(f"Cert found via HKPS: {cert}")
+    assert cert.fingerprint == "653909a2f0e37c106f5faf546c8857e0d8e8f074"
+
+asyncio.run(fetch_and_display())
+```
+
 ### CertD integration
 
 The library exposes [OpenPGP Certificate Directory][CERT-D]
