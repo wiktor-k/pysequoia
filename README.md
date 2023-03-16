@@ -222,6 +222,14 @@ asyncio.run(fetch_and_display())
 
 ### Key server
 
+Key servers let people search and store OpenPGP certificates.
+
+#### HKPS
+
+[HKPS][HKP] is a popular protocol implemented by most key servers.
+
+[HKP]: https://datatracker.ietf.org/doc/html/draft-shaw-openpgp-hkp-00
+
 Fetching certificates via HKPS protocol:
 
 ```python
@@ -251,7 +259,10 @@ async def upload_key(cert):
 asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
 ```
 
-[VKS protocol][VKS] is also supported:
+#### VKS
+
+[Verifying Key Server protocol][VKS] is a custom protocol used
+currently by keys.openpgp.org key server.
 
 [VKS]: https://keys.openpgp.org/about/api
 
@@ -266,6 +277,20 @@ async def fetch_and_display():
     assert cert.fingerprint == "653909a2f0e37c106f5faf546c8857e0d8e8f074"
 
 asyncio.run(fetch_and_display())
+```
+
+Keys can also be uploaded:
+
+```python
+from pysequoia import KeyServer
+import asyncio
+
+async def upload_key(cert):
+    ks = KeyServer("vks://keys.openpgp.org")
+    await ks.put(cert)
+    print("Cert uploaded successfully")
+
+asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
 ```
 
 ### CertD integration
