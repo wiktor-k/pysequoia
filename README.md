@@ -262,7 +262,9 @@ asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
 #### VKS
 
 [Verifying Key Server protocol][VKS] is a custom protocol used
-currently by keys.openpgp.org key server.
+currently by keys.openpgp.org key server. Keys retrieved via this
+protocol will contain only User IDs that have been verified (via
+e-mail) by the server operator.
 
 [VKS]: https://keys.openpgp.org/about/api
 
