@@ -14,6 +14,9 @@ pipeline:
       dockerfile: ci/build.dockerfile
       # do not push
       dry_run: true
+      # do not refresh image
+      pull_image: false
+      purge: false
       build_args: RUST_TOOLCHAIN=${RUST_TOOLCHAIN}
 
   notify:

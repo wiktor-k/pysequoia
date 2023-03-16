@@ -6,6 +6,9 @@ pipeline:
       output: type=local,dest=public
       # do not push, push cannot be used with output simultaneously anyway
       dry_run: true
+      # do not refresh image
+      pull_image: false
+      purge: false
 
   pages-publish:
     image: bitnami/git

@@ -5,3 +5,6 @@ pipeline:
       dockerfile: ci/e2e.dockerfile
       # do not push
       dry_run: true
+      # do not refresh image
+      pull_image: false
+      purge: false
