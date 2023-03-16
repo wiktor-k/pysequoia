@@ -28,10 +28,21 @@ impl KeyServer {
         pyo3_asyncio::tokio::future_into_py(py, async move {
             use openpgp::Fingerprint;
             let fpr: Fingerprint = fpr.parse()?;
-            let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
-            let cert = ks.get(fpr);
-            let cert: Cert = cert.await?.into();
-            Ok(cert)
+
+            if let Some(addr) = uri.strip_prefix("vks://") {
+                let bytes = reqwest::get(format!("https://{addr}/vks/v1/by-fingerprint/{fpr:X}"))
+                    .await
+                    .map_err(anyhow::Error::from)?
+                    .bytes()
+                    .await
+                    .map_err(anyhow::Error::from)?;
+                Cert::from_bytes(&bytes)
+            } else {
+                let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
+                let cert = ks.get(fpr);
+                let cert: Cert = cert.await?.into();
+                Ok(cert)
+            }
         })
     }
 
