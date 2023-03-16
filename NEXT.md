@@ -3,6 +3,7 @@
 v
 
 New:
+  - `KeyServer.put` for uploading keys to keyservers.
 
 Changed:
 
