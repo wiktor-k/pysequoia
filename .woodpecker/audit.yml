@@ -5,5 +5,8 @@ pipeline:
       dockerfile: ci/audit.dockerfile
       # do not push
       dry_run: true
+      # do not refresh image
+      pull_image: false
+      purge: false
     when:
       event: [push, cron, pull_request]

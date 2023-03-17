@@ -14,4 +14,16 @@ pipeline:
       dockerfile: ci/build.dockerfile
       # do not push
       dry_run: true
+      # do not refresh image
+      pull_image: false
+      purge: false
       build_args: RUST_TOOLCHAIN=${RUST_TOOLCHAIN}
+
+  notify:
+    image: rust
+    secrets: [ codeberg_token ]
+    commands:
+      - 'curl --fail -i -d body="Build \`build-${RUST_TOOLCHAIN}\` has status: ${CI_PREV_BUILD_STATUS}." -H "Authorization: token $CODEBERG_TOKEN" "https://codeberg.org/api/v1/repos/$CI_REPO/issues/$CI_COMMIT_PULL_REQUEST/comments"'
+    when:
+      event: [ pull_request ]
+      status: [ success, failure ]
