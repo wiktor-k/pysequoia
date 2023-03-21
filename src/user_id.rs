@@ -29,7 +29,7 @@ impl UserId {
 
 #[pymethods]
 impl UserId {
-    fn __str__(&self) -> &String {
+    pub fn __str__(&self) -> &str {
         &self.value
     }
 

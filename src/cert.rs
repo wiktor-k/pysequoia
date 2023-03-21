@@ -81,8 +81,20 @@ impl Cert {
         let builder = signature::SignatureBuilder::new(SignatureType::PositiveCertification);
         let binding = userid.bind(&mut certifier, &cert, builder)?;
 
-        // Now merge the User ID and binding signature into the Cert.
         let cert = cert.insert_packets(vec![Packet::from(userid), binding.into()])?;
+        Ok(Cert {
+            cert,
+            policy: Arc::clone(&self.policy),
+        })
+    }
+
+    pub fn revoke_user_id(&mut self, user_id: &UserId, mut certifier: PySigner) -> PyResult<Cert> {
+        let cert = self.cert.clone();
+        let userid = UserID::from(user_id.__str__());
+        let builder = signature::SignatureBuilder::new(SignatureType::CertificationRevocation);
+        let binding = userid.bind(&mut certifier, &cert, builder)?;
+
+        let cert = cert.insert_packets(vec![Packet::from(binding)])?;
         Ok(Cert {
             cert,
             policy: Arc::clone(&self.policy),
@@ -107,7 +119,10 @@ impl Cert {
     pub fn user_ids(&self) -> PyResult<Vec<UserId>> {
         let policy = &**self.policy();
         let cert = self.cert.with_policy(policy, None)?;
-        cert.userids().map(|ui| UserId::new(ui, policy)).collect()
+        cert.userids()
+            .revoked(false)
+            .map(|ui| UserId::new(ui, policy))
+            .collect()
     }
 
     pub fn set_notations(

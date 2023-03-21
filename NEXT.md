@@ -8,8 +8,10 @@ New:
   - `KeyServer.put` supports `vks` protocol now.
   - `Cert.certifier` for getting key usable for certifications.
   - `Cert.add_user_id` for appending User IDs to certificates.
+  - `Cert.revoke_user_id` for revoking previously added User IDs.
 
 Changed:
+  - `Cert.user_ids` will return only non-revoked User IDs.
 
 Removed:
 
