@@ -7,6 +7,7 @@ New:
   - `KeyServer.get` supports `vks` protocol now.
   - `KeyServer.put` supports `vks` protocol now.
   - `Cert.certifier` for getting key usable for certifications.
+  - `Cert.add_user_id` for appending User IDs to certificates.
 
 Changed:
 

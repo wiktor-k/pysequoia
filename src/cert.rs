@@ -4,8 +4,11 @@ use once_cell::sync::Lazy;
 use openpgp::cert::prelude::*;
 use openpgp::packet::signature::subpacket::NotationDataFlags;
 use openpgp::packet::signature::SignatureBuilder;
+use openpgp::packet::{signature, UserID};
 use openpgp::policy::{Policy, StandardPolicy};
 use openpgp::serialize::SerializeInto;
+use openpgp::types::SignatureType;
+use openpgp::Packet;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
@@ -70,6 +73,20 @@ impl Cert {
     pub fn merge(&self, new_cert: &Cert) -> PyResult<Cert> {
         let merged_cert = self.cert().clone().merge_public(new_cert.cert().clone())?;
         Ok(merged_cert.into())
+    }
+
+    pub fn add_user_id(&mut self, value: String, mut certifier: PySigner) -> PyResult<Cert> {
+        let cert = self.cert.clone();
+        let userid = UserID::from(value);
+        let builder = signature::SignatureBuilder::new(SignatureType::PositiveCertification);
+        let binding = userid.bind(&mut certifier, &cert, builder)?;
+
+        // Now merge the User ID and binding signature into the Cert.
+        let cert = cert.insert_packets(vec![Packet::from(userid), binding.into()])?;
+        Ok(Cert {
+            cert,
+            policy: Arc::clone(&self.policy),
+        })
     }
 
     pub fn __str__(&self) -> PyResult<String> {
