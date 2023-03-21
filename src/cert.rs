@@ -4,8 +4,11 @@ use once_cell::sync::Lazy;
 use openpgp::cert::prelude::*;
 use openpgp::packet::signature::subpacket::NotationDataFlags;
 use openpgp::packet::signature::SignatureBuilder;
+use openpgp::packet::{signature, UserID};
 use openpgp::policy::{Policy, StandardPolicy};
 use openpgp::serialize::SerializeInto;
+use openpgp::types::SignatureType;
+use openpgp::Packet;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
@@ -72,6 +75,20 @@ impl Cert {
         Ok(merged_cert.into())
     }
 
+    pub fn add_user_id(&mut self, value: String, mut certifier: PySigner) -> PyResult<Cert> {
+        let cert = self.cert.clone();
+        let userid = UserID::from(value);
+        let builder = signature::SignatureBuilder::new(SignatureType::PositiveCertification);
+        let binding = userid.bind(&mut certifier, &cert, builder)?;
+
+        // Now merge the User ID and binding signature into the Cert.
+        let cert = cert.insert_packets(vec![Packet::from(userid), binding.into()])?;
+        Ok(Cert {
+            cert,
+            policy: Arc::clone(&self.policy),
+        })
+    }
+
     pub fn __str__(&self) -> PyResult<String> {
         let armored = self.cert.armored();
         Ok(String::from_utf8(armored.to_vec()?)?)
@@ -93,7 +110,11 @@ impl Cert {
         cert.userids().map(|ui| UserId::new(ui, policy)).collect()
     }
 
-    pub fn set_notations(&self, mut signer: PySigner, notations: Vec<Notation>) -> PyResult<Self> {
+    pub fn set_notations(
+        &self,
+        mut certifier: PySigner,
+        notations: Vec<Notation>,
+    ) -> PyResult<Self> {
         let policy = self.policy();
         let cert = self.cert.with_policy(&**policy, None)?;
 
@@ -117,7 +138,7 @@ impl Cert {
                 )?;
             }
 
-            let new_sig = builder.sign_userid_binding(&mut signer, None, ua.userid())?;
+            let new_sig = builder.sign_userid_binding(&mut certifier, None, ua.userid())?;
 
             self.cert.clone().insert_packets(vec![new_sig])?
         } else {
@@ -146,6 +167,28 @@ impl Cert {
             Ok(PySigner::new(Box::new(keypair)))
         } else {
             Err(anyhow::anyhow!("No suitable signing subkey for {}", self.cert).into())
+        }
+    }
+
+    pub fn certifier(&self, password: Option<String>) -> PyResult<PySigner> {
+        if let Some(key) = self
+            .cert
+            .keys()
+            .secret()
+            .with_policy(&**self.policy(), None)
+            .alive()
+            .revoked(false)
+            .for_certification()
+            .next()
+        {
+            let mut key = key.key().clone();
+            if let Some(password) = password {
+                key = key.decrypt_secret(&(password[..]).into())?;
+            }
+            let keypair = key.into_keypair()?;
+            Ok(PySigner::new(Box::new(keypair)))
+        } else {
+            Err(anyhow::anyhow!("No suitable certifying key for {}", self.cert).into())
         }
     }
 

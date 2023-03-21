@@ -156,10 +156,23 @@ print(f"Merged, updated cert: {merged}")
 
 #### User IDs
 
+Listing existing User IDs:
+
 ```python
 cert = Cert.from_file("wiktor.asc")
 user_id = cert.user_ids[0]
 assert str(user_id).startswith("Wiktor Kwapisiewicz")
+```
+
+Adding new User IDs:
+
+```python
+cert = Cert.generate("Alice <alice@example.com>")
+assert len(cert.user_ids) == 1;
+
+cert = cert.add_user_id(value = "Alice <alice@company.invalid>", certifier = cert.certifier())
+print(str(cert.user_ids))
+assert len(cert.user_ids) == 2;
 ```
 
 #### Notations
@@ -189,7 +202,7 @@ cert = Cert.from_file("signing-key.asc")
 # No notations initially
 assert len(cert.user_ids[0].notations) == 0;
 
-cert = cert.set_notations(cert.signer(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
+cert = cert.set_notations(cert.certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
 
 # Has one notation now
 print(str(cert.user_ids[0].notations))
