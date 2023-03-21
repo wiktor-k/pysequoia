@@ -1678,6 +1678,7 @@ checksum = "cfb848f80438f926a9ebddf0a539ed6065434fd7aae03a89312a9821f81b8501"
 dependencies = [
  "anyhow",
  "cfg-if",
+ "chrono",
  "indoc",
  "libc",
  "memoffset",
@@ -1749,6 +1750,7 @@ name = "pysequoia"
 version = "0.1.16"
 dependencies = [
  "anyhow",
+ "chrono",
  "once_cell",
  "openpgp-card-pcsc",
  "openpgp-card-sequoia",

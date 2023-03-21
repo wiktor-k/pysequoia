@@ -230,6 +230,37 @@ assert notation.key == "proof@metacode.biz";
 assert notation.value == "dns:metacode.biz";
 ```
 
+### Key expiration
+
+Certs have an `expiration` getter for retrieving current key expiry time:
+
+```python
+cert = Cert.from_file("signing-key.asc")
+
+# Cert does not have any expiration date:
+assert cert.expiration is None
+
+cert = Cert.from_file("wiktor.asc")
+# Cert expires on New Year's Eve
+assert str(cert.expiration) == "2022-12-31 12:00:02+00:00"
+```
+
+Key expiration can also be adjusted with `set_expiration`:
+
+```python
+from datetime import datetime
+
+cert = Cert.from_file("signing-key.asc")
+
+# Cert does not have any expiration date:
+assert cert.expiration is None
+
+# Set the expiration to some specified point in time
+expiration = datetime.fromisoformat("2021-11-04T00:05:23+00:00")
+cert = cert.set_expiration(expiration = expiration, certifier = cert.certifier())
+assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
+```
+
 ## Certificate management
 
 ### WKD
