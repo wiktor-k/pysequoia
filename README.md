@@ -171,8 +171,21 @@ cert = Cert.generate("Alice <alice@example.com>")
 assert len(cert.user_ids) == 1;
 
 cert = cert.add_user_id(value = "Alice <alice@company.invalid>", certifier = cert.certifier())
-print(str(cert.user_ids))
+
 assert len(cert.user_ids) == 2;
+```
+
+Revoking User IDs:
+
+```python
+cert = Cert.generate("Bob <bob@example.com>")
+
+cert = cert.add_user_id(value = "Bob <bob@company.invalid>", certifier = cert.certifier())
+assert len(cert.user_ids) == 2;
+
+cert = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.certifier())
+print(str(cert.user_ids))
+assert len(cert.user_ids) == 1;
 ```
 
 #### Notations
