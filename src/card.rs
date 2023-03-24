@@ -33,7 +33,13 @@ impl Card {
 
     #[staticmethod]
     pub fn all() -> anyhow::Result<Vec<Card>> {
-        Ok(PcscBackend::cards(None)?
+        // Need to suppress errors here to handle the case of
+        // no-readers being connected.  This should be handled by the
+        // backend.
+        //
+        // See: https://gitlab.com/openpgp-card/openpgp-card/-/issues/68
+        Ok(PcscBackend::cards(None)
+            .unwrap_or_default()
             .into_iter()
             .map(|card| Self { open: card.into() })
             .collect())
