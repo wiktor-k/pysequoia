@@ -1,9 +1,6 @@
 matrix:
   RUST_TOOLCHAIN:
-    # Temporarily explicitly use 1.65 version due to a compiler bug:
-    # https://github.com/rust-lang/rust/issues/108970
-    # - stable
-    - 1.65
+    - stable
     - beta
     - nightly
 
