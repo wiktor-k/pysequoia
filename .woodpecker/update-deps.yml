@@ -14,6 +14,12 @@ pipeline:
         if [ -z "$(git status --porcelain)" ]; then
           echo "No changes"
         else
+          # Fix commit date to the commit on the tip of the main branch.
+          # This makes daily updates a no-op if the only difference
+          # is current date.
+          export GIT_AUTHOR_DATE="$(git log -1 --format=%cd)"
+          export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+
           git checkout -b update-deps
           git add .
           git commit -m "Update dependencies" -m "The following dependencies will be upgraded:" -m "$REPORT" -m "Build: $CI_SYSTEM_LINK/$CI_REPO/pipeline/$CI_BUILD_NUMBER" --signoff
