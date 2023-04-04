@@ -1,3 +1,5 @@
+<img src="doc/logo.png" align="right" />
+
 # PySequoia
 
 [![PyPI version](https://badge.fury.io/py/pysequoia.svg)](https://pypi.org/project/pysequoia/)
