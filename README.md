@@ -20,7 +20,7 @@ Note: This is a work in progress. The API is **not** stable!
 
 ```bash
 set -euxo pipefail
-python3 -m venv .env
+python -m venv .env
 source .env/bin/activate
 pip install maturin
 maturin develop
@@ -33,6 +33,11 @@ PySequoia can be installed through `pip`:
 ```sh
 pip install pysequoia
 ```
+
+Note that since `pysequoia` is implemented largely in Rust a [Rust
+toolchain][RUSTUP] is necessary for the installation to succeed.
+
+[RUSTUP]: https://rustup.rs/
 
 ## Testing
 
@@ -56,7 +61,7 @@ echo 12345678 > pin
 /root/.cargo/bin/opgpcard admin --card 0000:00000000 --admin-pin pin import no-passwd.pgp
 ```
 
-## Available functions
+## Functions
 
 All examples assume these basic classes have been imported:
 
@@ -110,7 +115,7 @@ signed = sign(s.signer(), "data to be signed")
 print(f"Signed data: {signed}")
 ```
 
-### Certificates API
+## Certificates
 
 The `Cert` class represents one OpenPGP certificate (commonly called a
 "public key").
@@ -122,9 +127,13 @@ in other OpenPGP software (e.g. if the User ID uses SHA-1 in
 back-signatures it may be missing from the list returned by this
 package).
 
-[SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
+Checking certificates for problems ("linting") [is planned][LINT] but
+not yet implemented.
 
-#### generate
+[SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
+[LINT]: https://codeberg.org/wiktor/pysequoia/issues/52
+
+### generate
 
 Creates new general purpose key with given User ID:
 
@@ -145,7 +154,7 @@ encrypted = encrypt(signer = alice.signer(), recipients = [bob], content = "cont
 print(f"Encrypted data: {encrypted}")
 ```
 
-#### merge
+### merge
 
 Merges data from old certificate with new packets:
 
@@ -156,7 +165,7 @@ merged = old.merge(new)
 print(f"Merged, updated cert: {merged}")
 ```
 
-#### User IDs
+### User IDs
 
 Listing existing User IDs:
 
@@ -190,7 +199,7 @@ print(str(cert.user_ids))
 assert len(cert.user_ids) == 1;
 ```
 
-#### Notations
+### Notations
 
 Notations are small pieces of data that can be attached to signatures (and, indirectly, to User IDs).
 
@@ -452,6 +461,7 @@ conditions.
 
 My work is being supported by these generous organizations
 (alphabetical order):
+
   - [nlnet.nl](https://nlnet.nl/)
   - [pep.foundation](https://pep.foundation/)
   - [sovereigntechfund.de](https://sovereigntechfund.de/en.html)
