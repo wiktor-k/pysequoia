@@ -56,7 +56,7 @@ echo 12345678 > pin
 /root/.cargo/bin/opgpcard admin --card 0000:00000000 --admin-pin pin import no-passwd.pgp
 ```
 
-## Available functions
+## Functions
 
 All examples assume these basic classes have been imported:
 
@@ -110,7 +110,7 @@ signed = sign(s.signer(), "data to be signed")
 print(f"Signed data: {signed}")
 ```
 
-### Certificates
+## Certificates
 
 The `Cert` class represents one OpenPGP certificate (commonly called a
 "public key").
@@ -128,7 +128,7 @@ not yet implemented.
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
 [LINT]: https://codeberg.org/wiktor/pysequoia/issues/52
 
-#### generate
+### generate
 
 Creates new general purpose key with given User ID:
 
@@ -149,7 +149,7 @@ encrypted = encrypt(signer = alice.signer(), recipients = [bob], content = "cont
 print(f"Encrypted data: {encrypted}")
 ```
 
-#### merge
+### merge
 
 Merges data from old certificate with new packets:
 
@@ -160,7 +160,7 @@ merged = old.merge(new)
 print(f"Merged, updated cert: {merged}")
 ```
 
-#### User IDs
+### User IDs
 
 Listing existing User IDs:
 
@@ -194,7 +194,7 @@ print(str(cert.user_ids))
 assert len(cert.user_ids) == 1;
 ```
 
-#### Notations
+### Notations
 
 Notations are small pieces of data that can be attached to signatures (and, indirectly, to User IDs).
 
@@ -234,7 +234,7 @@ assert notation.key == "proof@metacode.biz";
 assert notation.value == "dns:metacode.biz";
 ```
 
-#### Key expiration
+### Key expiration
 
 Certs have an `expiration` getter for retrieving current key expiry time:
 
