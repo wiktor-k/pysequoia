@@ -456,6 +456,7 @@ conditions.
 
 My work is being supported by these generous organizations
 (alphabetical order):
+
   - [nlnet.nl](https://nlnet.nl/)
   - [pep.foundation](https://pep.foundation/)
   - [sovereigntechfund.de](https://sovereigntechfund.de/en.html)
