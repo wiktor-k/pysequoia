@@ -110,7 +110,7 @@ signed = sign(s.signer(), "data to be signed")
 print(f"Signed data: {signed}")
 ```
 
-### Certificates API
+### Certificates
 
 The `Cert` class represents one OpenPGP certificate (commonly called a
 "public key").
@@ -234,7 +234,7 @@ assert notation.key == "proof@metacode.biz";
 assert notation.value == "dns:metacode.biz";
 ```
 
-### Key expiration
+#### Key expiration
 
 Certs have an `expiration` getter for retrieving current key expiry time:
 
