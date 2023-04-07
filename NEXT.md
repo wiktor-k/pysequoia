@@ -1,18 +1,14 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v
+v0.1.17
 
 New:
-  - `KeyServer.put` for uploading keys to keyservers.
-  - `KeyServer.get` supports `vks` protocol now.
-  - `KeyServer.put` supports `vks` protocol now.
-  - `Cert.certifier` for getting key usable for certifications.
-  - `Cert.add_user_id` for appending User IDs to certificates.
-  - `Cert.revoke_user_id` for revoking previously added User IDs.
+  - `Cert.expiration` for getting key expiration time ([#27]).
+  - `Cert.set_expiration` for setting key expiration time ([#27]).
 
 Changed:
-  - `Cert.user_ids` will return only non-revoked User IDs.
 
 Removed:
 
+[#27]: https://codeberg.org/wiktor/pysequoia/issues/27
 ### git tag --edit -s -F NEXT.md v...

@@ -101,6 +101,36 @@ impl Cert {
         })
     }
 
+    pub fn set_expiration(
+        &mut self,
+        expiration: chrono::DateTime<chrono::Utc>,
+        mut certifier: PySigner,
+    ) -> PyResult<Cert> {
+        let cert = self.cert.clone();
+        let signature = cert.set_expiration_time(
+            &**self.policy(),
+            None,
+            &mut certifier,
+            Some(expiration.into()),
+        )?;
+
+        let cert = cert.insert_packets(signature)?;
+        Ok(Cert {
+            cert,
+            policy: Arc::clone(&self.policy),
+        })
+    }
+
+    #[getter]
+    pub fn expiration(&self) -> PyResult<Option<chrono::DateTime<chrono::Utc>>> {
+        Ok(self
+            .cert
+            .primary_key()
+            .with_policy(&**self.policy(), None)?
+            .key_expiration_time()
+            .map(|exp| exp.into()))
+    }
+
     pub fn __str__(&self) -> PyResult<String> {
         let armored = self.cert.armored();
         Ok(String::from_utf8(armored.to_vec()?)?)

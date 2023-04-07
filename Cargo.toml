@@ -14,11 +14,12 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1"
+chrono = "0.4"
 once_cell = "1.17"
 openpgp-card-pcsc = "0.3"
 openpgp-card-sequoia = { version = "0.1.1", default-features = false }
 openpgp-cert-d = "0.1"
-pyo3 = { version = "0.18", features = ["extension-module", "anyhow"] }
+pyo3 = { version = "0.18", features = ["extension-module", "anyhow", "chrono"] }
 pyo3-asyncio = { version = "0.18", features = ["tokio-runtime"] }
 reqwest = { version = "0.11", features = ["json"] }
 sequoia-net = "0.27"
