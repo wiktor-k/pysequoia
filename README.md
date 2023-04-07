@@ -34,6 +34,11 @@ PySequoia can be installed through `pip`:
 pip install pysequoia
 ```
 
+Note that since `pysequoia` is implemented largely in Rust a [Rust
+toolchain][RUSTUP] is necessary for the installation to succeed.
+
+[RUSTUP]: https://rustup.rs/
+
 ## Testing
 
 This entire document is used for end-to-end, integration tests that
