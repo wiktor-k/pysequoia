@@ -122,7 +122,11 @@ in other OpenPGP software (e.g. if the User ID uses SHA-1 in
 back-signatures it may be missing from the list returned by this
 package).
 
+Checking certificates for problems ("linting") [is planned][LINT] but
+not yet implemented.
+
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
+[LINT]: https://codeberg.org/wiktor/pysequoia/issues/52
 
 #### generate
 
