@@ -7,12 +7,14 @@
 https://pypi.org/project/pysequoia/)
 [![status-badge](https://ci.codeberg.org/api/badges/wiktor/pysequoia/status.svg)](https://ci.codeberg.org/wiktor/pysequoia)
 
-Provides [OpenPGP][] facilities in Python through [Sequoia PGP][SQ] library. If
-you need to work with encryption and digital signatures using IETF
-standard this package is for you!
+This library provides [OpenPGP][] facilities in Python through the
+[Sequoia PGP][SQ] library. If you need to work with encryption and
+digital signatures using an [IETF standardized protocol][4880], this
+package is for you!
 
 [OpenPGP]: https://en.wikipedia.org/wiki/Pretty_Good_Privacy#OpenPGP
 [SQ]: https://sequoia-pgp.org/
+[4880]: https://www.rfc-editor.org/rfc/rfc4880
 
 Note: This is a work in progress. The API is **not** stable!
 
@@ -34,17 +36,17 @@ PySequoia can be installed through `pip`:
 pip install pysequoia
 ```
 
-Note that since `pysequoia` is implemented largely in Rust a [Rust
+Note that since `pysequoia` is implemented largely in Rust, a [Rust
 toolchain][RUSTUP] is necessary for the installation to succeed.
 
 [RUSTUP]: https://rustup.rs/
 
 ## Testing
 
-This entire document is used for end-to-end, integration tests that
-exercise package's API surface.
+This entire document is used for end-to-end integration tests that
+exercise the package's API surface.
 
-Tests assume these keys and cards exist:
+The tests assume that these keys and cards exist:
 
 ```bash
 # generate a key with password
@@ -63,7 +65,7 @@ echo 12345678 > pin
 
 ## Functions
 
-All examples assume these basic classes have been imported:
+All examples assume that these basic classes have been imported:
 
 ```python
 from pysequoia import Cert
@@ -105,7 +107,7 @@ assert content == decrypted.content;
 
 ### sign
 
-Signs the data and returns armored output:
+Signs data and returns armored output:
 
 ```python
 from pysequoia import sign
@@ -122,10 +124,10 @@ The `Cert` class represents one OpenPGP certificate (commonly called a
 
 This package additionally verifies the certificate using Sequoia PGP's
 [`StandardPolicy`][SP]. This means that certificates using weak
-cryptography can fail to load or present different view than the one
-in other OpenPGP software (e.g. if the User ID uses SHA-1 in
-back-signatures it may be missing from the list returned by this
-package).
+cryptography can fail to load, or present a different view than in
+other OpenPGP software (e.g. if a User ID uses SHA-1 in its
+back-signature, it may be missing from the list of User IDs returned
+by this package).
 
 Checking certificates for problems ("linting") [is planned][LINT] but
 not yet implemented.
@@ -135,7 +137,7 @@ not yet implemented.
 
 ### generate
 
-Creates new general purpose key with given User ID:
+Creates a new general purpose key with a given User ID:
 
 ```python
 alice = Cert.generate("Alice <alice@example.com>")
@@ -156,7 +158,7 @@ print(f"Encrypted data: {encrypted}")
 
 ### merge
 
-Merges data from old certificate with new packets:
+Merges packets from a new version into an old version of a certificate:
 
 ```python
 old = Cert.from_file("wiktor.asc")
@@ -203,7 +205,7 @@ assert len(cert.user_ids) == 1;
 
 Notations are small pieces of data that can be attached to signatures (and, indirectly, to User IDs).
 
-The following example reads and displays [Keyoxide][KX] proof URI:
+The following example reads and displays a [Keyoxide][KX] proof URI:
 
 [KX]: https://keyoxide.org/
 
@@ -241,7 +243,8 @@ assert notation.value == "dns:metacode.biz";
 
 ### Key expiration
 
-Certs have an `expiration` getter for retrieving current key expiry time:
+Certs have an `expiration` getter for retrieving the current key
+expiry time:
 
 ```python
 cert = Cert.from_file("signing-key.asc")
@@ -298,7 +301,7 @@ Key servers let people search and store OpenPGP certificates.
 
 [HKP]: https://datatracker.ietf.org/doc/html/draft-shaw-openpgp-hkp-00
 
-Fetching certificates via HKPS protocol:
+Fetching certificates via the HKPS protocol:
 
 ```python
 from pysequoia import KeyServer
@@ -329,8 +332,8 @@ asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
 
 #### VKS
 
-[Verifying Key Server protocol][VKS] is a custom protocol used
-currently by keys.openpgp.org key server. Keys retrieved via this
+[Verifying Key Server protocol][VKS] is a custom protocol currently
+only used by the keys.openpgp.org key server. Keys retrieved via this
 protocol will contain only User IDs that have been verified (via
 e-mail) by the server operator.
 
@@ -365,8 +368,8 @@ asyncio.run(upload_key(Cert.from_file("wiktor.asc")))
 
 ### CertD integration
 
-The library exposes [OpenPGP Certificate Directory][CERT-D]
-integration which allows storing and retrieving OpenPGP certificates
+This library exposes [OpenPGP Certificate Directory][CERT-D]
+integration, which allows storing and retrieving OpenPGP certificates
 in a persistent way directly in the file system.
 
 Note that this will *not* allow you to read GnuPG-specific key
@@ -395,7 +398,7 @@ assert s.get("653909a2f0e37c106f5faf546c8857e0d8e8f074") != None
 ## OpenPGP Cards
 
 There's an experimental feature allowing communication with OpenPGP
-Cards (like Yubikey or Nitrokey).
+Cards (like YubiKey or Nitrokey).
 
 ```python
 from pysequoia import Card
@@ -439,8 +442,8 @@ assert content == decrypted.content;
 ```
 
 Note that while this package allows using cards for signing and
-decryption the provisioning process is not supported.
-[OpenPGP card tools][] can be used to initialize the card.
+decryption, the provisioning process is not supported.  [OpenPGP card
+tools][] can be used to initialize the card.
 
 [OpenPGP card tools]: https://crates.io/crates/openpgp-card-tools
 
@@ -459,8 +462,8 @@ conditions.
 
 ## Sponsors
 
-My work is being supported by these generous organizations
-(alphabetical order):
+My work is supported by these generous organizations (alphabetical
+order):
 
   - [nlnet.nl](https://nlnet.nl/)
   - [pep.foundation](https://pep.foundation/)
