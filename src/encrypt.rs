@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::io::Write;
 
 use anyhow::Context;
@@ -14,8 +15,8 @@ use crate::signer::PySigner;
 pub fn encrypt(
     signer: PySigner,
     recipients: Vec<PyRef<Cert>>,
-    content: String,
-) -> PyResult<String> {
+    bytes: &[u8],
+) -> PyResult<Cow<'static, [u8]>> {
     let mode = KeyFlags::empty()
         .set_storage_encryption()
         .set_transport_encryption();
@@ -80,9 +81,9 @@ pub fn encrypt(
         .build()
         .context("Failed to create literal writer")?;
 
-    message.write_all(content.as_ref())?;
+    message.write_all(bytes.as_ref())?;
 
     message.finalize()?;
 
-    Ok(String::from_utf8(sink)?)
+    Ok(sink.into())
 }
