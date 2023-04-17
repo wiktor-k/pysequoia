@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+if ! git diff-files --quiet ; then
+    echo "Working tree has changes. Please stage them: git add ."
+    exit 1
+fi
+
+codespell --write-changes
+cargo clippy --fix --allow-staged
+
+# fmt must be last as clippy's changes may break formatting
+cargo fmt
