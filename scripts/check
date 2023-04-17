@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+# Move faster checks near the top of this script.  For example
+# codespell is very fast. cargo fmt does not need to download crates etc.
+
+codespell
+cargo fmt -- --check
+cargo clippy --all -- -D warnings
+cargo test --all

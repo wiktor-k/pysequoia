@@ -19,4 +19,4 @@ RUN rustup toolchain install $RUST_TOOLCHAIN
 COPY . /build
 WORKDIR /build
 
-RUN ci/quick-checks.sh
+RUN scripts/check
