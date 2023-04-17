@@ -80,7 +80,8 @@ from pysequoia import encrypt
 
 s = Cert.from_file("passwd.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-encrypted = encrypt(signer = s.signer("hunter22"), recipients = [r], content = "content to encrypt")
+bytes = "content to encrypt".encode("utf8")
+encrypted = encrypt(signer = s.signer("hunter22"), recipients = [r], bytes = bytes).decode("utf8")
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -96,13 +97,11 @@ receiver = Cert.from_file("passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(signer = sender.signer(), recipients = [receiver], content = content)
+encrypted = encrypt(signer = sender.signer(), recipients = [receiver], bytes = content.encode("utf8"))
 
-print(f"Encrypted data: {encrypted}")
+decrypted = decrypt(decryptor = receiver.decryptor("hunter22"), bytes = encrypted)
 
-decrypted = decrypt(decryptor = receiver.decryptor("hunter22"), data = encrypted)
-
-assert content == decrypted.content;
+assert content == decrypted.bytes.decode("utf8");
 ```
 
 ### sign
@@ -113,7 +112,7 @@ Signs data and returns armored output:
 from pysequoia import sign
 
 s = Cert.from_file("signing-key.asc")
-signed = sign(s.signer(), "data to be signed")
+signed = sign(s.signer(), "data to be signed".encode("utf8"))
 print(f"Signed data: {signed}")
 ```
 
@@ -152,7 +151,9 @@ contexts:
 alice = Cert.generate("Alice <alice@example.com>")
 bob = Cert.generate("Bob <bob@example.com>")
 
-encrypted = encrypt(signer = alice.signer(), recipients = [bob], content = "content to encrypt")
+bytes = "content to encrypt".encode("utf8")
+
+encrypted = encrypt(signer = alice.signer(), recipients = [bob], bytes = bytes)
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -418,7 +419,7 @@ Cards can be used for signing data:
 ```python
 signer = card.signer("123456")
 
-signed = sign(signer, "data to be signed")
+signed = sign(signer, "data to be signed".encode("utf8"))
 print(f"Signed data: {signed}")
 ```
 
@@ -432,13 +433,13 @@ receiver = Cert.from_file("no-passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(signer = sender.signer("hunter22"), recipients = [receiver], content = content)
+encrypted = encrypt(signer = sender.signer("hunter22"), recipients = [receiver], bytes = content.encode("utf8"))
 
 print(f"Encrypted data: {encrypted}")
 
-decrypted = decrypt(decryptor = decryptor, data = encrypted)
+decrypted = decrypt(decryptor = decryptor, bytes = encrypted)
 
-assert content == decrypted.content;
+assert content == decrypted.bytes.decode("utf8");
 ```
 
 Note that while this package allows using cards for signing and

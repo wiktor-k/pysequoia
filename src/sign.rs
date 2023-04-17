@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::io::Write;
 
 use openpgp::serialize::stream::Armorer;
@@ -8,7 +9,7 @@ use sequoia_openpgp as openpgp;
 use crate::signer::PySigner;
 
 #[pyfunction]
-pub fn sign(signer: PySigner, data: String) -> PyResult<String> {
+pub fn sign(signer: PySigner, bytes: &[u8]) -> PyResult<Cow<'static, [u8]>> {
     use openpgp::serialize::stream::Signer;
 
     let mut sink = vec![];
@@ -22,10 +23,10 @@ pub fn sign(signer: PySigner, data: String) -> PyResult<String> {
 
         let mut message = LiteralWriter::new(message).build()?;
 
-        message.write_all(data.as_bytes())?;
+        message.write_all(bytes)?;
 
         message.finalize()?;
     }
 
-    Ok(String::from_utf8_lossy(&sink).into())
+    Ok(sink.into())
 }

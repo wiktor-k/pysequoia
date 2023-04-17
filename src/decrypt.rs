@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
 
 use openpgp::crypto::SessionKey;
@@ -30,17 +31,17 @@ pub struct Decrypted {
 #[pymethods]
 impl Decrypted {
     #[getter]
-    pub fn content(&self) -> String {
-        String::from_utf8_lossy(&self.content).into()
+    pub fn bytes(&self) -> Cow<[u8]> {
+        Cow::Borrowed(&self.content)
     }
 }
 
 #[pyfunction]
-pub fn decrypt(decryptor: PyDecryptor, data: String) -> PyResult<Decrypted> {
+pub fn decrypt(decryptor: PyDecryptor, bytes: &[u8]) -> PyResult<Decrypted> {
     let policy = &P::new();
 
     let mut decryptor =
-        DecryptorBuilder::from_bytes(&data)?.with_policy(policy, None, decryptor)?;
+        DecryptorBuilder::from_bytes(bytes)?.with_policy(policy, None, decryptor)?;
 
     let mut sink = Vec::new();
     std::io::copy(&mut decryptor, &mut sink)?;
