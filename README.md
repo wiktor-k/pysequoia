@@ -1,4 +1,4 @@
-<img src="doc/logo.png" align="right" width="150" height="150" />
+<img src="https://codeberg.org/wiktor/pysequoia/raw/branch/main/doc/logo.png" align="right" width="150" height="150" />
 
 # PySequoia
 

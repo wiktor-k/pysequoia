@@ -26,6 +26,3 @@ homepage = "https://codeberg.org/wiktor/pysequoia"
 changelog = "https://codeberg.org/wiktor/pysequoia/releases"
 repository = "https://codeberg.org/wiktor/pysequoia"
 "Bug Tracker" = "https://codeberg.org/wiktor/pysequoia/issues"
-
-[tool.maturin]
-sdist-include = ["doc/logo.png"]
