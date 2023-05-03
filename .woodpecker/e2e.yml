@@ -17,4 +17,4 @@ pipeline:
       - bash ./ci/add-comment.sh "e2e"
     when:
       event: [ pull_request ]
-      status: [ success, failure ]
+      status: [ failure ]

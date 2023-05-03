@@ -24,4 +24,4 @@ pipeline:
       - bash ./ci/add-comment.sh "build-${RUST_TOOLCHAIN}"
     when:
       event: [ pull_request ]
-      status: [ success, failure ]
+      status: [ failure ]
