@@ -60,7 +60,7 @@ gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-pass
 # initialize dummy OpenPGP Card
 sh /start.sh
 echo 12345678 > pin
-/root/.cargo/bin/opgpcard admin --card 0000:00000000 --admin-pin pin import no-passwd.pgp
+opgpcard admin --card 0000:00000000 --admin-pin pin import no-passwd.pgp
 ```
 
 ## Functions
