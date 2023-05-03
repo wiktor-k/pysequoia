@@ -21,7 +21,7 @@ pipeline:
     secrets: [ codeberg_token ]
     commands:
       - export
-      - bash ./ci/add-comment.sh "${RUST_TOOLCHAIN}"
+      - bash ./ci/add-comment.sh "build-${RUST_TOOLCHAIN}"
     when:
       event: [ pull_request ]
-      status: [ success, failure ]
+      status: [ failure ]
