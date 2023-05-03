@@ -8,3 +8,13 @@ pipeline:
       # do not refresh image
       pull_image: false
       purge: false
+
+  notify:
+    image: rust
+    secrets: [ codeberg_token ]
+    commands:
+      - export
+      - bash ./ci/add-comment.sh "e2e"
+    when:
+      event: [ pull_request ]
+      status: [ success, failure ]
