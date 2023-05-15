@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use openpgp::serialize::stream::Armorer;
 use pyo3::prelude::*;
 
@@ -11,6 +13,7 @@ mod signature;
 mod signer;
 mod store;
 mod user_id;
+mod verify;
 
 use openpgp::armor::Kind;
 use openpgp::packet::Packet;
@@ -31,6 +34,20 @@ where
     Ok(sink)
 }
 
+#[pyclass]
+#[derive(Clone)]
+pub struct Decrypted {
+    content: Vec<u8>,
+}
+
+#[pymethods]
+impl Decrypted {
+    #[getter]
+    pub fn bytes(&self) -> Cow<[u8]> {
+        Cow::Borrowed(&self.content)
+    }
+}
+
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<cert::Cert>()?;
@@ -40,6 +57,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sign::sign, m)?)?;
     m.add_function(wrap_pyfunction!(encrypt::encrypt, m)?)?;
     m.add_function(wrap_pyfunction!(decrypt::decrypt, m)?)?;
+    m.add_function(wrap_pyfunction!(verify::verify, m)?)?;
     Ok(())
 }
 

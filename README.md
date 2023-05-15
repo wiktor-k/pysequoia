@@ -123,6 +123,25 @@ print(f"Signed data: {signed}")
 assert "PGP MESSAGE" in str(signed)
 ```
 
+### verify
+
+Verifies signed data and returns verified data:
+
+```python
+from pysequoia import Store, verify
+
+# sign some data
+signing_key = Cert.from_file("signing-key.asc")
+signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
+
+# verify the data
+store = Store("/tmp/store")
+store.put(signing_key)
+
+result = verify(signed, store)
+assert result.bytes.decode("utf8") == "data to be signed"
+```
+
 ## Certificates
 
 The `Cert` class represents one OpenPGP certificate (commonly called a
