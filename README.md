@@ -318,6 +318,22 @@ async def fetch_and_display():
 asyncio.run(fetch_and_display())
 ```
 
+Search by e-mail returns multiple certificates:
+
+```python
+from pysequoia import KeyServer
+import asyncio
+from uuid import uuid4
+
+async def fetch_and_display():
+    ks = KeyServer("hkps://keyserver.ubuntu.com")
+    certs = await ks.search(email = f"{uuid4()}@metacode.biz")
+    print(f"Found {len(certs)} via HKPS: {certs}")
+    assert len(certs) == 0
+
+asyncio.run(fetch_and_display())
+```
+
 Keys can also be uploaded:
 
 ```python
@@ -350,6 +366,24 @@ async def fetch_and_display():
     cert = await ks.get("653909a2f0e37c106f5faf546c8857e0d8e8f074")
     print(f"Cert found via HKPS: {cert}")
     assert cert.fingerprint == "653909a2f0e37c106f5faf546c8857e0d8e8f074"
+
+asyncio.run(fetch_and_display())
+```
+
+Search by e-mail always returns zero or one certificates via the VKS
+protocol but to keep the interface consistent with HKPS the return
+value is a list:
+
+```python
+from pysequoia import KeyServer
+import asyncio
+from uuid import uuid4
+
+async def fetch_and_display():
+    ks = KeyServer("vks://keys.openpgp.org")
+    certs = await ks.search(email = "test-wkd@metacode.biz")
+    print(f"Found {len(certs)} via HKPS: {certs}")
+    assert len(certs) == 1
 
 asyncio.run(fetch_and_display())
 ```
