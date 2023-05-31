@@ -3,12 +3,14 @@
 v0.1.20
 
 New:
+  - `KeyServer.search` for looking up keys using e-mail addresses ([#77]).
 
 Changed:
-  - `WKD.search` now returns a list of certificates ([#57]).
+  - `WKD.search` now returns a list of certificates ([#76]).
 
 Removed:
 
-[#57]: https://codeberg.org/wiktor/pysequoia/issues/57
+[#76]: https://codeberg.org/wiktor/pysequoia/issues/76
+[#77]: https://codeberg.org/wiktor/pysequoia/issues/77
 
 ### git tag --edit -s -F NEXT.md v...
