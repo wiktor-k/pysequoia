@@ -12,12 +12,7 @@ impl WKD {
     fn search(py: Python<'_>, email: String) -> PyResult<&PyAny> {
         pyo3_asyncio::tokio::future_into_py(py, async move {
             let certs = sequoia_net::wkd::get(email).await?;
-            if let Some(cert) = certs.first() {
-                let cert: Cert = cert.clone().into();
-                Ok(Some(cert))
-            } else {
-                Ok(None)
-            }
+            Ok(certs.into_iter().map(Into::into).collect::<Vec<Cert>>())
         })
     }
 }

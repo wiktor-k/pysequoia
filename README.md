@@ -285,9 +285,10 @@ from pysequoia import WKD
 import asyncio
 
 async def fetch_and_display():
-    cert = await WKD.search(email = "test-wkd@metacode.biz")
-    print(f"Cert found via WKD: {cert}")
-    assert cert.fingerprint == "5b7abe660d5c62a607fe2448716b17764e3fcaca"
+    certs = await WKD.search(email = "test-wkd@metacode.biz")
+    assert len(certs) == 1
+    print(f"Cert found via WKD: {certs[0]}")
+    assert certs[0].fingerprint == "5b7abe660d5c62a607fe2448716b17764e3fcaca"
 
 asyncio.run(fetch_and_display())
 ```
