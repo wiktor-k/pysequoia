@@ -46,6 +46,8 @@ impl Cert {
     }
 }
 
+pub mod secret;
+
 #[pymethods]
 impl Cert {
     #[staticmethod]
@@ -68,6 +70,19 @@ impl Cert {
                 .0
                 .into(),
         )
+    }
+
+    #[getter]
+    pub fn has_secret_keys(&self) -> bool {
+        self.cert.is_tsk()
+    }
+
+    pub fn secrets(&self) -> Option<secret::SecretCert> {
+        if self.cert.is_tsk() {
+            Some(secret::SecretCert::new(self.cert.clone()))
+        } else {
+            None
+        }
     }
 
     pub fn merge(&self, new_cert: &Cert) -> PyResult<Cert> {

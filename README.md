@@ -274,6 +274,30 @@ cert = cert.set_expiration(expiration = expiration, certifier = cert.certifier()
 assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 ```
 
+## Secret keys
+
+Certificates generated through `Cert.generate()` contain secret keys
+and can be used for signing and decryption.
+
+To avoid accidental leakage secret keys are never directly written
+when the Cert is written to a string. To enable this behavior use
+`Cert.secrets()`. `secrets()` returns `None` on certificates which do
+not contain any secret key material.
+
+```python
+c = Cert.generate("Testing key <test@example.com>")
+assert c.has_secret_keys
+
+# by default only public parts are exported
+public_parts = Cert.from_bytes(f"{c}".encode("utf8"))
+assert not public_parts.has_secret_keys
+assert public_parts.secrets() is None
+
+# to export secret parts use the following:
+private_parts = Cert.from_bytes(f"{c.secrets()}".encode("utf8"))
+assert private_parts.has_secret_keys
+```
+
 ## Certificate management
 
 ### WKD
