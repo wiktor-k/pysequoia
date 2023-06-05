@@ -134,6 +134,15 @@ not yet implemented.
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
 [LINT]: https://codeberg.org/wiktor/pysequoia/issues/52
 
+Certificates have two forms, one is ASCII armored and one is raw bytes:
+
+```python
+cert = Cert.generate("Test <test@example.com>")
+
+print(f"Armored cert: {cert}")
+print(f"Bytes of the cert: {cert.bytes()}")
+```
+
 ### generate
 
 Creates a new general purpose key with a given User ID:

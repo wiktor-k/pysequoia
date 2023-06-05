@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use once_cell::sync::Lazy;
@@ -205,5 +206,9 @@ impl Cert {
         };
 
         Ok(cert.into())
+    }
+
+    pub fn bytes(&self) -> PyResult<Cow<[u8]>> {
+        Ok(self.cert.to_vec()?.into())
     }
 }
