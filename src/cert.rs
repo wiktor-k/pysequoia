@@ -12,7 +12,6 @@ use openpgp::Packet;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
-use crate::decrypt;
 use crate::notation::Notation;
 use crate::signer::PySigner;
 use crate::user_id::UserId;
@@ -79,7 +78,7 @@ impl Cert {
 
     pub fn secrets(&self) -> Option<secret::SecretCert> {
         if self.cert.is_tsk() {
-            Some(secret::SecretCert::new(self.cert.clone()))
+            Some(secret::SecretCert::new(self.cert.clone(), &self.policy))
         } else {
             None
         }
@@ -206,72 +205,5 @@ impl Cert {
         };
 
         Ok(cert.into())
-    }
-
-    pub fn signer(&self, password: Option<String>) -> PyResult<PySigner> {
-        if let Some(key) = self
-            .cert
-            .keys()
-            .secret()
-            .with_policy(&**self.policy(), None)
-            .alive()
-            .revoked(false)
-            .for_signing()
-            .next()
-        {
-            let mut key = key.key().clone();
-            if let Some(password) = password {
-                key = key.decrypt_secret(&(password[..]).into())?;
-            }
-            let keypair = key.into_keypair()?;
-            Ok(PySigner::new(Box::new(keypair)))
-        } else {
-            Err(anyhow::anyhow!("No suitable signing subkey for {}", self.cert).into())
-        }
-    }
-
-    pub fn certifier(&self, password: Option<String>) -> PyResult<PySigner> {
-        if let Some(key) = self
-            .cert
-            .keys()
-            .secret()
-            .with_policy(&**self.policy(), None)
-            .alive()
-            .revoked(false)
-            .for_certification()
-            .next()
-        {
-            let mut key = key.key().clone();
-            if let Some(password) = password {
-                key = key.decrypt_secret(&(password[..]).into())?;
-            }
-            let keypair = key.into_keypair()?;
-            Ok(PySigner::new(Box::new(keypair)))
-        } else {
-            Err(anyhow::anyhow!("No suitable certifying key for {}", self.cert).into())
-        }
-    }
-
-    pub fn decryptor(&self, password: Option<String>) -> PyResult<decrypt::PyDecryptor> {
-        if let Some(key) = self
-            .cert
-            .keys()
-            .secret()
-            .with_policy(&**self.policy(), None)
-            .alive()
-            .revoked(false)
-            .for_transport_encryption()
-            .for_storage_encryption()
-            .next()
-        {
-            let mut key = key.key().clone();
-            if let Some(password) = password {
-                key = key.decrypt_secret(&(password[..]).into())?;
-            }
-            let keypair = key.into_keypair()?;
-            Ok(decrypt::PyDecryptor::new(Box::new(keypair)))
-        } else {
-            Err(anyhow::anyhow!("No suitable decryption subkey for {}", self.cert).into())
-        }
     }
 }
