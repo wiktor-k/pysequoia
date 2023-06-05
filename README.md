@@ -279,7 +279,7 @@ assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 Certificates generated through `Cert.generate()` contain secret keys
 and can be used for signing and decryption.
 
-To avoid accidental leakage secret keys are never directly written
+To avoid accidental leakage secret keys are never directly printed
 when the Cert is written to a string. To enable this behavior use
 `Cert.secrets()`. `secrets()` returns `None` on certificates which do
 not contain any secret key material.
