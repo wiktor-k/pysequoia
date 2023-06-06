@@ -204,11 +204,14 @@ Revoking User IDs:
 cert = Cert.generate("Bob <bob@example.com>")
 
 cert = cert.add_user_id(value = "Bob <bob@company.invalid>", certifier = cert.secrets().certifier())
-assert len(cert.user_ids) == 2;
+assert len(cert.user_ids) == 2
 
-cert = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets().certifier())
-print(str(cert.user_ids))
-assert len(cert.user_ids) == 1;
+# create User ID revocation
+revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets().certifier())
+
+# merge the revocation with the cert
+cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
+assert len(cert.user_ids) == 1
 ```
 
 ### Notations

@@ -15,6 +15,12 @@ impl Signature {
     }
 }
 
+impl From<SqSignature> for Signature {
+    fn from(sig: SqSignature) -> Self {
+        Self { sig }
+    }
+}
+
 #[pymethods]
 impl Signature {
     pub fn bytes(&self) -> PyResult<Cow<[u8]>> {

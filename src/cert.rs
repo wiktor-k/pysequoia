@@ -103,17 +103,14 @@ impl Cert {
         })
     }
 
-    pub fn revoke_user_id(&mut self, user_id: &UserId, mut certifier: PySigner) -> PyResult<Cert> {
-        let cert = self.cert.clone();
+    pub fn revoke_user_id(
+        &mut self,
+        user_id: &UserId,
+        mut certifier: PySigner,
+    ) -> PyResult<crate::signature::Signature> {
         let userid = UserID::from(user_id.__str__());
         let builder = signature::SignatureBuilder::new(SignatureType::CertificationRevocation);
-        let binding = userid.bind(&mut certifier, &cert, builder)?;
-
-        let cert = cert.insert_packets(vec![Packet::from(binding)])?;
-        Ok(Cert {
-            cert,
-            policy: Arc::clone(&self.policy),
-        })
+        Ok(userid.bind(&mut certifier, &self.cert, builder)?.into())
     }
 
     pub fn set_expiration(
