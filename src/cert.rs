@@ -6,6 +6,7 @@ use openpgp::cert::prelude::*;
 use openpgp::packet::signature::subpacket::NotationDataFlags;
 use openpgp::packet::signature::SignatureBuilder;
 use openpgp::packet::{signature, UserID};
+use openpgp::parse::Parse;
 use openpgp::policy::{Policy, StandardPolicy};
 use openpgp::serialize::SerializeInto;
 use openpgp::types::SignatureType;
@@ -52,14 +53,32 @@ pub mod secret;
 impl Cert {
     #[staticmethod]
     pub fn from_file(path: String) -> PyResult<Self> {
-        use openpgp::parse::Parse;
         Ok(openpgp::cert::Cert::from_file(path)?.into())
     }
 
     #[staticmethod]
     pub fn from_bytes(bytes: &[u8]) -> PyResult<Self> {
-        use openpgp::parse::Parse;
         Ok(openpgp::cert::Cert::from_bytes(bytes)?.into())
+    }
+
+    #[staticmethod]
+    pub fn split_file(path: String) -> PyResult<Vec<Self>> {
+        let parser = CertParser::from_file(path)?;
+        let mut results = vec![];
+        for item in parser {
+            results.push(item?.into());
+        }
+        Ok(results)
+    }
+
+    #[staticmethod]
+    pub fn split_bytes(bytes: &[u8]) -> PyResult<Vec<Self>> {
+        let parser = CertParser::from_bytes(&bytes)?;
+        let mut results = vec![];
+        for item in parser {
+            results.push(item?.into());
+        }
+        Ok(results)
     }
 
     #[staticmethod]
