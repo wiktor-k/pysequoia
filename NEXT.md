@@ -7,6 +7,8 @@ New:
   - `Cert.secrets` for retrieving secret keys from a certificate ([#81]).
   - `Cert.has_secret_keys` for checking if certificate contains secret keys ([#81]).
   - `Cert.bytes` for returning raw Certificate bytes ([#85]).
+  - `Cert.is_revoked` for checking potential revocation status ([#83]).
+  - `Cert.revoke` for creating revocation signatures ([#83]).
 
 Changed:
   - `WKD.search` now returns a list of certificates ([#76]).
@@ -18,6 +20,7 @@ Removed:
 [#76]: https://codeberg.org/wiktor/pysequoia/issues/76
 [#77]: https://codeberg.org/wiktor/pysequoia/issues/77
 [#81]: https://codeberg.org/wiktor/pysequoia/issues/81
+[#83]: https://codeberg.org/wiktor/pysequoia/issues/83
 [#85]: https://codeberg.org/wiktor/pysequoia/issues/85
 
 ### git tag --edit -s -F NEXT.md v...

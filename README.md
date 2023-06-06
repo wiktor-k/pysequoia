@@ -283,6 +283,24 @@ cert = cert.set_expiration(expiration = expiration, certifier = cert.secrets().c
 assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 ```
 
+### Key revocation
+
+Certs can be revoked. While expiration is meant as a temporarily make
+the key unusable to encourage the user to refresh a copy revocation is
+irreversible.
+
+```python
+cert = Cert.generate("Test Revocation <revoke@example.com>")
+revocation = cert.revoke(certifier = cert.secrets().certifier())
+
+# creating revocation signature does not revoke the key
+assert not cert.is_revoked
+
+# importing revocation signature marks the key as revoked
+revoked_cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
+assert revoked_cert.is_revoked
+```
+
 ## Secret keys
 
 Certificates generated through `Cert.generate()` contain secret keys

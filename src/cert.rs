@@ -211,4 +211,19 @@ impl Cert {
     pub fn bytes(&self) -> PyResult<Cow<[u8]>> {
         Ok(self.cert.to_vec()?.into())
     }
+
+    pub fn revoke(&self, mut certifier: PySigner) -> PyResult<crate::signature::Signature> {
+        let signature = self.cert.revoke(
+            &mut certifier,
+            openpgp::types::ReasonForRevocation::Unspecified,
+            &[],
+        )?;
+        Ok(crate::signature::Signature::new(signature))
+    }
+
+    #[getter]
+    pub fn is_revoked(&self) -> bool {
+        use openpgp::types::RevocationStatus;
+        self.cert.revocation_status(&**self.policy(), None) != RevocationStatus::NotAsFarAsWeKnow
+    }
 }
