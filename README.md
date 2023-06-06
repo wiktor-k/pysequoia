@@ -134,6 +134,15 @@ not yet implemented.
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
 [LINT]: https://codeberg.org/wiktor/pysequoia/issues/52
 
+Certificates have two forms, one is ASCII armored and one is raw bytes:
+
+```python
+cert = Cert.generate("Test <test@example.com>")
+
+print(f"Armored cert: {cert}")
+print(f"Bytes of the cert: {cert.bytes()}")
+```
+
 ### generate
 
 Creates a new general purpose key with a given User ID:
@@ -195,11 +204,14 @@ Revoking User IDs:
 cert = Cert.generate("Bob <bob@example.com>")
 
 cert = cert.add_user_id(value = "Bob <bob@company.invalid>", certifier = cert.secrets().certifier())
-assert len(cert.user_ids) == 2;
+assert len(cert.user_ids) == 2
 
-cert = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets().certifier())
-print(str(cert.user_ids))
-assert len(cert.user_ids) == 1;
+# create User ID revocation
+revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets().certifier())
+
+# merge the revocation with the cert
+cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
+assert len(cert.user_ids) == 1
 ```
 
 ### Notations
@@ -274,12 +286,30 @@ cert = cert.set_expiration(expiration = expiration, certifier = cert.secrets().c
 assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 ```
 
+### Key revocation
+
+Certs can be revoked. While expiration is meant as a temporarily make
+the key unusable to encourage the user to refresh a copy revocation is
+irreversible.
+
+```python
+cert = Cert.generate("Test Revocation <revoke@example.com>")
+revocation = cert.revoke(certifier = cert.secrets().certifier())
+
+# creating revocation signature does not revoke the key
+assert not cert.is_revoked
+
+# importing revocation signature marks the key as revoked
+revoked_cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
+assert revoked_cert.is_revoked
+```
+
 ## Secret keys
 
 Certificates generated through `Cert.generate()` contain secret keys
 and can be used for signing and decryption.
 
-To avoid accidental leakage secret keys are never directly written
+To avoid accidental leakage secret keys are never directly printed
 when the Cert is written to a string. To enable this behavior use
 `Cert.secrets()`. `secrets()` returns `None` on certificates which do
 not contain any secret key material.

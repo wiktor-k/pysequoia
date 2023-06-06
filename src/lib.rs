@@ -1,3 +1,4 @@
+use openpgp::serialize::stream::Armorer;
 use pyo3::prelude::*;
 
 mod card;
@@ -7,10 +8,30 @@ mod encrypt;
 mod ks;
 mod notation;
 mod sign;
+mod signature;
 mod signer;
 mod store;
 mod user_id;
 mod wkd;
+
+use openpgp::armor::Kind;
+use openpgp::packet::Packet;
+use openpgp::serialize::{stream::Message, Marshal};
+use sequoia_openpgp as openpgp;
+
+pub(crate) fn serialize<T>(p: Packet, armor_kind: T) -> openpgp::Result<Vec<u8>>
+where
+    T: Into<Option<Kind>>,
+{
+    let mut sink = vec![];
+    let mut message = Message::new(&mut sink);
+    if let Some(kind) = armor_kind.into() {
+        message = Armorer::new(message).kind(kind).build()?
+    }
+    p.serialize(&mut message)?;
+    message.finalize()?;
+    Ok(sink)
+}
 
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {

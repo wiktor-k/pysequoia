@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use once_cell::sync::Lazy;
@@ -102,17 +103,14 @@ impl Cert {
         })
     }
 
-    pub fn revoke_user_id(&mut self, user_id: &UserId, mut certifier: PySigner) -> PyResult<Cert> {
-        let cert = self.cert.clone();
+    pub fn revoke_user_id(
+        &mut self,
+        user_id: &UserId,
+        mut certifier: PySigner,
+    ) -> PyResult<crate::signature::Signature> {
         let userid = UserID::from(user_id.__str__());
         let builder = signature::SignatureBuilder::new(SignatureType::CertificationRevocation);
-        let binding = userid.bind(&mut certifier, &cert, builder)?;
-
-        let cert = cert.insert_packets(vec![Packet::from(binding)])?;
-        Ok(Cert {
-            cert,
-            policy: Arc::clone(&self.policy),
-        })
+        Ok(userid.bind(&mut certifier, &self.cert, builder)?.into())
     }
 
     pub fn set_expiration(
@@ -205,5 +203,24 @@ impl Cert {
         };
 
         Ok(cert.into())
+    }
+
+    pub fn bytes(&self) -> PyResult<Cow<[u8]>> {
+        Ok(self.cert.to_vec()?.into())
+    }
+
+    pub fn revoke(&self, mut certifier: PySigner) -> PyResult<crate::signature::Signature> {
+        let signature = self.cert.revoke(
+            &mut certifier,
+            openpgp::types::ReasonForRevocation::Unspecified,
+            &[],
+        )?;
+        Ok(crate::signature::Signature::new(signature))
+    }
+
+    #[getter]
+    pub fn is_revoked(&self) -> bool {
+        use openpgp::types::RevocationStatus;
+        self.cert.revocation_status(&**self.policy(), None) != RevocationStatus::NotAsFarAsWeKnow
     }
 }
