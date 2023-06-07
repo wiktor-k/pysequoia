@@ -82,13 +82,30 @@ impl Cert {
     }
 
     #[staticmethod]
-    pub fn generate(user_id: &str) -> PyResult<Self> {
-        Ok(
-            openpgp::cert::CertBuilder::general_purpose(None, Some(user_id))
-                .generate()?
-                .0
-                .into(),
-        )
+    pub fn generate(user_id: Option<&str>, user_ids: Option<Vec<&str>>) -> PyResult<Self> {
+        use openpgp::types::KeyFlags;
+        let mut builder = CertBuilder::new()
+            .set_cipher_suite(CipherSuite::default())
+            .set_primary_key_flags(KeyFlags::empty().set_certification())
+            .set_validity_period(std::time::Duration::new(3 * 52 * 7 * 24 * 60 * 60, 0))
+            .add_signing_subkey()
+            .add_subkey(
+                KeyFlags::empty()
+                    .set_transport_encryption()
+                    .set_storage_encryption(),
+                None,
+                None,
+            );
+        if let Some(u) = user_id {
+            builder = builder.add_userid(u);
+        }
+        if let Some(user_ids) = user_ids {
+            for user_id in user_ids {
+                builder = builder.add_userid(user_id);
+            }
+        }
+
+        Ok(builder.generate()?.0.into())
     }
 
     #[getter]
@@ -96,6 +113,7 @@ impl Cert {
         self.cert.is_tsk()
     }
 
+    #[getter]
     pub fn secrets(&self) -> Option<secret::SecretCert> {
         if self.cert.is_tsk() {
             Some(secret::SecretCert::new(self.cert.clone(), &self.policy))
