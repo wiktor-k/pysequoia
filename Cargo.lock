@@ -1693,7 +1693,7 @@ dependencies = [
 
 [[package]]
 name = "pysequoia"
-version = "0.1.19"
+version = "0.1.20"
 dependencies = [
  "anyhow",
  "chrono",
