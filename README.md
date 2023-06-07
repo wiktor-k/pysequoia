@@ -81,7 +81,7 @@ from pysequoia import encrypt
 s = Cert.from_file("passwd.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
 bytes = "content to encrypt".encode("utf8")
-encrypted = encrypt(signer = s.secrets().signer("hunter22"), recipients = [r], bytes = bytes).decode("utf8")
+encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = bytes).decode("utf8")
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -97,9 +97,9 @@ receiver = Cert.from_file("passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(signer = sender.secrets().signer(), recipients = [receiver], bytes = content.encode("utf8"))
+encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
 
-decrypted = decrypt(decryptor = receiver.secrets().decryptor("hunter22"), bytes = encrypted)
+decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted)
 
 assert content == decrypted.bytes.decode("utf8");
 ```
@@ -112,7 +112,7 @@ Signs data and returns armored output:
 from pysequoia import sign
 
 s = Cert.from_file("signing-key.asc")
-signed = sign(s.secrets().signer(), "data to be signed".encode("utf8"))
+signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 print(f"Signed data: {signed}")
 ```
 
@@ -196,7 +196,7 @@ bob = Cert.generate("Bob <bob@example.com>")
 
 bytes = "content to encrypt".encode("utf8")
 
-encrypted = encrypt(signer = alice.secrets().signer(), recipients = [bob], bytes = bytes)
+encrypted = encrypt(signer = alice.secrets.signer(), recipients = [bob], bytes = bytes)
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -227,7 +227,7 @@ Adding new User IDs:
 cert = Cert.generate("Alice <alice@example.com>")
 assert len(cert.user_ids) == 1;
 
-cert = cert.add_user_id(value = "Alice <alice@company.invalid>", certifier = cert.secrets().certifier())
+cert = cert.add_user_id(value = "Alice <alice@company.invalid>", certifier = cert.secrets.certifier())
 
 assert len(cert.user_ids) == 2;
 ```
@@ -237,11 +237,11 @@ Revoking User IDs:
 ```python
 cert = Cert.generate("Bob <bob@example.com>")
 
-cert = cert.add_user_id(value = "Bob <bob@company.invalid>", certifier = cert.secrets().certifier())
+cert = cert.add_user_id(value = "Bob <bob@company.invalid>", certifier = cert.secrets.certifier())
 assert len(cert.user_ids) == 2
 
 # create User ID revocation
-revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets().certifier())
+revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets.certifier())
 
 # merge the revocation with the cert
 cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
@@ -275,7 +275,7 @@ cert = Cert.from_file("signing-key.asc")
 # No notations initially
 assert len(cert.user_ids[0].notations) == 0;
 
-cert = cert.set_notations(cert.secrets().certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
+cert = cert.set_notations(cert.secrets.certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
 
 # Has one notation now
 print(str(cert.user_ids[0].notations))
@@ -316,7 +316,7 @@ assert cert.expiration is None
 
 # Set the expiration to some specified point in time
 expiration = datetime.fromisoformat("2021-11-04T00:05:23+00:00")
-cert = cert.set_expiration(expiration = expiration, certifier = cert.secrets().certifier())
+cert = cert.set_expiration(expiration = expiration, certifier = cert.secrets.certifier())
 assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 ```
 
@@ -330,7 +330,7 @@ irreversible.
 
 ```python
 cert = Cert.generate("Test Revocation <revoke@example.com>")
-revocation = cert.revoke(certifier = cert.secrets().certifier())
+revocation = cert.revoke(certifier = cert.secrets.certifier())
 
 # creating revocation signature does not revoke the key
 assert not cert.is_revoked
@@ -347,8 +347,8 @@ and can be used for signing and decryption.
 
 To avoid accidental leakage secret keys are never directly printed
 when the Cert is written to a string. To enable this behavior use
-`Cert.secrets()`. `secrets()` returns `None` on certificates which do
-not contain any secret key material.
+`Cert.secrets`. `secrets` returns `None` on certificates which do
+not contain any secret key material ("public keys").
 
 ```python
 c = Cert.generate("Testing key <test@example.com>")
@@ -357,10 +357,10 @@ assert c.has_secret_keys
 # by default only public parts are exported
 public_parts = Cert.from_bytes(f"{c}".encode("utf8"))
 assert not public_parts.has_secret_keys
-assert public_parts.secrets() is None
+assert public_parts.secrets is None
 
 # to export secret parts use the following:
-private_parts = Cert.from_bytes(f"{c.secrets()}".encode("utf8"))
+private_parts = Cert.from_bytes(f"{c.secrets}".encode("utf8"))
 assert private_parts.has_secret_keys
 ```
 
@@ -558,7 +558,7 @@ receiver = Cert.from_file("no-passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(signer = sender.secrets().signer("hunter22"), recipients = [receiver], bytes = content.encode("utf8"))
+encrypted = encrypt(signer = sender.secrets.signer("hunter22"), recipients = [receiver], bytes = content.encode("utf8"))
 
 print(f"Encrypted data: {encrypted}")
 

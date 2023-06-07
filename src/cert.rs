@@ -113,6 +113,7 @@ impl Cert {
         self.cert.is_tsk()
     }
 
+    #[getter]
     pub fn secrets(&self) -> Option<secret::SecretCert> {
         if self.cert.is_tsk() {
             Some(secret::SecretCert::new(self.cert.clone(), &self.policy))

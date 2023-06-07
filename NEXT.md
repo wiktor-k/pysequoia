@@ -15,8 +15,8 @@ New:
 
 Changed:
   - `WKD.search` now returns a list of certificates ([#76]).
-  - `Cert.signer` moved to `Cert.secrets().signer` since it requires secret key material ([#81]).
-  - `Cert.decryptor` moved to `Cert.secrets().decryptor` since it requires secret key material ([#81]).
+  - `Cert.signer` moved to `Cert.secrets.signer` since it requires secret key material ([#81]).
+  - `Cert.decryptor` moved to `Cert.secrets.decryptor` since it requires secret key material ([#81]).
   - `Cert.revoke_user_id` returns a revocation signature now instead of Cert with revoked User ID.
 
 Removed:
