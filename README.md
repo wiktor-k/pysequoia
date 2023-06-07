@@ -322,9 +322,11 @@ assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 
 ### Key revocation
 
-Certs can be revoked. While expiration is meant as a temporarily make
-the key unusable to encourage the user to refresh a copy revocation is
+Certs can be revoked. While [expiration makes the key unusable
+temporarily][EXP] to encourage the user to refresh a copy revocation is
 irreversible.
+
+[EXP]: https://blogs.gentoo.org/mgorny/2018/08/13/openpgp-key-expiration-is-not-a-security-measure/
 
 ```python
 cert = Cert.generate("Test Revocation <revoke@example.com>")
