@@ -180,6 +180,13 @@ fpr = alice.fingerprint
 print(f"Generated cert with fingerprint {fpr}:\n{alice}")
 ```
 
+Multiple User IDs can be passed as a list to the `generate` function:
+
+```python
+cert = Cert.generate(user_ids = ["First", "Second", "Third"])
+assert len(cert.user_ids) == 3
+```
+
 Newly generated certificates are usable in both encryption and signing
 contexts:
 
