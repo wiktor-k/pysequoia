@@ -92,7 +92,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: 'true'
         env:
-          PKG_CONFIG_SYSROOT_DIR: /
+          XPKG_CONFIG_SYSROOT_DIR: /
           OPENSSL_CFLAGS: "-I/usr/local/opt/openssl@3.1/include"
           OPENSSL_LIBS: "-L/usr/local/opt/openssl@3.1/lib -lcrypto -lssl"
       - name: Upload wheels
