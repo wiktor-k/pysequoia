@@ -19,18 +19,13 @@ permissions:
   contents: read
 
 jobs:
-  linux:
+  linux-x86:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [x86_64]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      #- name: Setup dependencies
-      #  run: sudo apt-get install -yqq cargo clang git nettle-dev pkg-config libssl-dev openssl libpcsclite-dev llvm
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -38,8 +33,6 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: 'true'
           manylinux: auto
-          #container: off
-          #before-script-linux: yum install -y cargo clang git nettle-devel openssl-devel pcsc-lite-devel
           before-script-linux: .github/workflows/before-script-linux.sh
           docker-options: -e PKG_CONFIG_SYSROOT_DIR=/ -e LIBCLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e LIBCLANG_STATIC_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e CLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/bin/clang
       - name: Upload wheels
@@ -48,11 +41,8 @@ jobs:
           name: wheels
           path: dist
 
-  windows:
+  windows-x64:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        target: [x64]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -73,11 +63,29 @@ jobs:
           name: wheels
           path: dist
 
-  macos:
+  macos-x86:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Setup dependencies
+        run: brew install rust nettle openssl@3.1
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter
+          sccache: 'true'
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
+
+  macos-aarch64:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -92,15 +100,13 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: 'true'
         env:
-          XPKG_CONFIG_SYSROOT_DIR: /
-          XOPENSSL_CFLAGS: "-I/usr/local/opt/openssl@3.1/include"
-          XOPENSSL_LIBS: "-L/usr/local/opt/openssl@3.1/lib -lcrypto -lssl"
+          PKG_CONFIG_SYSROOT_DIR: /
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist
-
+          
   sdist:
     runs-on: ubuntu-latest
     steps:
