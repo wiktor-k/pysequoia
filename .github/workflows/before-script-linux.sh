@@ -27,5 +27,5 @@ cd /tmp &&
     make && make install
 else
     apt-get update
-    apt-get install -yqq cargo clang git nettle-dev pkg-config libssl-dev openssl libpcsclite-dev llvm gcc-multilib
+    apt-get install -yqq cargo clang git nettle-dev pkg-config libssl-dev openssl libpcsclite-dev llvm gcc-multilib libgmp-dev
 fi

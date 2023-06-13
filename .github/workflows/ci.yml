@@ -109,7 +109,7 @@ jobs:
         with:
           python-version: '3.10'
       - name: Setup dependencies
-        run: brew install rust nettle openssl@3.1
+        run: brew install rust nettle openssl@3.1 pkg-config
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -117,7 +117,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: 'true'
         env:
-          PKG_CONFIG_SYSROOT_DIR: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+          XPKG_CONFIG_SYSROOT_DIR: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
