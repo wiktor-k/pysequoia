@@ -34,7 +34,6 @@ jobs:
         with:
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
-          sccache: 'true'
           manylinux: auto
           before-script-linux: .github/workflows/before-script-linux.sh
       - name: Upload wheels
