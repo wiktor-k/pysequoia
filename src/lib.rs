@@ -1,7 +1,7 @@
 use openpgp::serialize::stream::Armorer;
 use pyo3::prelude::*;
 
-mod card;
+//mod card;
 mod cert;
 mod decrypt;
 mod encrypt;
@@ -39,7 +39,7 @@ fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ks::KeyServer>()?;
     m.add_class::<wkd::WKD>()?;
     m.add_class::<store::Store>()?;
-    m.add_class::<card::Card>()?;
+    //m.add_class::<card::Card>()?;
     m.add_class::<notation::Notation>()?;
     m.add_function(wrap_pyfunction!(sign::sign, m)?)?;
     m.add_function(wrap_pyfunction!(encrypt::encrypt, m)?)?;
