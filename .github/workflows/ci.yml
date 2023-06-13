@@ -29,7 +29,6 @@ jobs:
           sccache: 'true'
           manylinux: auto
           before-script-linux: .github/workflows/before-script-linux.sh
-          docker-options: -e PKG_CONFIG_SYSROOT_DIR=/ -e LIBCLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e LIBCLANG_STATIC_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e CLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/bin/clang
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
