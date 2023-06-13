@@ -3,14 +3,7 @@
 if [ -f /usr/bin/yum ]; then
     yum install -y openssl-devel pcsc-lite-devel centos-release-scl llvm-toolset-7
 
-    echo "========="
-    cat /opt/rh/llvm-toolset-7/enable
-    echo "========="
     source /opt/rh/llvm-toolset-7/enable
-    export PKG_CONFIG_SYSROOT_DIR=/
-    export LIBCLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/
-    export LIBCLANG_STATIC_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/
-    export CLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/bin/clang
 
     PREFIX=/
     GMP_VERSION=6.2.1
