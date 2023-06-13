@@ -117,7 +117,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: 'true'
         env:
-          XPKG_CONFIG_SYSROOT_DIR: /
+          PKG_CONFIG_SYSROOT_DIR: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
