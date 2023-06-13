@@ -28,7 +28,7 @@ impl KeyServer {
     }
 
     pub fn get<'a>(&self, py: Python<'a>, fpr: String) -> PyResult<&'a PyAny> {
-        let uri: String = self.uri.clone();
+        /*let uri: String = self.uri.clone();
         pyo3_asyncio::tokio::future_into_py(py, async move {
             use openpgp::Fingerprint;
             let fpr: Fingerprint = fpr.parse()?;
@@ -47,11 +47,12 @@ impl KeyServer {
                 let cert: Cert = cert.await?.into();
                 Ok(cert)
             }
-        })
+    })*/
+        unimplemented!()
     }
 
     pub fn search<'a>(&self, py: Python<'a>, email: String) -> PyResult<&'a PyAny> {
-        let uri: String = self.uri.clone();
+        /*let uri: String = self.uri.clone();
         pyo3_asyncio::tokio::future_into_py(py, async move {
             let certs = if let Some(addr) = uri.strip_prefix("vks://") {
                 let bytes = reqwest::get(format!("https://{addr}/vks/v1/by-email/{email}"))
@@ -77,11 +78,12 @@ impl KeyServer {
                 }
             };
             Ok(certs.into_iter().map(Into::into).collect::<Vec<Cert>>())
-        })
+    })*/
+        unimplemented!()
     }
 
     pub fn put<'a>(&self, py: Python<'a>, cert: Cert) -> PyResult<&'a PyAny> {
-        let uri: String = self.uri.clone();
+        /*let uri: String = self.uri.clone();
         pyo3_asyncio::tokio::future_into_py(py, async move {
             if let Some(addr) = uri.strip_prefix("vks://") {
                 let mut map = HashMap::new();
@@ -98,7 +100,8 @@ impl KeyServer {
                 ks.send(cert.cert()).await?;
             }
             Ok(())
-        })
+    })*/
+        unimplemented!()
     }
 
     pub fn __repr__(&self) -> String {
