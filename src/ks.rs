@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+//use std::collections::HashMap;
 
-use openpgp::packet::UserID;
-use openpgp::parse::Parse;
+//use openpgp::packet::UserID;
+//use openpgp::parse::Parse;
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
 
+//use sequoia_openpgp as openpgp;
 use crate::cert::Cert;
 
 #[pyclass]
@@ -27,78 +27,81 @@ impl KeyServer {
         }
     }
 
-    pub fn get<'a>(&self, py: Python<'a>, fpr: String) -> PyResult<&'a PyAny> {
-        let uri: String = self.uri.clone();
-        pyo3_asyncio::tokio::future_into_py(py, async move {
-            use openpgp::Fingerprint;
-            let fpr: Fingerprint = fpr.parse()?;
+    pub fn get<'a>(&self, _py: Python<'a>, _fpr: String) -> PyResult<&'a PyAny> {
+        /*let uri: String = self.uri.clone();
+            pyo3_asyncio::tokio::future_into_py(py, async move {
+                use openpgp::Fingerprint;
+                let fpr: Fingerprint = fpr.parse()?;
 
-            if let Some(addr) = uri.strip_prefix("vks://") {
-                let bytes = reqwest::get(format!("https://{addr}/vks/v1/by-fingerprint/{fpr:X}"))
-                    .await
-                    .map_err(anyhow::Error::from)?
-                    .bytes()
-                    .await
-                    .map_err(anyhow::Error::from)?;
-                Cert::from_bytes(&bytes)
-            } else {
-                let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
-                let cert = ks.get(fpr);
-                let cert: Cert = cert.await?.into();
-                Ok(cert)
-            }
-        })
+                if let Some(addr) = uri.strip_prefix("vks://") {
+                    let bytes = reqwest::get(format!("https://{addr}/vks/v1/by-fingerprint/{fpr:X}"))
+                        .await
+                        .map_err(anyhow::Error::from)?
+                        .bytes()
+                        .await
+                        .map_err(anyhow::Error::from)?;
+                    Cert::from_bytes(&bytes)
+                } else {
+                    let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
+                    let cert = ks.get(fpr);
+                    let cert: Cert = cert.await?.into();
+                    Ok(cert)
+                }
+        })*/
+        unimplemented!()
     }
 
-    pub fn search<'a>(&self, py: Python<'a>, email: String) -> PyResult<&'a PyAny> {
-        let uri: String = self.uri.clone();
-        pyo3_asyncio::tokio::future_into_py(py, async move {
-            let certs = if let Some(addr) = uri.strip_prefix("vks://") {
-                let bytes = reqwest::get(format!("https://{addr}/vks/v1/by-email/{email}"))
-                    .await
-                    .map_err(anyhow::Error::from)?
-                    .bytes()
-                    .await
-                    .map_err(anyhow::Error::from)?;
-                vec![openpgp::Cert::from_bytes(&bytes)?]
-            } else {
-                let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
-                match ks.search(UserID::from_address(None, None, email)?).await {
-                    Ok(certs) => certs,
-                    Err(error) => {
-                        if let Some(sequoia_net::Error::NotFound) =
-                            error.downcast_ref::<sequoia_net::Error>()
-                        {
-                            vec![]
-                        } else {
-                            return Err(error)?;
+    pub fn search<'a>(&self, _py: Python<'a>, _email: String) -> PyResult<&'a PyAny> {
+        /*let uri: String = self.uri.clone();
+            pyo3_asyncio::tokio::future_into_py(py, async move {
+                let certs = if let Some(addr) = uri.strip_prefix("vks://") {
+                    let bytes = reqwest::get(format!("https://{addr}/vks/v1/by-email/{email}"))
+                        .await
+                        .map_err(anyhow::Error::from)?
+                        .bytes()
+                        .await
+                        .map_err(anyhow::Error::from)?;
+                    vec![openpgp::Cert::from_bytes(&bytes)?]
+                } else {
+                    let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
+                    match ks.search(UserID::from_address(None, None, email)?).await {
+                        Ok(certs) => certs,
+                        Err(error) => {
+                            if let Some(sequoia_net::Error::NotFound) =
+                                error.downcast_ref::<sequoia_net::Error>()
+                            {
+                                vec![]
+                            } else {
+                                return Err(error)?;
+                            }
                         }
                     }
-                }
-            };
-            Ok(certs.into_iter().map(Into::into).collect::<Vec<Cert>>())
-        })
+                };
+                Ok(certs.into_iter().map(Into::into).collect::<Vec<Cert>>())
+        })*/
+        unimplemented!()
     }
 
-    pub fn put<'a>(&self, py: Python<'a>, cert: Cert) -> PyResult<&'a PyAny> {
-        let uri: String = self.uri.clone();
-        pyo3_asyncio::tokio::future_into_py(py, async move {
-            if let Some(addr) = uri.strip_prefix("vks://") {
-                let mut map = HashMap::new();
-                map.insert("keytext", cert.__str__()?);
-                let client = reqwest::Client::new();
-                client
-                    .post(format!("https://{addr}/vks/v1/upload"))
-                    .json(&map)
-                    .send()
-                    .await
-                    .map_err(anyhow::Error::from)?;
-            } else {
-                let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
-                ks.send(cert.cert()).await?;
-            }
-            Ok(())
-        })
+    pub fn put<'a>(&self, _py: Python<'a>, _cert: Cert) -> PyResult<&'a PyAny> {
+        /*let uri: String = self.uri.clone();
+            pyo3_asyncio::tokio::future_into_py(py, async move {
+                if let Some(addr) = uri.strip_prefix("vks://") {
+                    let mut map = HashMap::new();
+                    map.insert("keytext", cert.__str__()?);
+                    let client = reqwest::Client::new();
+                    client
+                        .post(format!("https://{addr}/vks/v1/upload"))
+                        .json(&map)
+                        .send()
+                        .await
+                        .map_err(anyhow::Error::from)?;
+                } else {
+                    let mut ks = sequoia_net::KeyServer::new(sequoia_net::Policy::Encrypted, &uri)?;
+                    ks.send(cert.cert()).await?;
+                }
+                Ok(())
+        })*/
+        unimplemented!()
     }
 
     pub fn __repr__(&self) -> String {
