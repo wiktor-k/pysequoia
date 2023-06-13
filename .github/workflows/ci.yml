@@ -95,7 +95,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: 'true'
         env:
-          PKG_CONFIG_SYSROOT_DIR: /
+          XPKG_CONFIG_SYSROOT_DIR: /
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
