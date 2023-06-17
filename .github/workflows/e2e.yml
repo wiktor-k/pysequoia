@@ -1,0 +1,17 @@
+name: Integration tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/amd64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Run integration tests
+        run: |
+          docker buildx build --build-arg SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) --platform linux/amd64 --file ci/e2e.dockerfile .
