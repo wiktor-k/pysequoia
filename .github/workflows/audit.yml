@@ -1,0 +1,24 @@
+name: Audits
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  audit:
+    name: Audit dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/amd64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build image
+        run: |
+          docker buildx build --platform linux/amd64 --file ci/audit.dockerfile .

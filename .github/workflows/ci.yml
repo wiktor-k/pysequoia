@@ -1,0 +1,53 @@
+name: CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/amd64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build image
+        run: |
+          docker buildx build --platform linux/amd64 --file ci/e2e.dockerfile .
+
+  build:
+    name: Build and check
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            toolchain: stable
+            continue-on-error: false
+          - os: ubuntu-latest
+            toolchain: beta
+            continue-on-error: false
+          - os: ubuntu-latest
+            toolchain: nightly
+            continue-on-error: true
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.continue-on-error }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/amd64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build image
+        run: |
+          docker buildx build --build-arg RUST_TOOLCHAIN=${{ matrix.toolchain }} --platform linux/amd64 --file ci/build.dockerfile .
