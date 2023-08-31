@@ -5,14 +5,12 @@ mod card;
 mod cert;
 mod decrypt;
 mod encrypt;
-mod ks;
 mod notation;
 mod sign;
 mod signature;
 mod signer;
 mod store;
 mod user_id;
-mod wkd;
 
 use openpgp::armor::Kind;
 use openpgp::packet::Packet;
@@ -36,8 +34,6 @@ where
 #[pymodule]
 fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<cert::Cert>()?;
-    m.add_class::<ks::KeyServer>()?;
-    m.add_class::<wkd::WKD>()?;
     m.add_class::<store::Store>()?;
     m.add_class::<card::Card>()?;
     m.add_class::<notation::Notation>()?;
