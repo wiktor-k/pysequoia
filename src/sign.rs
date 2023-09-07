@@ -17,7 +17,7 @@ pub fn sign(signer: PySigner, bytes: &[u8]) -> PyResult<Cow<'static, [u8]>> {
         let message = Message::new(&mut sink);
 
         let message = Armorer::new(message)
-            .kind(openpgp::armor::Kind::Signature)
+            .kind(openpgp::armor::Kind::Message)
             .build()?;
         let message = Signer::new(message, signer).build()?;
 

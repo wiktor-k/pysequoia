@@ -106,13 +106,15 @@ assert content == decrypted.bytes.decode("utf8");
 
 ### sign
 
-Signs data and returns armored output:
+Signs data and returns armored output which contains both the signed
+data and the signature (inline signed data):
 
 ```python
 from pysequoia import sign
 
 s = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
+assert "PGP MESSAGE" in str(signed)
 print(f"Signed data: {signed}")
 ```
 
@@ -242,6 +244,7 @@ assert len(cert.user_ids) == 2
 
 # create User ID revocation
 revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets.certifier())
+assert "PGP SIGNATURE" in str(revocation)
 
 # merge the revocation with the cert
 cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
