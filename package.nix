@@ -38,13 +38,14 @@ buildPythonPackage rec {
 
   buildInputs = [
     bzip2
-    nettle
-    pcsclite
   ] ++ lib.optionals stdenv.isDarwin [
     darwin.apple_sdk.frameworks.CoreFoundation
     darwin.apple_sdk.frameworks.Security
     darwin.apple_sdk.frameworks.PCSC
     libiconv
+  ] ++ lib.optionals stdenv.isLinux [
+    nettle
+    pcsclite
   ];
 
   pythonImportsCheck = [ "pysequoia" ];
