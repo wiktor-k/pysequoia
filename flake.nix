@@ -1,9 +1,5 @@
 {
-  # See https://github.com/mhwombat/nix-for-numbskulls/blob/main/flakes.md
-  # for a brief overview of what each section in a flake should or can contain.
-
-  # TODO: Fix this to something better
-  description = "a very simple and friendly flake";
+  description = "Flake for PySequoia Python package";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";

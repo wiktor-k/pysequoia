@@ -51,9 +51,9 @@ buildPythonPackage rec {
   pythonImportsCheck = [ "pysequoia" ];
 
   meta = with lib; {
-    description = "This library provides OpenPGP facilities in Python through the Sequoia PGP library";
-    downloadPage = "https://codeberg.org/wiktor/pysequoia";
-    homepage = "https://sequoia-pgp.gitlab.io/pysequoia";
+    description = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.description;
+    downloadPage = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.repository;
+    homepage = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.homepage;
     license = licenses.asl20;
     maintainers = with maintainers; [ doronbehar ];
   };
