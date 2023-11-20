@@ -39,7 +39,6 @@ buildPythonPackage rec {
   buildInputs = [
     bzip2
     nettle
-    openssl
     pcsclite
   ] ++ lib.optionals stdenv.isDarwin [
     darwin.apple_sdk.frameworks.CoreFoundation
