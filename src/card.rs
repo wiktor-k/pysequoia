@@ -1,4 +1,6 @@
-use openpgp_card_pcsc::PcscBackend;
+use card_backend_pcsc::PcscBackend;
+use openpgp_card_sequoia::state::Open;
+use openpgp_card_sequoia::Card as CCard;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
@@ -7,22 +9,26 @@ use crate::signer::PySigner;
 
 #[pyclass]
 pub struct Card {
-    open: openpgp_card_sequoia::Card<openpgp_card_sequoia::state::Open>,
+    open: CCard<Open>,
 }
 
 #[pymethods]
 impl Card {
     #[staticmethod]
     pub fn open(ident: &str) -> anyhow::Result<Self> {
+        let cards = PcscBackend::card_backends(None)?;
         Ok(Self {
-            open: PcscBackend::open_by_ident(ident, None)?.into(),
+            open: CCard::<Open>::open_by_ident(cards, ident)?,
         })
     }
 
     #[getter]
     pub fn cardholder(&mut self) -> anyhow::Result<Option<String>> {
         let mut transaction = self.open.transaction()?;
-        Ok(transaction.cardholder_name()?)
+        Ok(transaction
+            .cardholder_related_data()?
+            .name()
+            .map(|name| String::from_utf8_lossy(name).into()))
     }
 
     #[getter]
@@ -37,12 +43,17 @@ impl Card {
         // no-readers being connected.  This should be handled by the
         // backend.
         //
-        // See: https://gitlab.com/openpgp-card/openpgp-card/-/issues/68
-        Ok(PcscBackend::cards(None)
-            .unwrap_or_default()
-            .into_iter()
-            .map(|card| Self { open: card.into() })
-            .collect())
+        // See: https://gitlab.com/openpgp-card/openpgp-card/-/issues/6
+        if let Ok(cards) = PcscBackend::cards(None) {
+            Ok(cards
+                .into_iter()
+                .filter_map(|card| card.ok())
+                .filter_map(|card| CCard::<Open>::new(card).ok())
+                .map(|open| Self { open })
+                .collect())
+        } else {
+            Ok(Vec::new())
+        }
     }
 
     pub fn signer(&mut self, pin: String) -> anyhow::Result<PySigner> {
@@ -72,13 +83,13 @@ impl Card {
                 hash_algo: openpgp::types::HashAlgorithm,
                 digest: &[u8],
             ) -> openpgp::Result<openpgp::crypto::mpi::Signature> {
-                let backend = openpgp_card_pcsc::PcscBackend::open_by_ident(&self.ident, None)?;
-                let mut card: openpgp_card_sequoia::Card<openpgp_card_sequoia::state::Open> =
-                    backend.into();
+                let cards = PcscBackend::card_backends(None)?;
+                let mut card = CCard::<Open>::open_by_ident(cards, &self.ident)?;
                 let mut transaction = card.transaction()?;
 
-                transaction.verify_user_for_signing(self.pin.as_bytes())?;
-                let mut user = transaction.signing_card().expect("This should not fail");
+                let mut user = transaction
+                    .to_signing_card(Some(self.pin.as_bytes()))
+                    .expect("This should not fail");
 
                 let mut signer = user.signer(&|| {})?;
                 signer.sign(hash_algo, digest)
@@ -88,9 +99,9 @@ impl Card {
         let public = {
             let mut transaction = self.open.transaction()?;
 
-            transaction.verify_user_for_signing(pin.as_bytes())?;
-
-            let mut user = transaction.signing_card().expect("This should not fail");
+            let mut user = transaction
+                .to_signing_card(Some(pin.as_bytes()))
+                .expect("This should not fail");
 
             let signer = user.signer(&|| {})?;
             signer.public().clone()
@@ -128,13 +139,13 @@ impl Card {
                 ciphertext: &openpgp::crypto::mpi::Ciphertext,
                 plaintext_len: Option<usize>,
             ) -> openpgp::Result<openpgp::crypto::SessionKey> {
-                let backend = openpgp_card_pcsc::PcscBackend::open_by_ident(&self.ident, None)?;
-                let mut card: openpgp_card_sequoia::Card<openpgp_card_sequoia::state::Open> =
-                    backend.into();
+                let cards = PcscBackend::card_backends(None)?;
+                let mut card = CCard::<Open>::open_by_ident(cards, &self.ident)?;
                 let mut transaction = card.transaction()?;
 
-                transaction.verify_user(self.pin.as_bytes())?;
-                let mut user = transaction.user_card().expect("user_card should not fail");
+                let mut user = transaction
+                    .to_user_card(Some(self.pin.as_bytes()))
+                    .expect("user_card should not fail");
 
                 let mut decryptor = user.decryptor(&|| {})?;
                 decryptor.decrypt(ciphertext, plaintext_len)
@@ -144,9 +155,9 @@ impl Card {
         let public = {
             let mut transaction = self.open.transaction()?;
 
-            transaction.verify_user_for_signing(pin.as_bytes())?;
-
-            let mut user = transaction.user_card().expect("user_card should not fail");
+            let mut user = transaction
+                .to_user_card(Some(pin.as_bytes()))
+                .expect("user_card should not fail");
 
             let decryptor = user.decryptor(&|| {})?;
             decryptor.public().clone()
