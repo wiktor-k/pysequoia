@@ -22,7 +22,7 @@ license = {file = "LICENSE"}
 description = "Provides OpenPGP facilities using Sequoia-PGP library"
 
 [project.urls]
-homepage = "https://codeberg.org/wiktor/pysequoia"
-changelog = "https://codeberg.org/wiktor/pysequoia/releases"
-repository = "https://codeberg.org/wiktor/pysequoia"
-"Bug Tracker" = "https://codeberg.org/wiktor/pysequoia/issues"
+homepage = "https://github.com/wiktor-k/pysequoia"
+changelog = "https://github.com/wiktor-k/pysequoia/tags"
+repository = "https://github.com/wiktor-k/pysequoia"
+"Bug Tracker" = "https://github.com/wiktor-k/pysequoia/issues"

@@ -1,5 +1,0 @@
-pipeline:
-  check-links:
-    image: rust
-    commands:
-      - bash ./ci/url-validator.sh README.md
