@@ -178,4 +178,56 @@ impl Card {
     pub fn __repr__(&mut self) -> anyhow::Result<String> {
         Ok(format!("<Card ident={}>", self.ident()?))
     }
+
+    #[getter]
+    pub fn keys(&mut self) -> anyhow::Result<Vec<CardKey>> {
+        let transaction = self.open.transaction()?;
+        let card_keys = transaction.fingerprints()?;
+        let mut keys = Vec::with_capacity(3);
+        if let Some(key) = card_keys.signature() {
+            keys.push(CardKey {
+                fingerprint: hex::encode(key.as_bytes()),
+                usage: vec!["sign".into()],
+            })
+        }
+        if let Some(key) = card_keys.decryption() {
+            keys.push(CardKey {
+                fingerprint: hex::encode(key.as_bytes()),
+                usage: vec!["decrypt".into()],
+            })
+        }
+        if let Some(key) = card_keys.authentication() {
+            keys.push(CardKey {
+                fingerprint: hex::encode(key.as_bytes()),
+                usage: vec!["authenticate".into()],
+            })
+        }
+        Ok(keys)
+    }
+}
+
+#[pyclass]
+pub struct CardKey {
+    fingerprint: String,
+    usage: Vec<String>,
+}
+
+#[pymethods]
+impl CardKey {
+    #[getter]
+    fn fingerprint(&self) -> &String {
+        &self.fingerprint
+    }
+
+    #[getter]
+    fn usage(&self) -> Vec<String> {
+        self.usage.clone()
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!(
+            "<Key fingerprint={} usage={:?}>",
+            self.fingerprint, self.usage
+        )
+    }
 }

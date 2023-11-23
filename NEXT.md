@@ -4,6 +4,7 @@ v0.1.21
 
 New:
   - `Card.cert_url` - for retrieving certificate URL stored on the card, note that the URL returned can be empty or invalid,
+  - `Card.keys` - for enumerating secret keys stored on the card,
 
 Changed:
 
