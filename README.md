@@ -60,12 +60,13 @@ gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-pass
 # initialize dummy OpenPGP Card
 sh /start.sh
 echo 12345678 > pin
-opgpcard admin --card 0000:00000000 --admin-pin pin import full-key.asc
-opgpcard admin --card 0000:00000000 --admin-pin pin name "John Doe"
-opgpcard admin --card 0000:00000000 --admin-pin pin url "https://example.com/key.pgp"
-opgpcard admin --card 0000:00000000 --admin-pin pin touch --key SIG --policy Fixed
-opgpcard admin --card 0000:00000000 --admin-pin pin touch --key DEC --policy Off
-opgpcard admin --card 0000:00000000 --admin-pin pin touch --key AUT --policy Fixed
+CARD_ADMIN="opgpcard admin --card 0000:00000000 --admin-pin pin"
+$CARD_ADMIN import full-key.asc
+$CARD_ADMIN name "John Doe"
+$CARD_ADMIN url "https://example.com/key.pgp"
+$CARD_ADMIN touch --key SIG --policy Fixed
+$CARD_ADMIN touch --key DEC --policy Off
+$CARD_ADMIN touch --key AUT --policy Fixed
 ```
 
 ## Functions
