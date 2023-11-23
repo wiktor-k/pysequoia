@@ -1,8 +1,10 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v0.2.0
+v0.1.21
 
 New:
+  - `Card.cert_url` - for retrieving certificate URL stored on the card, note that the URL returned can be empty or invalid,
+  - `Card.keys` - for enumerating secret keys stored on the card,
 
 Changed:
 
