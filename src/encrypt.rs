@@ -3,7 +3,7 @@ use std::io::Write;
 
 use anyhow::Context;
 use openpgp::serialize::stream::{Armorer, Signer};
-use openpgp::serialize::stream::{Encryptor, LiteralWriter, Message};
+use openpgp::serialize::stream::{Encryptor2 as Encryptor, LiteralWriter, Message};
 use openpgp::types::KeyFlags;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
