@@ -62,6 +62,7 @@ sh /start.sh
 echo 12345678 > pin
 opgpcard admin --card 0000:00000000 --admin-pin pin import no-passwd.pgp
 opgpcard admin --card 0000:00000000 --admin-pin pin name "John Doe"
+opgpcard admin --card 0000:00000000 --admin-pin pin url "https://example.com/key.pgp"
 ```
 
 ## Functions
@@ -408,6 +409,7 @@ card = Card.open("0000:00000000")
 
 print(f"Card ident: {card.ident}")
 assert card.cardholder == "John Doe"
+assert card.cert_url == "https://example.com/key.pgp"
 ```
 
 Cards can be used for signing data:

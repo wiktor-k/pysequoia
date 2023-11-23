@@ -32,6 +32,12 @@ impl Card {
     }
 
     #[getter]
+    pub fn cert_url(&mut self) -> anyhow::Result<String> {
+        let mut transaction = self.open.transaction()?;
+        Ok(transaction.url()?)
+    }
+
+    #[getter]
     pub fn ident(&mut self) -> anyhow::Result<String> {
         let transaction = self.open.transaction()?;
         Ok(transaction.application_identifier()?.ident())
