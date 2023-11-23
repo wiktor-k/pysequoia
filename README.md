@@ -63,6 +63,9 @@ echo 12345678 > pin
 opgpcard admin --card 0000:00000000 --admin-pin pin import full-key.asc
 opgpcard admin --card 0000:00000000 --admin-pin pin name "John Doe"
 opgpcard admin --card 0000:00000000 --admin-pin pin url "https://example.com/key.pgp"
+opgpcard admin --card 0000:00000000 --admin-pin pin touch --key SIG --policy Fixed
+opgpcard admin --card 0000:00000000 --admin-pin pin touch --key DEC --policy Off
+opgpcard admin --card 0000:00000000 --admin-pin pin touch --key AUT --policy Fixed
 ```
 
 ## Functions
@@ -422,12 +425,15 @@ assert len(keys) == 3
 
 assert keys[0].fingerprint == "ddc3e03c91fb52ca2d95c2444566f2743ed5f382"
 assert "sign" in keys[0].usage
+assert keys[0].touch_required
 
 assert keys[1].fingerprint == "689e152a7420be13dcaf2c142ac27adc1db9395e"
 assert "decrypt" in keys[1].usage
+assert not keys[1].touch_required
 
 assert keys[2].fingerprint == "731fbca93ce9821347bf8e696444723371d3c650"
 assert "authenticate" in keys[2].usage
+assert keys[2].touch_required
 ```
 
 

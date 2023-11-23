@@ -1,5 +1,6 @@
 use card_backend_pcsc::PcscBackend;
 use openpgp_card_sequoia::state::Open;
+use openpgp_card_sequoia::types::{Fingerprint, KeyType};
 use openpgp_card_sequoia::Card as CCard;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
@@ -176,7 +177,12 @@ impl Card {
     }
 
     pub fn __repr__(&mut self) -> anyhow::Result<String> {
-        Ok(format!("<Card ident={}>", self.ident()?))
+        Ok(format!(
+            "<Card ident={} cardholder='{:?}' cert_url='{}'>",
+            self.ident()?,
+            self.cardholder()?,
+            self.cert_url()?
+        ))
     }
 
     #[getter]
@@ -184,24 +190,31 @@ impl Card {
         let transaction = self.open.transaction()?;
         let card_keys = transaction.fingerprints()?;
         let mut keys = Vec::with_capacity(3);
-        if let Some(key) = card_keys.signature() {
-            keys.push(CardKey {
-                fingerprint: hex::encode(key.as_bytes()),
-                usage: vec!["sign".into()],
-            })
-        }
-        if let Some(key) = card_keys.decryption() {
-            keys.push(CardKey {
-                fingerprint: hex::encode(key.as_bytes()),
-                usage: vec!["decrypt".into()],
-            })
-        }
-        if let Some(key) = card_keys.authentication() {
-            keys.push(CardKey {
-                fingerprint: hex::encode(key.as_bytes()),
-                usage: vec!["authenticate".into()],
-            })
-        }
+        let mut append_key = |key: Option<&Fingerprint>, key_type: KeyType| {
+            if let Some(key) = key {
+                let usage = match key_type {
+                    KeyType::Signing => Some("sign"),
+                    KeyType::Decryption => Some("decrypt"),
+                    KeyType::Authentication => Some("authenticate"),
+                    _ => None,
+                }
+                .map(Into::into)
+                .into_iter()
+                .collect();
+                keys.push(CardKey {
+                    fingerprint: hex::encode(key.as_bytes()),
+                    usage,
+                    touch_required: transaction
+                        .user_interaction_flag(key_type)
+                        .unwrap_or_default()
+                        .map(|uif| uif.touch_policy().touch_required())
+                        .unwrap_or_default(),
+                })
+            }
+        };
+        append_key(card_keys.signature(), KeyType::Signing);
+        append_key(card_keys.decryption(), KeyType::Decryption);
+        append_key(card_keys.authentication(), KeyType::Authentication);
         Ok(keys)
     }
 }
@@ -210,6 +223,7 @@ impl Card {
 pub struct CardKey {
     fingerprint: String,
     usage: Vec<String>,
+    touch_required: bool,
 }
 
 #[pymethods]
@@ -224,10 +238,15 @@ impl CardKey {
         self.usage.clone()
     }
 
+    #[getter]
+    fn touch_required(&self) -> bool {
+        self.touch_required
+    }
+
     pub fn __repr__(&self) -> String {
         format!(
-            "<Key fingerprint={} usage={:?}>",
-            self.fingerprint, self.usage
+            "<Key fingerprint={} usage={:?} touch_required={}>",
+            self.fingerprint, self.usage, self.touch_required
         )
     }
 }

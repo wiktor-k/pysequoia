@@ -1494,6 +1494,7 @@ dependencies = [
  "chrono",
  "hex",
  "once_cell",
+ "openpgp-card",
  "openpgp-card-sequoia",
  "openpgp-cert-d",
  "pyo3",
