@@ -61,6 +61,7 @@ gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-pass
 sh /start.sh
 echo 12345678 > pin
 opgpcard admin --card 0000:00000000 --admin-pin pin import no-passwd.pgp
+opgpcard admin --card 0000:00000000 --admin-pin pin name "John Doe"
 ```
 
 ## Functions
@@ -406,7 +407,7 @@ all = Card.all()
 card = Card.open("0000:00000000")
 
 print(f"Card ident: {card.ident}")
-print(f"Cardholder: {card.cardholder}")
+assert card.cardholder == "John Doe"
 ```
 
 Cards can be used for signing data:
