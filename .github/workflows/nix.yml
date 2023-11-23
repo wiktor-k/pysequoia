@@ -1,0 +1,19 @@
+name: Nix
+
+on: [push, pull_request]
+
+jobs:
+  check-and-build:
+     name: Run nix flake check and nix build
+     runs-on: ${{ matrix.os }}
+     continue-on-error: true
+     strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+     steps:
+       - uses: actions/checkout@v3
+       - uses: nixbuild/nix-quick-install-action@v26
+       - run: nix flake check
+       - run: nix build .#pysequoia

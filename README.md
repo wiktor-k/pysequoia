@@ -1,11 +1,11 @@
-<img src="https://codeberg.org/wiktor/pysequoia/raw/branch/main/doc/logo.png" align="right" width="150" height="150" />
+<img src="https://camo.githubusercontent.com/2405a5e252c89f97bb4ec3542e1c56c0571551cf52615dbcf728d38c5279bfc0/68747470733a2f2f636f6465626572672e6f72672f77696b746f722f7079736571756f69612f7261772f6272616e63682f6d61696e2f646f632f6c6f676f2e706e67" align="right" width="150" height="150" />
 
 # PySequoia
 
 [![PyPI version](https://badge.fury.io/py/pysequoia.svg)](https://pypi.org/project/pysequoia/)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/pysequoia.svg?label=PyPI%20downloads)](
 https://pypi.org/project/pysequoia/)
-[![status-badge](https://ci.codeberg.org/api/badges/wiktor/pysequoia/status.svg)](https://ci.codeberg.org/wiktor/pysequoia)
+[![CI](https://github.com/wiktor-k/pysequoia/actions/workflows/ci.yml/badge.svg)](https://github.com/wiktor-k/pysequoia/actions/workflows/ci.yml)
 
 This library provides [OpenPGP][] facilities in Python through the
 [Sequoia PGP][SQ] library. If you need to work with encryption and
@@ -128,11 +128,7 @@ other OpenPGP software (e.g. if a User ID uses SHA-1 in its
 back-signature, it may be missing from the list of User IDs returned
 by this package).
 
-Checking certificates for problems ("linting") [is planned][LINT] but
-not yet implemented.
-
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
-[LINT]: https://codeberg.org/wiktor/pysequoia/issues/52
 
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 
@@ -462,7 +458,7 @@ conditions.
 
 ## Sponsors
 
-My work is supported by these generous organizations (alphabetical
+My work was supported by these generous organizations (alphabetical
 order):
 
   - [nlnet.nl](https://nlnet.nl/)
