@@ -16,14 +16,14 @@ if [ -f /usr/bin/yum ]; then
 
     cd /tmp && \
     curl --fail -sSL -O https://ftp.gnu.org/gnu/gmp/gmp-${GMP_VERSION}.tar.bz2 && \
-    tar xvf gmp-${GMP_VERSION}.tar.bz2 && \
+    tar xf gmp-${GMP_VERSION}.tar.bz2 && \
     cd gmp-${GMP_VERSION} && \
     ./configure --prefix=$PREFIX && \
     make && make install
 
     cd /tmp &&
     curl --fail -sSL -O https://ftp.gnu.org/gnu/nettle/nettle-${NETTLE_VERSION}.tar.gz && \
-    tar xvf nettle-${NETTLE_VERSION}.tar.gz && \
+    tar xf nettle-${NETTLE_VERSION}.tar.gz && \
     cd nettle-${NETTLE_VERSION} && \
     ./configure --prefix=$PREFIX \
       --with-lib-path=$PREFIX/lib \
