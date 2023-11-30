@@ -1,6 +1,17 @@
 name: Maturin
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - '*'
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -23,7 +34,7 @@ jobs:
           args: --release --out dist --find-interpreter
           manylinux: auto
           before-script-linux: .github/workflows/before-script-linux.sh
-          docker-options: -e LIBCLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e LIBCLANG_STATIC_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e CLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/bin/clang
+          docker-options: -e LIBCLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e LIBCLANG_STATIC_PATH=/opt/rh/llvm-toolset-7/root/usr/lib64/ -e CLANG_PATH=/opt/rh/llvm-toolset-7/root/usr/bin/clang -e PCSC_LIB_DIR=/lib
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
