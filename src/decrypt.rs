@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
 
 use openpgp::crypto::SessionKey;
@@ -7,6 +6,8 @@ use openpgp::policy::StandardPolicy as P;
 use openpgp::types::SymmetricAlgorithm;
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
+
+use crate::Decrypted;
 
 #[pyclass]
 #[derive(Clone)]
@@ -19,20 +20,6 @@ impl PyDecryptor {
         Self {
             inner: Arc::new(Mutex::new(inner)),
         }
-    }
-}
-
-#[pyclass]
-#[derive(Clone)]
-pub struct Decrypted {
-    content: Vec<u8>,
-}
-
-#[pymethods]
-impl Decrypted {
-    #[getter]
-    pub fn bytes(&self) -> Cow<[u8]> {
-        Cow::Borrowed(&self.content)
     }
 }
 
