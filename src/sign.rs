@@ -15,16 +15,10 @@ pub fn sign(signer: PySigner, bytes: &[u8]) -> PyResult<Cow<'static, [u8]>> {
     let mut sink = vec![];
     {
         let message = Message::new(&mut sink);
-
-        let message = Armorer::new(message)
-            .kind(openpgp::armor::Kind::Signature)
-            .build()?;
+        let message = Armorer::new(message).build()?;
         let message = Signer::new(message, signer).build()?;
-
         let mut message = LiteralWriter::new(message).build()?;
-
         message.write_all(bytes)?;
-
         message.finalize()?;
     }
 

@@ -120,6 +120,7 @@ from pysequoia import sign
 s = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 print(f"Signed data: {signed}")
+assert "PGP MESSAGE" in str(signed)
 ```
 
 ## Certificates
