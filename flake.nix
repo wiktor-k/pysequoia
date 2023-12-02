@@ -27,14 +27,13 @@
           };
         };
         packages = {
-          # Besides the `src` and `version` arguments, this package.nix could
+          # Besides the `src` and `cargoTomlPkg` arguments, this package.nix could
           # be copied as is to Nixpkgs'
           # pkgs/development/python-modules/pysequoia/default.nix, and should be
           # maintained in parallel to this local version of it.
           pysequoia = pkgs.python3.pkgs.callPackage ./package.nix {
             src = self;
-            # Get the version defined in pyproject.toml
-            version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.version;
+            cargoTomlPkg = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package;
           };
         };
       }
