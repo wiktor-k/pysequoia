@@ -1,7 +1,7 @@
 { lib
 , buildPythonPackage
 , src
-, version
+, cargoTomlPkg
 , pkg-config
 , rustPlatform
 , cargo
@@ -17,7 +17,8 @@
 
 buildPythonPackage rec {
   pname = "pysequoia";
-  inherit src version;
+  inherit src;
+  inherit (cargoTomlPkg) version;
   pyproject = true;
 
   # This attribute is defined differently in Nixpkgs - using
@@ -50,11 +51,13 @@ buildPythonPackage rec {
 
   pythonImportsCheck = [ "pysequoia" ];
 
-  meta = with lib; {
-    description = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.description;
-    downloadPage = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.repository;
-    homepage = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.homepage;
-    license = licenses.asl20;
-    maintainers = with maintainers; [ doronbehar ];
+  meta = {
+    inherit (cargoTomlPkg)
+      description
+      homepage
+    ;
+    downloadPage = cargoTomlPkg.repository;
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ doronbehar ];
   };
 }
