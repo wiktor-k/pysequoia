@@ -1,4 +1,4 @@
-<img src="https://camo.githubusercontent.com/2405a5e252c89f97bb4ec3542e1c56c0571551cf52615dbcf728d38c5279bfc0/68747470733a2f2f636f6465626572672e6f72672f77696b746f722f7079736571756f69612f7261772f6272616e63682f6d61696e2f646f632f6c6f676f2e706e67" align="right" width="150" height="150" />
+<img src="https://github.com/wiktor-k/pysequoia/raw/main/doc/logo.png" align="right" width="150" height="150" />
 
 # PySequoia
 
