@@ -128,17 +128,18 @@ assert "PGP MESSAGE" in str(signed)
 Verifies signed data and returns verified data:
 
 ```python
-from pysequoia import Store, verify
+from pysequoia import verify
 
 # sign some data
 signing_key = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 
-# verify the data
-store = Store("/tmp/store")
-store.put(signing_key)
+def get_certs(key_ids):
+  print(f"For verification, we need these keys: {key_ids}")
+  return [signing_key]
 
-result = verify(signed, store)
+# verify the data
+result = verify(signed, get_certs)
 assert result.bytes.decode("utf8") == "data to be signed"
 ```
 
@@ -230,7 +231,6 @@ Merges packets from a new version into an old version of a certificate:
 old = Cert.from_file("wiktor.asc")
 new = Cert.from_file("wiktor-fresh.asc")
 merged = old.merge(new)
-print(f"Merged, updated cert: {merged}")
 ```
 
 ### User IDs
@@ -384,37 +384,6 @@ assert public_parts.secrets is None
 # to export secret parts use the following:
 private_parts = Cert.from_bytes(f"{c.secrets}".encode("utf8"))
 assert private_parts.has_secret_keys
-```
-
-## Certificate management
-
-### CertD integration
-
-This library exposes [OpenPGP Certificate Directory][CERT-D]
-integration, which allows storing and retrieving OpenPGP certificates
-in a persistent way directly in the file system.
-
-Note that this will *not* allow you to read GnuPG-specific key
-directories. Cert-D [does not allow certificate removal][NO-REMOV].
-
-[CERT-D]: https://sequoia-pgp.gitlab.io/pgp-cert-d/
-[NO-REMOV]: https://gitlab.com/sequoia-pgp/pgp-cert-d/-/issues/33
-
-```python
-from pysequoia import Store
-
-cert = Cert.from_file("wiktor.asc")
-s = Store("/tmp/store")
-s.put(cert)
-assert s.get(cert.fingerprint) != None
-```
-
-The certificate is now stored in the given directory and can be
-retrieved later by its fingerprint:
-
-```python
-s = Store("/tmp/store")
-assert s.get("653909a2f0e37c106f5faf546c8857e0d8e8f074") != None
 ```
 
 ## OpenPGP Cards

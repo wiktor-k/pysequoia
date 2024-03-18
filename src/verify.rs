@@ -3,11 +3,10 @@ use openpgp::{parse::stream::*, policy::StandardPolicy};
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
-use crate::store::Store;
 use crate::Decrypted;
 
 #[pyfunction]
-pub fn verify(bytes: &[u8], store: &Store) -> PyResult<Decrypted> {
+pub fn verify(bytes: &[u8], store: Py<PyAny>) -> PyResult<Decrypted> {
     let helper = PyVerifier { store };
 
     let policy = &StandardPolicy::new();
@@ -20,17 +19,22 @@ pub fn verify(bytes: &[u8], store: &Store) -> PyResult<Decrypted> {
     Ok(Decrypted { content: sink })
 }
 
-struct PyVerifier<'a> {
-    store: &'a Store,
+struct PyVerifier {
+    store: Py<PyAny>,
 }
 
-impl VerificationHelper for PyVerifier<'_> {
+impl VerificationHelper for PyVerifier {
     fn get_certs(&mut self, ids: &[openpgp::KeyHandle]) -> openpgp::Result<Vec<openpgp::Cert>> {
         let mut certs = vec![];
-        for id in ids {
-            if let Some(cert) = self.store.get(id.to_string())? {
-                certs.push(cert.cert().clone());
-            }
+        let result: Vec<crate::cert::Cert> = Python::with_gil(|py| {
+            let str_ids = ids
+                .iter()
+                .map(|key_id| format!("{:x}", key_id))
+                .collect::<Vec<_>>();
+            self.store.call1(py, (str_ids,))?.extract(py)
+        })?;
+        for cert in result.into_iter() {
+            certs.push(cert.cert().clone());
         }
         Ok(certs)
     }
