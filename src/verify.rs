@@ -3,11 +3,11 @@ use openpgp::{parse::stream::*, policy::StandardPolicy};
 use pyo3::prelude::*;
 use sequoia_openpgp as openpgp;
 
-use crate::Decrypted;
+use crate::{Decrypted, ValidSig};
 
 #[pyfunction]
 pub fn verify(bytes: &[u8], store: Py<PyAny>) -> PyResult<Decrypted> {
-    let helper = PyVerifier { store };
+    let helper = PyVerifier::from_callback(store);
 
     let policy = &StandardPolicy::new();
 
@@ -16,11 +16,31 @@ pub fn verify(bytes: &[u8], store: Py<PyAny>) -> PyResult<Decrypted> {
     let mut sink = vec![];
     std::io::copy(&mut verifier, &mut sink)?;
 
-    Ok(Decrypted { content: sink })
+    let helper = verifier.into_helper();
+
+    Ok(Decrypted {
+        content: sink,
+        valid_sigs: helper.valid_sigs,
+    })
 }
 
-struct PyVerifier {
+#[derive(Debug, Clone)]
+pub struct PyVerifier {
     store: Py<PyAny>,
+    valid_sigs: Vec<ValidSig>,
+}
+
+impl PyVerifier {
+    pub fn from_callback(store: Py<PyAny>) -> Self {
+        Self {
+            store,
+            valid_sigs: vec![],
+        }
+    }
+
+    pub fn valid_sigs(self) -> Vec<ValidSig> {
+        self.valid_sigs
+    }
 }
 
 impl VerificationHelper for PyVerifier {
@@ -40,19 +60,23 @@ impl VerificationHelper for PyVerifier {
     }
 
     fn check(&mut self, structure: MessageStructure) -> openpgp::Result<()> {
-        let mut good = false;
+        let mut valid_sigs = vec![];
         for (i, layer) in structure.into_iter().enumerate() {
-            match (i, layer) {
-                (0, MessageLayer::SignatureGroup { results }) => match results.into_iter().next() {
-                    Some(Ok(_)) => good = true,
-                    Some(Err(e)) => return Err(openpgp::Error::from(e).into()),
-                    None => return Err(anyhow::anyhow!("No signature")),
-                },
+            match layer {
+                MessageLayer::Encryption { .. } if i == 0 => (),
+                MessageLayer::Compression { .. } if i == 1 => (),
+                MessageLayer::SignatureGroup { results } if (0..2).contains(&i) => {
+                    for result in results.into_iter().flatten() {
+                        valid_sigs.push(result.into());
+                    }
+                }
                 _ => return Err(anyhow::anyhow!("Unexpected message structure")),
             }
         }
 
-        if good {
+        self.valid_sigs = valid_sigs;
+
+        if !self.valid_sigs.is_empty() {
             Ok(())
         } else {
             Err(anyhow::anyhow!("Signature verification failed"))

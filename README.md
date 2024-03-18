@@ -105,9 +105,17 @@ content = "Red Green Blue"
 
 encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
 
-decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted)
+def get_certs(key_ids):
+  print(f"For verification after decryption, we need these keys: {key_ids}")
+  return [sender]
+
+decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted, store = get_certs)
 
 assert content == decrypted.bytes.decode("utf8");
+print(decrypted.valid_sigs)
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert decrypted.valid_sigs[0].certificate == sender.fingerprint
+assert decrypted.valid_sigs[0].signing_key == sender.fingerprint
 ```
 
 ### sign
@@ -141,6 +149,10 @@ def get_certs(key_ids):
 # verify the data
 result = verify(signed, get_certs)
 assert result.bytes.decode("utf8") == "data to be signed"
+
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
 ```
 
 ## Certificates
