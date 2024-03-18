@@ -77,6 +77,43 @@ All examples assume that these basic classes have been imported:
 from pysequoia import Cert
 ```
 
+### sign
+
+Signs data and returns armored output:
+
+```python
+from pysequoia import sign
+
+s = Cert.from_file("signing-key.asc")
+signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
+print(f"Signed data: {signed}")
+assert "PGP MESSAGE" in str(signed)
+```
+
+### verify
+
+Verifies signed data and returns verified data:
+
+```python
+from pysequoia import verify
+
+# sign some data
+signing_key = Cert.from_file("signing-key.asc")
+signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
+
+def get_certs(key_ids):
+  print(f"For verification, we need these keys: {key_ids}")
+  return [signing_key]
+
+# verify the data
+result = verify(signed, get_certs)
+assert result.bytes.decode("utf8") == "data to be signed"
+
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+```
+
 ### encrypt
 
 Signs and encrypts a string to one or more recipients:
@@ -116,43 +153,6 @@ print(decrypted.valid_sigs)
 # let's check the valid signature's certificate and signing subkey fingerprints
 assert decrypted.valid_sigs[0].certificate == sender.fingerprint
 assert decrypted.valid_sigs[0].signing_key == sender.fingerprint
-```
-
-### sign
-
-Signs data and returns armored output:
-
-```python
-from pysequoia import sign
-
-s = Cert.from_file("signing-key.asc")
-signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
-print(f"Signed data: {signed}")
-assert "PGP MESSAGE" in str(signed)
-```
-
-### verify
-
-Verifies signed data and returns verified data:
-
-```python
-from pysequoia import verify
-
-# sign some data
-signing_key = Cert.from_file("signing-key.asc")
-signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
-
-def get_certs(key_ids):
-  print(f"For verification, we need these keys: {key_ids}")
-  return [signing_key]
-
-# verify the data
-result = verify(signed, get_certs)
-assert result.bytes.decode("utf8") == "data to be signed"
-
-# let's check the valid signature's certificate and signing subkey fingerprints
-assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
-assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
 ```
 
 ## Certificates
