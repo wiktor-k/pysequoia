@@ -77,39 +77,6 @@ All examples assume that these basic classes have been imported:
 from pysequoia import Cert
 ```
 
-### encrypt
-
-Signs and encrypts a string to one or more recipients:
-
-```python
-from pysequoia import encrypt
-
-s = Cert.from_file("passwd.pgp")
-r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-bytes = "content to encrypt".encode("utf8")
-encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = bytes).decode("utf8")
-print(f"Encrypted data: {encrypted}")
-```
-
-### decrypt
-
-Decrypts data:
-
-```python
-from pysequoia import decrypt
-
-sender = Cert.from_file("no-passwd.pgp")
-receiver = Cert.from_file("passwd.pgp")
-
-content = "Red Green Blue"
-
-encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
-
-decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted)
-
-assert content == decrypted.bytes.decode("utf8");
-```
-
 ### sign
 
 Signs data and returns armored output:
@@ -135,13 +102,87 @@ signing_key = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 
 def get_certs(key_ids):
+  # key_ids is an array of required signing keys
   print(f"For verification, we need these keys: {key_ids}")
   return [signing_key]
 
 # verify the data
 result = verify(signed, get_certs)
 assert result.bytes.decode("utf8") == "data to be signed"
+
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
 ```
+
+The function that returns certificates (here `get_certs`) may return more certificates than necessary.
+
+`verify` succeeds if *at least one* correct signature has been made by any of the certificates supplied. If you need more advanced policies they can be implemented by inspecting the `valid_sigs` property.
+
+### encrypt
+
+Signs and encrypts a string to one or more recipients:
+
+```python
+from pysequoia import encrypt
+
+s = Cert.from_file("passwd.pgp")
+r = Cert.from_bytes(open("wiktor.asc", "rb").read())
+bytes = "content to encrypt".encode("utf8")
+encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = bytes).decode("utf8")
+print(f"Encrypted data: {encrypted}")
+```
+
+The `signer` argument is optional and when omitted the function will return an unsigned (but encrypted) message.
+
+### decrypt
+
+Decrypts plain data:
+
+```python
+from pysequoia import decrypt
+
+sender = Cert.from_file("no-passwd.pgp")
+receiver = Cert.from_file("passwd.pgp")
+
+content = "Red Green Blue"
+
+encrypted = encrypt(recipients = [receiver], bytes = content.encode("utf8"))
+
+decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted)
+
+assert content == decrypted.bytes.decode("utf8");
+
+# this message did not contain any valid signatures
+assert len(decrypted.valid_sigs) == 0
+```
+
+Decrypt can also verify signatures while decrypting:
+
+```python
+from pysequoia import decrypt
+
+sender = Cert.from_file("no-passwd.pgp")
+receiver = Cert.from_file("passwd.pgp")
+
+content = "Red Green Blue"
+
+encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
+
+def get_certs(key_ids):
+  print(f"For verification after decryption, we need these keys: {key_ids}")
+  return [sender]
+
+decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted, store = get_certs)
+
+assert content == decrypted.bytes.decode("utf8");
+
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert decrypted.valid_sigs[0].certificate == sender.fingerprint
+assert decrypted.valid_sigs[0].signing_key == sender.fingerprint
+```
+
+Here, the same remarks as to [`verify`](#verify) also apply.
 
 ## Certificates
 

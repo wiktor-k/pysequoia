@@ -13,9 +13,9 @@ use crate::signer::PySigner;
 
 #[pyfunction]
 pub fn encrypt(
-    signer: PySigner,
     recipients: Vec<PyRef<Cert>>,
     bytes: &[u8],
+    signer: Option<PySigner>,
 ) -> PyResult<Cow<'static, [u8]>> {
     let mode = KeyFlags::empty()
         .set_storage_encryption()
@@ -66,7 +66,7 @@ pub fn encrypt(
 
     let message = Armorer::new(message).build()?;
 
-    let message = Encryptor::for_recipients(
+    let mut message = Encryptor::for_recipients(
         message,
         recipient_keys
             .iter()
@@ -75,8 +75,9 @@ pub fn encrypt(
     .build()
     .context("Failed to create encryptor")?;
 
-    let message = Signer::new(message, signer).build()?;
-
+    if let Some(signer) = signer {
+        message = Signer::new(message, signer).build()?;
+    }
     let mut message = LiteralWriter::new(message)
         .build()
         .context("Failed to create literal writer")?;

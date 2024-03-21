@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use openpgp::parse::stream::GoodChecksum;
 use openpgp::serialize::stream::Armorer;
 use pyo3::prelude::*;
 
@@ -34,8 +35,46 @@ where
 }
 
 #[pyclass]
+#[derive(Debug, Clone)]
+pub struct ValidSig {
+    certificate: String,
+    signing_key: String,
+}
+
+impl From<GoodChecksum<'_>> for ValidSig {
+    fn from(value: GoodChecksum<'_>) -> Self {
+        Self {
+            certificate: format!("{:x}", value.ka.cert().fingerprint()),
+            signing_key: format!("{:x}", value.ka.fingerprint()),
+        }
+    }
+}
+
+#[pymethods]
+impl ValidSig {
+    #[getter]
+    fn certificate(&self) -> &str {
+        &self.certificate
+    }
+
+    #[getter]
+    fn signing_key(&self) -> &str {
+        &self.signing_key
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!(
+            "<ValidSig certificate={} signing_key={}>",
+            self.certificate(),
+            self.signing_key()
+        )
+    }
+}
+
+#[pyclass]
 #[derive(Clone)]
 pub struct Decrypted {
+    valid_sigs: Vec<ValidSig>,
     content: Vec<u8>,
 }
 
@@ -44,6 +83,11 @@ impl Decrypted {
     #[getter]
     pub fn bytes(&self) -> Cow<[u8]> {
         Cow::Borrowed(&self.content)
+    }
+
+    #[getter]
+    pub fn valid_sigs(&self) -> Vec<ValidSig> {
+        self.valid_sigs.clone()
     }
 }
 
