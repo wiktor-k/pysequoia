@@ -1,8 +1,8 @@
 FROM rust
 
-RUN cargo install cargo-audit
+RUN cargo install --locked cargo-deny
 
 COPY . /build
 WORKDIR /build
 
-RUN cargo audit
+RUN cargo deny check

@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: 2023 David Runge <dave@sleepmap.de>
+# SPDX-FileCopyrightText: 2023 Wiktor Kwapisiewicz <wiktor@metacode.biz>
+# SPDX-License-Identifier: CC0-1.0
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = [
+  "RUSTSEC-2023-0071",
+]
+
+[bans]
+deny = [
+]
+
+[licenses]
+version = 2
+allow = [
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "MIT",
+  "Unicode-DFS-2016",
+  "BSL-1.0",
+  "CC0-1.0",
+  "ISC",
+  "BSD-3-Clause",
+  "LGPL-3.0",
+]
