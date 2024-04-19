@@ -427,6 +427,21 @@ private_parts = Cert.from_bytes(f"{c.secrets}".encode("utf8"))
 assert private_parts.has_secret_keys
 ```
 
+## Signatures
+
+Detached signatures can be read directly from files (`Sig.from_file`) or bytes in memory (`Sig.from_bytes`):
+
+```python
+from pysequoia import Sig
+
+sig = Sig.from_file("sig.pgp")
+
+print(f"Parsed signature: {repr(sig)}")
+
+assert sig.issuer_fpr == "e8f23996f23218640cb44cbe75cf5ac418b8e74c"
+assert sig.created == datetime.fromisoformat("2023-07-19T18:14:01+00:00")
+```
+
 ## OpenPGP Cards
 
 There's an experimental feature allowing communication with OpenPGP
@@ -514,12 +529,3 @@ Unless you explicitly state otherwise, any contribution intentionally
 submitted for inclusion in the package by you shall be under the terms
 and conditions of this license, without any additional terms or
 conditions.
-
-## Sponsors
-
-My work was supported by these generous organizations (alphabetical
-order):
-
-  - [nlnet.nl](https://nlnet.nl/)
-  - [pep.foundation](https://pep.foundation/)
-  - [sovereigntechfund.de](https://sovereigntechfund.de/en.html)

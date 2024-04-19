@@ -92,9 +92,10 @@ impl Decrypted {
 }
 
 #[pymodule]
-fn pysequoia(_py: Python, m: &PyModule) -> PyResult<()> {
+fn pysequoia(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<cert::Cert>()?;
     m.add_class::<card::Card>()?;
+    m.add_class::<signature::Sig>()?;
     m.add_class::<notation::Notation>()?;
     m.add_function(wrap_pyfunction!(sign::sign, m)?)?;
     m.add_function(wrap_pyfunction!(encrypt::encrypt, m)?)?;
