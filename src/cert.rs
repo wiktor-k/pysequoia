@@ -82,7 +82,7 @@ impl Cert {
     }
 
     #[staticmethod]
-    pub fn generate(user_id: Option<&str>, user_ids: Option<Vec<&str>>) -> PyResult<Self> {
+    pub fn generate(user_id: Option<&str>, user_ids: Option<Vec<String>>) -> PyResult<Self> {
         use openpgp::types::KeyFlags;
         let mut builder = CertBuilder::new()
             .set_cipher_suite(CipherSuite::default())
@@ -144,7 +144,7 @@ impl Cert {
         &mut self,
         user_id: &UserId,
         mut certifier: PySigner,
-    ) -> PyResult<crate::signature::Signature> {
+    ) -> PyResult<crate::signature::Sig> {
         let userid = UserID::from(user_id.__str__());
         let builder = signature::SignatureBuilder::new(SignatureType::CertificationRevocation);
         Ok(userid.bind(&mut certifier, &self.cert, builder)?.into())
@@ -246,13 +246,13 @@ impl Cert {
         Ok(self.cert.to_vec()?.into())
     }
 
-    pub fn revoke(&self, mut certifier: PySigner) -> PyResult<crate::signature::Signature> {
+    pub fn revoke(&self, mut certifier: PySigner) -> PyResult<crate::signature::Sig> {
         let signature = self.cert.revoke(
             &mut certifier,
             openpgp::types::ReasonForRevocation::Unspecified,
             &[],
         )?;
-        Ok(crate::signature::Signature::new(signature))
+        Ok(crate::signature::Sig::new(signature))
     }
 
     #[getter]
