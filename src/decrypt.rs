@@ -39,6 +39,7 @@ impl PyDecryptor {
 }
 
 #[pyfunction]
+#[pyo3(signature = (decryptor, bytes, store=None))]
 pub fn decrypt(
     mut decryptor: PyDecryptor,
     bytes: &[u8],

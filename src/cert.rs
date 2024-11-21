@@ -82,6 +82,7 @@ impl Cert {
     }
 
     #[staticmethod]
+    #[pyo3(signature = (user_id=None, user_ids=None))]
     pub fn generate(user_id: Option<&str>, user_ids: Option<Vec<String>>) -> PyResult<Self> {
         use openpgp::types::KeyFlags;
         let mut builder = CertBuilder::new()

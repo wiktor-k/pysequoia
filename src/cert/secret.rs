@@ -33,6 +33,7 @@ impl SecretCert {
         Ok(String::from_utf8(armored.to_vec()?)?)
     }
 
+    #[pyo3(signature = (password=None))]
     pub fn signer(&self, password: Option<String>) -> PyResult<PySigner> {
         if let Some(key) = self
             .cert
@@ -55,6 +56,7 @@ impl SecretCert {
         }
     }
 
+    #[pyo3(signature = (password=None))]
     pub fn certifier(&self, password: Option<String>) -> PyResult<PySigner> {
         if let Some(key) = self
             .cert
@@ -77,6 +79,7 @@ impl SecretCert {
         }
     }
 
+    #[pyo3(signature = (password=None))]
     pub fn decryptor(&self, password: Option<String>) -> PyResult<decrypt::PyDecryptor> {
         if let Some(key) = self
             .cert

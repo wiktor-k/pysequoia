@@ -5,9 +5,9 @@ set -euxo pipefail
 if [ -f /usr/bin/yum ]; then
     echo Manylinux2010 build
 
-    yum install -y centos-release-scl llvm-toolset-7 flex
+    #yum install -y centos-release-scl llvm-toolset-7 flex
 
-    source /opt/rh/llvm-toolset-7/enable
+    #source /opt/rh/llvm-toolset-7/enable
 
     PREFIX=/
 
