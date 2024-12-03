@@ -17,21 +17,14 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1"
-card-backend-pcsc = "0.5"
 chrono = "0.4"
 hex = "0.4.3"
-once_cell = "1.19"
-openpgp-card = "0.4.2"
-openpgp-card-sequoia = { version = "0.2.1", default-features = false }
-pyo3 = { version = "0.21", features = ["extension-module", "anyhow", "chrono"] }
-sequoia-openpgp = { version = "1.20", default-features = false, features = ["compression"] }
+once_cell = "1.20"
 testresult = "0.4"
-
-[target.'cfg(target_os = "linux")'.dependencies]
-sequoia-openpgp = { version = "1", default-features = false, features = ["crypto-nettle"] }
-
-[target.'cfg(windows)'.dependencies]
-sequoia-openpgp = { version = "1", default-features = false, features = ["crypto-cng"] }
-
-[target.'cfg(not(any(target_os = "linux", windows)))'.dependencies]
 sequoia-openpgp = { version = "1", default-features = false, features = [ "crypto-rust", "allow-experimental-crypto", "allow-variable-time-crypto"] }
+
+[dependencies.pyo3]
+version = "0.23"
+# "py-clone" feature added to keep the original behavior but it'd be good to avoid it
+# see: https://github.com/PyO3/pyo3/pull/4095
+features = ["extension-module", "anyhow", "chrono", "py-clone"]

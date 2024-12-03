@@ -46,7 +46,7 @@ toolchain][RUSTUP] is necessary for the installation to succeed.
 This entire document is used for end-to-end integration tests that
 exercise the package's API surface.
 
-The tests assume that these keys and cards exist:
+The tests assume that these keys exist:
 
 ```bash
 # generate a key with password
@@ -56,17 +56,6 @@ gpg --batch --pinentry-mode loopback --passphrase hunter22 --export-secret-key p
 # generate a key without password
 gpg --batch --pinentry-mode loopback --passphrase '' --quick-gen-key no-passwd@example.com future-default
 gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-passwd@example.com > no-passwd.pgp
-
-# initialize dummy OpenPGP Card
-sh /start.sh
-echo 12345678 > pin
-CARD_ADMIN="opgpcard admin --card 0000:00000000 --admin-pin pin"
-$CARD_ADMIN import full-key.asc
-$CARD_ADMIN name "John Doe"
-$CARD_ADMIN url "https://example.com/key.pgp"
-$CARD_ADMIN touch --key SIG --policy Fixed
-$CARD_ADMIN touch --key DEC --policy Off
-$CARD_ADMIN touch --key AUT --policy Fixed
 ```
 
 ## Functions
@@ -441,81 +430,6 @@ print(f"Parsed signature: {repr(sig)}")
 assert sig.issuer_fpr == "e8f23996f23218640cb44cbe75cf5ac418b8e74c"
 assert sig.created == datetime.fromisoformat("2023-07-19T18:14:01+00:00")
 ```
-
-## OpenPGP Cards
-
-There's an experimental feature allowing communication with OpenPGP
-Cards (like YubiKey or Nitrokey).
-
-```python
-from pysequoia import Card
-
-# enumerate all cards
-all = Card.all()
-
-# open card by card ident
-card = Card.open("0000:00000000")
-
-print(f"Card ident: {card.ident}")
-assert card.cardholder == "John Doe"
-assert card.cert_url == "https://example.com/key.pgp"
-```
-
-Cards provide `keys` property that can be used to see which keys are imported
-on the card:
-
-```python
-keys = card.keys
-print(f"Keys: {keys}")
-assert len(keys) == 3
-
-assert keys[0].fingerprint == "ddc3e03c91fb52ca2d95c2444566f2743ed5f382"
-assert "sign" in keys[0].usage
-assert keys[0].touch_required
-
-assert keys[1].fingerprint == "689e152a7420be13dcaf2c142ac27adc1db9395e"
-assert "decrypt" in keys[1].usage
-assert not keys[1].touch_required
-
-assert keys[2].fingerprint == "731fbca93ce9821347bf8e696444723371d3c650"
-assert "authenticate" in keys[2].usage
-assert keys[2].touch_required
-```
-
-
-Cards can be used for signing data:
-
-```python
-signer = card.signer("123456")
-
-signed = sign(signer, "data to be signed".encode("utf8"))
-print(f"Signed data: {signed}")
-```
-
-As well as for decryption:
-
-```python
-decryptor = card.decryptor("123456")
-
-sender = Cert.from_file("passwd.pgp")
-receiver = Cert.from_file("full-key.asc")
-
-content = "Red Green Blue"
-
-encrypted = encrypt(signer = sender.secrets.signer("hunter22"), recipients = [receiver], bytes = content.encode("utf8"))
-
-print(f"Encrypted data: {encrypted}")
-
-decrypted = decrypt(decryptor = decryptor, bytes = encrypted)
-
-assert content == decrypted.bytes.decode("utf8");
-```
-
-Note that while this package allows using cards for signing and
-decryption, the provisioning process is not supported.  [OpenPGP card
-tools][] can be used to initialize the card.
-
-[OpenPGP card tools]: https://crates.io/crates/openpgp-card-tools
 
 ## License
 

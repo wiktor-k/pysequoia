@@ -9,7 +9,6 @@
 , bzip2
 , nettle
 , openssl
-, pcsclite
 , stdenv
 , darwin
 , libiconv
@@ -42,11 +41,9 @@ buildPythonPackage rec {
   ] ++ lib.optionals stdenv.isDarwin [
     darwin.apple_sdk.frameworks.CoreFoundation
     darwin.apple_sdk.frameworks.Security
-    darwin.apple_sdk.frameworks.PCSC
     libiconv
   ] ++ lib.optionals stdenv.isLinux [
     nettle
-    pcsclite
   ];
 
   pythonImportsCheck = [ "pysequoia" ];

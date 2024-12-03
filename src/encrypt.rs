@@ -12,6 +12,7 @@ use crate::cert::Cert;
 use crate::signer::PySigner;
 
 #[pyfunction]
+#[pyo3(signature = (recipients, bytes, signer=None))]
 pub fn encrypt(
     recipients: Vec<PyRef<Cert>>,
     bytes: &[u8],
