@@ -1,9 +1,9 @@
-FROM registry.gitlab.com/openpgp-card/virtual-cards/opcard-rs-tools
+FROM rust
 
 RUN apt-get update -y -qq && \
-    apt-get install -y -qq --no-install-recommends python-is-python3 python3-venv clang make pkg-config nettle-dev libssl-dev ca-certificates pip patchelf pcscd libpcsclite-dev && \
+    apt-get install -y -qq --no-install-recommends python-is-python3 python3-venv clang make pkg-config libssl-dev ca-certificates pip patchelf && \
     apt-get clean
-RUN cargo install --locked tangler openpgp-card-tools
+RUN cargo install --locked tangler
 
 COPY . /build
 WORKDIR /build

@@ -17,12 +17,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1"
-card-backend-pcsc = "0.5"
 chrono = "0.4"
 hex = "0.4.3"
 once_cell = "1.20"
-openpgp-card = "0.5.0"
-openpgp-card-sequoia = { version = "0.2.2", default-features = false }
 testresult = "0.4"
 sequoia-openpgp = { version = "1", default-features = false, features = [ "crypto-rust", "allow-experimental-crypto", "allow-variable-time-crypto"] }
 

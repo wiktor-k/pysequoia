@@ -4,7 +4,6 @@ use openpgp::parse::stream::GoodChecksum;
 use openpgp::serialize::stream::Armorer;
 use pyo3::prelude::*;
 
-mod card;
 mod cert;
 mod decrypt;
 mod encrypt;
@@ -94,7 +93,6 @@ impl Decrypted {
 #[pymodule]
 fn pysequoia(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<cert::Cert>()?;
-    m.add_class::<card::Card>()?;
     m.add_class::<signature::Sig>()?;
     m.add_class::<notation::Notation>()?;
     m.add_function(wrap_pyfunction!(sign::sign, m)?)?;

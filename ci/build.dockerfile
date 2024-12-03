@@ -4,7 +4,7 @@ FROM debian
 ARG RUST_TOOLCHAIN=stable
 
 RUN apt-get update -y -qq && \
-    apt-get install -y -qq --no-install-recommends curl python3 python3-venv clang make pkg-config nettle-dev libssl-dev ca-certificates pip pcscd libpcsclite-dev codespell > /dev/null && \
+    apt-get install -y -qq --no-install-recommends curl python3 python3-venv clang make pkg-config nettle-dev libssl-dev ca-certificates pip codespell > /dev/null && \
     apt-get clean
 
 ENV RUSTUP_HOME=/usr/local/rustup \
