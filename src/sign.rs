@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::io::Write;
 
+use openpgp::armor;
 use openpgp::serialize::stream::Armorer;
 use openpgp::serialize::stream::{LiteralWriter, Message};
 use pyo3::prelude::*;
@@ -8,16 +9,40 @@ use sequoia_openpgp as openpgp;
 
 use crate::signer::PySigner;
 
+#[pyclass(eq, eq_int)]
+#[derive(PartialEq)]
+pub enum SignatureMode {
+    #[pyo3(name = "INLINE")]
+    Inline,
+    #[pyo3(name = "DETACHED")]
+    Detached,
+    #[pyo3(name = "CLEAR")]
+    Clear,
+}
+
 #[pyfunction]
-pub fn sign(signer: PySigner, bytes: &[u8]) -> PyResult<Cow<'static, [u8]>> {
+#[pyo3(signature = (signer, bytes, *, mode=&SignatureMode::Inline))]
+pub fn sign(signer: PySigner, bytes: &[u8], mode: &SignatureMode) -> PyResult<Cow<'static, [u8]>> {
     use openpgp::serialize::stream::Signer;
 
     let mut sink = vec![];
     {
         let message = Message::new(&mut sink);
-        let message = Armorer::new(message).build()?;
-        let message = Signer::new(message, signer).build()?;
-        let mut message = LiteralWriter::new(message).build()?;
+        let message = if mode == &SignatureMode::Inline {
+            Armorer::new(message).kind(armor::Kind::Message).build()?
+        } else if mode == &SignatureMode::Detached {
+            Armorer::new(message).kind(armor::Kind::Signature).build()?
+        } else {
+            message
+        };
+        let message = Signer::new(message, signer);
+        let mut message = if mode == &SignatureMode::Inline {
+            LiteralWriter::new(message.build()?).build()?
+        } else if mode == &SignatureMode::Detached {
+            message.detached().build()?
+        } else {
+            message.cleartext().build()?
+        };
         message.write_all(bytes)?;
         message.finalize()?;
     }

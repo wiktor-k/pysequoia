@@ -71,12 +71,20 @@ from pysequoia import Cert
 Signs data and returns armored output:
 
 ```python
-from pysequoia import sign
+from pysequoia import sign, SignatureMode
 
 s = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 print(f"Signed data: {signed}")
 assert "PGP MESSAGE" in str(signed)
+
+detached = sign(s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED)
+print(f"Detached signature: {detached}")
+assert "PGP SIGNATURE" in str(detached)
+
+clear = sign(s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.CLEAR)
+print(f"Clear signed: {clear}")
+assert "PGP SIGNED MESSAGE" in str(clear)
 ```
 
 ### verify
