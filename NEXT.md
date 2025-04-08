@@ -3,10 +3,8 @@
 v0.1.26
 
 New:
-  - `SignatureMode` - Expose enum to control signature format
 
 Changed:
-  - `sign` - Add support of cleartext and detached signatures
 
 Removed:
 

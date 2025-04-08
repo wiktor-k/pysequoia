@@ -1,11 +1,10 @@
 use std::borrow::Cow;
 use std::io::Write;
 
-use openpgp::armor;
-use openpgp::serialize::stream::Armorer;
-use openpgp::serialize::stream::{LiteralWriter, Message};
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
+use sequoia_openpgp::armor;
+use sequoia_openpgp::serialize::stream::Armorer;
+use sequoia_openpgp::serialize::stream::{LiteralWriter, Message};
 
 use crate::signer::PySigner;
 
@@ -23,7 +22,7 @@ pub enum SignatureMode {
 #[pyfunction]
 #[pyo3(signature = (signer, bytes, *, mode=&SignatureMode::Inline))]
 pub fn sign(signer: PySigner, bytes: &[u8], mode: &SignatureMode) -> PyResult<Cow<'static, [u8]>> {
-    use openpgp::serialize::stream::Signer;
+    use sequoia_openpgp::serialize::stream::Signer;
 
     let mut sink = vec![];
     {
@@ -35,7 +34,7 @@ pub fn sign(signer: PySigner, bytes: &[u8], mode: &SignatureMode) -> PyResult<Co
         } else {
             message
         };
-        let message = Signer::new(message, signer);
+        let message = Signer::new(message, signer)?;
         let mut message = if mode == &SignatureMode::Inline {
             LiteralWriter::new(message.build()?).build()?
         } else if mode == &SignatureMode::Detached {

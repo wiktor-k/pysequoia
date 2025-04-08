@@ -1,6 +1,5 @@
-use openpgp::packet::signature::subpacket::NotationData;
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
+use sequoia_openpgp::packet::signature::subpacket::NotationData;
 
 #[pyclass]
 #[derive(Clone)]

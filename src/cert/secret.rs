@@ -1,21 +1,19 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use openpgp::policy::Policy;
-use openpgp::serialize::SerializeInto;
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
+use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
 
 use crate::decrypt;
 use crate::signer::PySigner;
 
 #[pyclass]
 pub struct SecretCert {
-    cert: openpgp::cert::Cert,
+    cert: cert::Cert,
     policy: Arc<Mutex<Box<dyn Policy>>>,
 }
 
 impl SecretCert {
-    pub fn new(cert: openpgp::cert::Cert, policy: &Arc<Mutex<Box<dyn Policy>>>) -> Self {
+    pub fn new(cert: cert::Cert, policy: &Arc<Mutex<Box<dyn Policy>>>) -> Self {
         Self {
             cert,
             policy: Arc::clone(policy),

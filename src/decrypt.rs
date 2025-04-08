@@ -1,11 +1,12 @@
 use std::sync::{Arc, Mutex};
 
-use openpgp::crypto::SessionKey;
-use openpgp::parse::{stream::*, Parse};
-use openpgp::policy::StandardPolicy as P;
-use openpgp::types::SymmetricAlgorithm;
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
+use sequoia_openpgp::crypto::{Decryptor, SessionKey};
+use sequoia_openpgp::packet::{PKESK, SKESK};
+use sequoia_openpgp::parse::{stream::*, Parse};
+use sequoia_openpgp::policy::StandardPolicy as P;
+use sequoia_openpgp::types::SymmetricAlgorithm;
+use sequoia_openpgp::{cert, KeyHandle};
 
 use crate::verify::PyVerifier;
 use crate::{Decrypted, ValidSig};
@@ -13,12 +14,12 @@ use crate::{Decrypted, ValidSig};
 #[pyclass]
 #[derive(Clone)]
 pub struct PyDecryptor {
-    inner: Arc<Mutex<Box<dyn openpgp::crypto::Decryptor + Send + Sync + 'static>>>,
+    inner: Arc<Mutex<Box<dyn Decryptor + Send + Sync + 'static>>>,
     verifier: Option<PyVerifier>,
 }
 
 impl PyDecryptor {
-    pub fn new(inner: Box<dyn openpgp::crypto::Decryptor + Send + Sync + 'static>) -> Self {
+    pub fn new(inner: Box<dyn Decryptor + Send + Sync + 'static>) -> Self {
         Self {
             inner: Arc::new(Mutex::new(inner)),
             verifier: None,
@@ -63,7 +64,7 @@ pub fn decrypt(
 }
 
 impl VerificationHelper for PyDecryptor {
-    fn get_certs(&mut self, ids: &[openpgp::KeyHandle]) -> openpgp::Result<Vec<openpgp::Cert>> {
+    fn get_certs(&mut self, ids: &[KeyHandle]) -> sequoia_openpgp::Result<Vec<cert::Cert>> {
         if let Some(verifier) = &mut self.verifier {
             verifier.get_certs(ids)
         } else {
@@ -71,7 +72,7 @@ impl VerificationHelper for PyDecryptor {
         }
     }
 
-    fn check(&mut self, structure: MessageStructure) -> openpgp::Result<()> {
+    fn check(&mut self, structure: MessageStructure) -> sequoia_openpgp::Result<()> {
         if let Some(verifier) = &mut self.verifier {
             verifier.check(structure)
         } else {
@@ -81,16 +82,13 @@ impl VerificationHelper for PyDecryptor {
 }
 
 impl DecryptionHelper for PyDecryptor {
-    fn decrypt<D>(
+    fn decrypt(
         &mut self,
-        pkesks: &[openpgp::packet::PKESK],
-        _skesks: &[openpgp::packet::SKESK],
+        pkesks: &[PKESK],
+        _skesks: &[SKESK],
         sym_algo: Option<SymmetricAlgorithm>,
-        mut decrypt: D,
-    ) -> openpgp::Result<Option<openpgp::Fingerprint>>
-    where
-        D: FnMut(SymmetricAlgorithm, &SessionKey) -> bool,
-    {
+        decrypt: &mut dyn FnMut(Option<SymmetricAlgorithm>, &SessionKey) -> bool,
+    ) -> sequoia_openpgp::Result<Option<cert::Cert>> {
         let pair = &mut *self.inner.lock().unwrap();
 
         for pkesk in pkesks.iter() {
