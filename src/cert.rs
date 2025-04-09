@@ -2,17 +2,16 @@ use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use once_cell::sync::Lazy;
-use openpgp::cert::prelude::*;
-use openpgp::packet::signature::subpacket::NotationDataFlags;
-use openpgp::packet::signature::SignatureBuilder;
-use openpgp::packet::{signature, UserID};
-use openpgp::parse::Parse;
-use openpgp::policy::{Policy, StandardPolicy};
-use openpgp::serialize::SerializeInto;
-use openpgp::types::SignatureType;
-use openpgp::Packet;
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
+use sequoia_openpgp::cert::{self, prelude::*};
+use sequoia_openpgp::packet::signature::subpacket::NotationDataFlags;
+use sequoia_openpgp::packet::signature::SignatureBuilder;
+use sequoia_openpgp::packet::{signature, UserID};
+use sequoia_openpgp::parse::Parse;
+use sequoia_openpgp::policy::{Policy, StandardPolicy};
+use sequoia_openpgp::serialize::SerializeInto;
+use sequoia_openpgp::types::{KeyFlags, ReasonForRevocation, RevocationStatus, SignatureType};
+use sequoia_openpgp::Packet;
 
 use crate::notation::Notation;
 use crate::signer::PySigner;
@@ -24,12 +23,12 @@ static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
 #[derive(Clone)]
 #[pyclass]
 pub struct Cert {
-    cert: openpgp::cert::Cert,
+    cert: cert::Cert,
     policy: Arc<Mutex<Box<dyn Policy>>>,
 }
 
-impl From<openpgp::cert::Cert> for Cert {
-    fn from(cert: openpgp::cert::Cert) -> Self {
+impl From<cert::Cert> for Cert {
+    fn from(cert: cert::Cert) -> Self {
         Self {
             cert,
             policy: Arc::clone(&DEFAULT_POLICY),
@@ -38,7 +37,7 @@ impl From<openpgp::cert::Cert> for Cert {
 }
 
 impl Cert {
-    pub fn cert(&self) -> &openpgp::cert::Cert {
+    pub fn cert(&self) -> &cert::Cert {
         &self.cert
     }
 
@@ -53,12 +52,12 @@ pub mod secret;
 impl Cert {
     #[staticmethod]
     pub fn from_file(path: String) -> PyResult<Self> {
-        Ok(openpgp::cert::Cert::from_file(path)?.into())
+        Ok(cert::Cert::from_file(path)?.into())
     }
 
     #[staticmethod]
     pub fn from_bytes(bytes: &[u8]) -> PyResult<Self> {
-        Ok(openpgp::cert::Cert::from_bytes(bytes)?.into())
+        Ok(cert::Cert::from_bytes(bytes)?.into())
     }
 
     #[staticmethod]
@@ -84,7 +83,6 @@ impl Cert {
     #[staticmethod]
     #[pyo3(signature = (user_id=None, user_ids=None))]
     pub fn generate(user_id: Option<&str>, user_ids: Option<Vec<String>>) -> PyResult<Self> {
-        use openpgp::types::KeyFlags;
         let mut builder = CertBuilder::new()
             .set_cipher_suite(CipherSuite::default())
             .set_primary_key_flags(KeyFlags::empty().set_certification())
@@ -134,7 +132,9 @@ impl Cert {
         let builder = signature::SignatureBuilder::new(SignatureType::PositiveCertification);
         let binding = userid.bind(&mut certifier, &cert, builder)?;
 
-        let cert = cert.insert_packets(vec![Packet::from(userid), binding.into()])?;
+        let cert = cert
+            .insert_packets(vec![Packet::from(userid), binding.into()])?
+            .0;
         Ok(Cert {
             cert,
             policy: Arc::clone(&self.policy),
@@ -164,7 +164,7 @@ impl Cert {
             Some(expiration.into()),
         )?;
 
-        let cert = cert.insert_packets(signature)?;
+        let cert = cert.insert_packets(signature)?.0;
         Ok(Cert {
             cert,
             policy: Arc::clone(&self.policy),
@@ -199,10 +199,7 @@ impl Cert {
     pub fn user_ids(&self) -> PyResult<Vec<UserId>> {
         let policy = &**self.policy();
         let cert = self.cert.with_policy(policy, None)?;
-        cert.userids()
-            .revoked(false)
-            .map(|ui| UserId::new(ui, policy))
-            .collect()
+        cert.userids().revoked(false).map(UserId::new).collect()
     }
 
     pub fn set_notations(
@@ -235,7 +232,7 @@ impl Cert {
 
             let new_sig = builder.sign_userid_binding(&mut certifier, None, ua.userid())?;
 
-            self.cert.clone().insert_packets(vec![new_sig])?
+            self.cert.clone().insert_packets(vec![new_sig])?.0
         } else {
             self.cert.clone()
         };
@@ -248,17 +245,14 @@ impl Cert {
     }
 
     pub fn revoke(&self, mut certifier: PySigner) -> PyResult<crate::signature::Sig> {
-        let signature = self.cert.revoke(
-            &mut certifier,
-            openpgp::types::ReasonForRevocation::Unspecified,
-            &[],
-        )?;
+        let signature = self
+            .cert
+            .revoke(&mut certifier, ReasonForRevocation::Unspecified, &[])?;
         Ok(crate::signature::Sig::new(signature))
     }
 
     #[getter]
     pub fn is_revoked(&self) -> bool {
-        use openpgp::types::RevocationStatus;
         self.cert.revocation_status(&**self.policy(), None) != RevocationStatus::NotAsFarAsWeKnow
     }
 }

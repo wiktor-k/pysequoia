@@ -2,11 +2,13 @@ use std::borrow::Cow;
 use std::io::Write;
 
 use anyhow::Context;
-use openpgp::serialize::stream::{Armorer, Signer};
-use openpgp::serialize::stream::{Encryptor2 as Encryptor, LiteralWriter, Message};
-use openpgp::types::KeyFlags;
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
+use sequoia_openpgp::cert::amalgamation::ValidAmalgamation;
+use sequoia_openpgp::cert::Preferences;
+use sequoia_openpgp::serialize::stream::Recipient;
+use sequoia_openpgp::serialize::stream::{Armorer, Signer};
+use sequoia_openpgp::serialize::stream::{Encryptor, LiteralWriter, Message};
+use sequoia_openpgp::types::KeyFlags;
 
 use crate::cert::Cert;
 use crate::signer::PySigner;
@@ -36,7 +38,7 @@ pub fn encrypt(
             .revoked(false)
             .key_flags(&mode)
         {
-            recipient_keys.push(key.key().clone());
+            recipient_keys.push((key.valid_cert().features(), key.key().clone()));
             found_one = true;
         }
 
@@ -49,7 +51,7 @@ pub fn encrypt(
                 .revoked(false)
                 .key_flags(&mode)
             {
-                recipient_keys.push(key.key().clone());
+                recipient_keys.push((key.valid_cert().features().clone(), key.key().clone()));
                 found_one = true;
             }
         }
@@ -71,13 +73,13 @@ pub fn encrypt(
         message,
         recipient_keys
             .iter()
-            .map(openpgp::serialize::stream::Recipient::from),
+            .map(|(features, key)| Recipient::new(features.clone(), key.key_handle(), key)),
     )
     .build()
     .context("Failed to create encryptor")?;
 
     if let Some(signer) = signer {
-        message = Signer::new(message, signer).build()?;
+        message = Signer::new(message, signer)?.build()?;
     }
     let mut message = LiteralWriter::new(message)
         .build()

@@ -1,7 +1,7 @@
-use openpgp::parse::Parse;
-use openpgp::{parse::stream::*, policy::StandardPolicy};
 use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
+use sequoia_openpgp::parse::Parse;
+use sequoia_openpgp::KeyHandle;
+use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
 
 use crate::{Decrypted, ValidSig};
 
@@ -44,7 +44,7 @@ impl PyVerifier {
 }
 
 impl VerificationHelper for PyVerifier {
-    fn get_certs(&mut self, ids: &[openpgp::KeyHandle]) -> openpgp::Result<Vec<openpgp::Cert>> {
+    fn get_certs(&mut self, ids: &[KeyHandle]) -> sequoia_openpgp::Result<Vec<cert::Cert>> {
         let mut certs = vec![];
         let result: Vec<crate::cert::Cert> = Python::with_gil(|py| {
             let str_ids = ids
@@ -59,7 +59,7 @@ impl VerificationHelper for PyVerifier {
         Ok(certs)
     }
 
-    fn check(&mut self, structure: MessageStructure) -> openpgp::Result<()> {
+    fn check(&mut self, structure: MessageStructure) -> sequoia_openpgp::Result<()> {
         let mut valid_sigs = vec![];
         for (i, layer) in structure.into_iter().enumerate() {
             match layer {

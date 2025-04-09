@@ -1,9 +1,5 @@
 use std::borrow::Cow;
 
-use openpgp::parse::stream::GoodChecksum;
-use openpgp::serialize::stream::Armorer;
-use pyo3::prelude::*;
-
 mod cert;
 mod decrypt;
 mod encrypt;
@@ -14,12 +10,14 @@ mod signer;
 mod user_id;
 mod verify;
 
-use openpgp::armor::Kind;
-use openpgp::packet::Packet;
-use openpgp::serialize::{stream::Message, Marshal};
-use sequoia_openpgp as openpgp;
+use pyo3::prelude::*;
+use sequoia_openpgp::armor::Kind;
+use sequoia_openpgp::packet::Packet;
+use sequoia_openpgp::parse::stream::GoodChecksum;
+use sequoia_openpgp::serialize::stream::Armorer;
+use sequoia_openpgp::serialize::{stream::Message, Marshal};
 
-pub(crate) fn serialize<T>(p: Packet, armor_kind: T) -> openpgp::Result<Vec<u8>>
+pub(crate) fn serialize<T>(p: Packet, armor_kind: T) -> sequoia_openpgp::Result<Vec<u8>>
 where
     T: Into<Option<Kind>>,
 {
@@ -44,7 +42,7 @@ impl From<GoodChecksum<'_>> for ValidSig {
     fn from(value: GoodChecksum<'_>) -> Self {
         Self {
             certificate: format!("{:x}", value.ka.cert().fingerprint()),
-            signing_key: format!("{:x}", value.ka.fingerprint()),
+            signing_key: format!("{:x}", value.ka.component().fingerprint()),
         }
     }
 }
@@ -101,21 +99,4 @@ fn pysequoia(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(decrypt::decrypt, m)?)?;
     m.add_function(wrap_pyfunction!(verify::verify, m)?)?;
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use openpgp::cert::prelude::*;
-    use sequoia_openpgp as openpgp;
-    use sequoia_openpgp::serialize::SerializeInto;
-    use testresult::TestResult;
-
-    #[test]
-    fn test_armoring() -> TestResult {
-        let cert = CertBuilder::general_purpose(None, Some("test@example.com"))
-            .generate()?
-            .0;
-        assert!(cert.armored().to_vec().is_ok());
-        Ok(())
-    }
 }

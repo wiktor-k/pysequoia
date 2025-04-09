@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 
 use anyhow::anyhow;
-use openpgp::{
+use pyo3::prelude::*;
+use sequoia_openpgp::{
+    armor,
     packet::Signature as SqSignature,
     parse::{PacketParser, PacketParserResult, Parse as _},
     Packet,
 };
-use pyo3::prelude::*;
-use sequoia_openpgp as openpgp;
 
 #[pyclass]
 pub struct Sig {
@@ -66,7 +66,7 @@ impl Sig {
     }
 
     pub fn __str__(&self) -> PyResult<String> {
-        let bytes = crate::serialize(self.sig.clone().into(), openpgp::armor::Kind::Signature)?;
+        let bytes = crate::serialize(self.sig.clone().into(), armor::Kind::Signature)?;
         Ok(String::from_utf8(bytes)?)
     }
 
