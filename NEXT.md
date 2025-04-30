@@ -4,6 +4,7 @@ v0.1.26
 
 New:
   - `verify` can be used to verify detached signatures through the new `signature` keyword parameter([#42])
+  - `verify` accepts a `file` parameter for direct verification of files
 
 Changed:
 

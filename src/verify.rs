@@ -1,3 +1,6 @@
+use std::path::PathBuf;
+
+use anyhow::anyhow;
 use pyo3::prelude::*;
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::KeyHandle;
@@ -5,27 +8,69 @@ use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
 
 use crate::{Decrypted, ValidSig};
 
+enum SignedData<'a> {
+    File(PathBuf),
+    Bytes(&'a [u8]),
+}
+
+impl From<SignedData<'_>> for Option<Vec<u8>> {
+    fn from(value: SignedData) -> Self {
+        match value {
+            SignedData::File(_) => None,
+            SignedData::Bytes(bytes) => Some(bytes.into()),
+        }
+    }
+}
+
 #[pyfunction]
-#[pyo3(signature = (bytes, store, signature=None))]
-pub fn verify(bytes: &[u8], store: Py<PyAny>, signature: Option<&[u8]>) -> PyResult<Decrypted> {
+#[pyo3(signature = (bytes=None, store=None, file=None, signature=None))]
+pub fn verify(
+    bytes: Option<&[u8]>,
+    store: Option<Py<PyAny>>,
+    #[allow(unused)] file: Option<PathBuf>,
+    signature: Option<&[u8]>,
+) -> PyResult<Decrypted> {
+    let Some(store) = store else {
+        return Err(anyhow!("Store parameter is required").into());
+    };
+    let signed_data = if let Some(bytes) = bytes {
+        if file.is_some() {
+            return Err(anyhow!("Cannot set both `bytes` or `file` parameters.").into());
+        }
+        SignedData::Bytes(bytes)
+    } else if let Some(file) = file {
+        SignedData::File(file)
+    } else {
+        return Err(anyhow!("Either `bytes` or `file` parameter should be given.").into());
+    };
+
     let helper = PyVerifier::from_callback(store);
 
     let policy = &StandardPolicy::new();
 
     if let Some(signature) = signature {
+        // detached signature verification
         let mut verifier =
             DetachedVerifierBuilder::from_bytes(signature)?.with_policy(policy, None, helper)?;
-        verifier.verify_bytes(bytes)?;
+
+        match &signed_data {
+            SignedData::File(path) => verifier.verify_file(path)?,
+            SignedData::Bytes(bytes) => verifier.verify_bytes(bytes)?,
+        };
 
         let helper = verifier.into_helper();
 
         Ok(Decrypted {
-            content: bytes.into(),
+            content: signed_data.into(),
             valid_sigs: helper.valid_sigs,
         })
     } else {
-        let mut verifier =
-            VerifierBuilder::from_bytes(&bytes)?.with_policy(policy, None, helper)?;
+        // inline signature verification
+        let mut verifier = match &signed_data {
+            SignedData::File(path) => VerifierBuilder::from_file(path)?,
+            SignedData::Bytes(bytes) => VerifierBuilder::from_bytes(bytes)?,
+        }
+        .with_policy(policy, None, helper)?;
 
         let mut sink = vec![];
         std::io::copy(&mut verifier, &mut sink)?;
@@ -33,7 +78,7 @@ pub fn verify(bytes: &[u8], store: Py<PyAny>, signature: Option<&[u8]>) -> PyRes
         let helper = verifier.into_helper();
 
         Ok(Decrypted {
-            content: sink,
+            content: Some(sink),
             valid_sigs: helper.valid_sigs,
         })
     }
@@ -94,7 +139,9 @@ impl VerificationHelper for PyVerifier {
         if !self.valid_sigs.is_empty() {
             Ok(())
         } else {
-            Err(anyhow::anyhow!("Signature verification failed"))
+            Err(anyhow::anyhow!(
+                "Signature verification failed: no valid signatures found."
+            ))
         }
     }
 }
