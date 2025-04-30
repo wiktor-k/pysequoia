@@ -114,6 +114,19 @@ assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86
 
 The function that returns certificates (here `get_certs`) may return more certificates than necessary.
 
+Detached signatures can be verified by passing additional parameter with the detached signature:
+
+```python
+data = "data to be signed".encode("utf8")
+detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+
+result = verify(data, get_certs, signature=detached)
+
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+```
+
 `verify` succeeds if *at least one* correct signature has been made by any of the certificates supplied. If you need more advanced policies they can be implemented by inspecting the `valid_sigs` property.
 
 ### encrypt

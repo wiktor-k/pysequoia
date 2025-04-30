@@ -6,22 +6,37 @@ use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
 use crate::{Decrypted, ValidSig};
 
 #[pyfunction]
-pub fn verify(bytes: &[u8], store: Py<PyAny>) -> PyResult<Decrypted> {
+#[pyo3(signature = (bytes, store, signature=None))]
+pub fn verify(bytes: &[u8], store: Py<PyAny>, signature: Option<&[u8]>) -> PyResult<Decrypted> {
     let helper = PyVerifier::from_callback(store);
 
     let policy = &StandardPolicy::new();
 
-    let mut verifier = VerifierBuilder::from_bytes(&bytes)?.with_policy(policy, None, helper)?;
+    if let Some(signature) = signature {
+        let mut verifier =
+            DetachedVerifierBuilder::from_bytes(signature)?.with_policy(policy, None, helper)?;
+        verifier.verify_bytes(bytes)?;
 
-    let mut sink = vec![];
-    std::io::copy(&mut verifier, &mut sink)?;
+        let helper = verifier.into_helper();
 
-    let helper = verifier.into_helper();
+        Ok(Decrypted {
+            content: bytes.into(),
+            valid_sigs: helper.valid_sigs,
+        })
+    } else {
+        let mut verifier =
+            VerifierBuilder::from_bytes(&bytes)?.with_policy(policy, None, helper)?;
 
-    Ok(Decrypted {
-        content: sink,
-        valid_sigs: helper.valid_sigs,
-    })
+        let mut sink = vec![];
+        std::io::copy(&mut verifier, &mut sink)?;
+
+        let helper = verifier.into_helper();
+
+        Ok(Decrypted {
+            content: sink,
+            valid_sigs: helper.valid_sigs,
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
