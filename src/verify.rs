@@ -64,7 +64,7 @@ impl VerificationHelper for PyVerifier {
         let result: Vec<crate::cert::Cert> = Python::with_gil(|py| {
             let str_ids = ids
                 .iter()
-                .map(|key_id| format!("{:x}", key_id))
+                .map(|key_id| format!("{key_id:x}"))
                 .collect::<Vec<_>>();
             self.store.call1(py, (str_ids,))?.extract(py)
         })?;
