@@ -6,6 +6,7 @@ use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::KeyHandle;
 use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
 
+use crate::signature::Sig;
 use crate::{Decrypted, ValidSig};
 
 enum SignedData<'a> {
@@ -28,7 +29,7 @@ pub fn verify(
     bytes: Option<&[u8]>,
     store: Option<Py<PyAny>>,
     #[allow(unused)] file: Option<PathBuf>,
-    signature: Option<&[u8]>,
+    signature: Option<&Sig>,
 ) -> PyResult<Decrypted> {
     let Some(store) = store else {
         return Err(anyhow!("Store parameter is required").into());
@@ -50,8 +51,9 @@ pub fn verify(
 
     if let Some(signature) = signature {
         // detached signature verification
+        let bytes = signature.bytes()?;
         let mut verifier =
-            DetachedVerifierBuilder::from_bytes(signature)?.with_policy(policy, None, helper)?;
+            DetachedVerifierBuilder::from_bytes(&bytes)?.with_policy(policy, None, helper)?;
 
         match &signed_data {
             SignedData::File(path) => verifier.verify_file(path)?,

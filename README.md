@@ -63,7 +63,7 @@ gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-pass
 All examples assume that these basic classes have been imported:
 
 ```python
-from pysequoia import Cert
+from pysequoia import Cert, Sig
 ```
 
 ### sign
@@ -119,6 +119,7 @@ Detached signatures can be verified by passing additional parameter with the det
 ```python
 data = "data to be signed".encode("utf8")
 detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+detached = Sig.from_bytes(detached)
 
 result = verify(bytes=data, store=get_certs, signature=detached)
 
@@ -134,6 +135,7 @@ import tempfile
 with tempfile.NamedTemporaryFile(delete=False) as tmp:
   data = "data to be signed".encode("utf8")
   detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+  detached = Sig.from_bytes(detached)
 
   tmp.write(data)
   tmp.close()
