@@ -72,14 +72,16 @@ impl ValidSig {
 #[derive(Clone)]
 pub struct Decrypted {
     valid_sigs: Vec<ValidSig>,
-    content: Vec<u8>,
+    content: Option<Vec<u8>>,
 }
 
 #[pymethods]
 impl Decrypted {
     #[getter]
-    pub fn bytes(&self) -> Cow<[u8]> {
-        Cow::Borrowed(&self.content)
+    pub fn bytes(&self) -> Option<Cow<[u8]>> {
+        self.content
+            .as_ref()
+            .map(|content| Cow::Borrowed(&content[..]))
     }
 
     #[getter]

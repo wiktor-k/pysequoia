@@ -36,8 +36,8 @@ PySequoia can be installed through `pip`:
 pip install pysequoia
 ```
 
-Note that since `pysequoia` is implemented largely in Rust, a [Rust
-toolchain][RUSTUP] is necessary for the installation to succeed.
+PyPI version of PySequoia includes native wheels for a variety of architectures and OS combinations.
+If you are using a combination that is not yet provided a [Rust toolchain][RUSTUP] will be necessary for the installation to succeed.
 
 [RUSTUP]: https://rustup.rs/
 
@@ -63,7 +63,7 @@ gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-pass
 All examples assume that these basic classes have been imported:
 
 ```python
-from pysequoia import Cert
+from pysequoia import Cert, Sig
 ```
 
 ### sign
@@ -113,6 +113,40 @@ assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86
 ```
 
 The function that returns certificates (here `get_certs`) may return more certificates than necessary.
+
+Detached signatures can be verified by passing additional parameter with the detached signature:
+
+```python
+data = "data to be signed".encode("utf8")
+detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+detached = Sig.from_bytes(detached)
+
+result = verify(bytes=data, store=get_certs, signature=detached)
+
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+```
+
+This function can also work with files directly, which is beneficial if the file to be verified is large:
+
+```python
+import tempfile
+with tempfile.NamedTemporaryFile(delete=False) as tmp:
+  data = "data to be signed".encode("utf8")
+  detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+  detached = Sig.from_bytes(detached)
+
+  tmp.write(data)
+  tmp.close()
+
+  # verify a detached signature against a file name
+  result = verify(file=tmp.name, store=get_certs, signature=detached)
+
+  # let's check the valid signature's certificate and signing subkey fingerprints
+  assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+  assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+```
 
 `verify` succeeds if *at least one* correct signature has been made by any of the certificates supplied. If you need more advanced policies they can be implemented by inspecting the `valid_sigs` property.
 

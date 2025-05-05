@@ -58,7 +58,7 @@ pub fn decrypt(
     std::io::copy(&mut decryptor, &mut sink)?;
     let decryptor = decryptor.into_helper();
     Ok(Decrypted {
-        content: sink,
+        content: Some(sink),
         valid_sigs: decryptor.valid_sigs(),
     })
 }

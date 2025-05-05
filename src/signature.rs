@@ -57,7 +57,7 @@ impl Sig {
         self.sig
             .issuer_fingerprints()
             .next()
-            .map(|issuer| format!("{:x}", issuer))
+            .map(|issuer| format!("{issuer:x}"))
     }
 
     #[getter]
