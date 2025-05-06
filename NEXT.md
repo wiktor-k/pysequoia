@@ -8,6 +8,7 @@ New:
 
 Changed:
   - `Sig.bytes()` is now `Sig.__bytes__()` to align with idiomatic Python. Convert all instances of `sig.bytes()` to `bytes(sig)` which automatically calls the magic function.
+  - `Cert.bytes()` is now `Cert.__bytes__()` to align with idiomatic Python. Convert all instances of `cert.bytes()` to `bytes(cert)` which automatically calls the magic function.
 
 Removed:
 

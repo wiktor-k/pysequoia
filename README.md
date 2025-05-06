@@ -235,7 +235,7 @@ Certificates have two forms, one is ASCII armored and one is raw bytes:
 cert = Cert.generate("Test <test@example.com>")
 
 print(f"Armored cert: {cert}")
-print(f"Bytes of the cert: {cert.bytes()}")
+print(f"Bytes of the cert: {bytes(cert)}")
 ```
 
 ### Parsing
@@ -245,7 +245,7 @@ memory (`Cert.from_bytes`).
 
 ```python
 cert1 = Cert.generate("Test <test@example.com>")
-buffer = cert1.bytes()
+buffer = bytes(cert1)
 
 parsed_cert = Cert.from_bytes(buffer)
 assert str(parsed_cert.user_ids[0]) == "Test <test@example.com>"
@@ -260,7 +260,7 @@ cert1 = Cert.generate("Test 1 <test-1@example.com>")
 cert2 = Cert.generate("Test 2 <test-2@example.com>")
 cert3 = Cert.generate("Test 3 <test-3@example.com>")
 
-buffer = cert1.bytes() + cert2.bytes() + cert3.bytes()
+buffer = bytes(cert1) + bytes(cert2) + bytes(cert3)
 certs = Cert.split_bytes(buffer)
 assert len(certs) == 3
 ```
@@ -338,7 +338,7 @@ assert len(cert.user_ids) == 2
 revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets.certifier())
 
 # merge the revocation with the cert
-cert = Cert.from_bytes(cert.bytes() + bytes(revocation))
+cert = Cert.from_bytes(bytes(cert) + bytes(revocation))
 assert len(cert.user_ids) == 1
 ```
 
@@ -430,7 +430,7 @@ revocation = cert.revoke(certifier = cert.secrets.certifier())
 assert not cert.is_revoked
 
 # importing revocation signature marks the key as revoked
-revoked_cert = Cert.from_bytes(cert.bytes() + bytes(revocation))
+revoked_cert = Cert.from_bytes(bytes(cert) + bytes(revocation))
 assert revoked_cert.is_revoked
 ```
 
