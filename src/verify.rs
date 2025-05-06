@@ -51,7 +51,7 @@ pub fn verify(
 
     if let Some(signature) = signature {
         // detached signature verification
-        let bytes = signature.bytes()?;
+        let bytes = signature.__bytes__()?;
         let mut verifier =
             DetachedVerifierBuilder::from_bytes(&bytes)?.with_policy(policy, None, helper)?;
 

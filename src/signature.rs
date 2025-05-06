@@ -48,7 +48,7 @@ impl Sig {
         Ok(Self::from_packets(PacketParser::from_bytes(bytes)?)?)
     }
 
-    pub fn bytes(&self) -> PyResult<Cow<[u8]>> {
+    pub fn __bytes__(&self) -> PyResult<Cow<[u8]>> {
         Ok(crate::serialize(self.sig.clone().into(), None)?.into())
     }
 

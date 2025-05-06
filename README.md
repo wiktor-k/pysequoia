@@ -159,8 +159,8 @@ from pysequoia import encrypt
 
 s = Cert.from_file("passwd.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-bytes = "content to encrypt".encode("utf8")
-encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = bytes).decode("utf8")
+content = "content to encrypt".encode("utf8")
+encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = content).decode("utf8")
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -289,9 +289,9 @@ contexts:
 alice = Cert.generate("Alice <alice@example.com>")
 bob = Cert.generate("Bob <bob@example.com>")
 
-bytes = "content to encrypt".encode("utf8")
+content = "content to encrypt".encode("utf8")
 
-encrypted = encrypt(signer = alice.secrets.signer(), recipients = [bob], bytes = bytes)
+encrypted = encrypt(signer = alice.secrets.signer(), recipients = [bob], bytes = content)
 print(f"Encrypted data: {encrypted}")
 ```
 
@@ -338,7 +338,7 @@ assert len(cert.user_ids) == 2
 revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets.certifier())
 
 # merge the revocation with the cert
-cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
+cert = Cert.from_bytes(cert.bytes() + bytes(revocation))
 assert len(cert.user_ids) == 1
 ```
 
@@ -430,7 +430,7 @@ revocation = cert.revoke(certifier = cert.secrets.certifier())
 assert not cert.is_revoked
 
 # importing revocation signature marks the key as revoked
-revoked_cert = Cert.from_bytes(cert.bytes() + revocation.bytes())
+revoked_cert = Cert.from_bytes(cert.bytes() + bytes(revocation))
 assert revoked_cert.is_revoked
 ```
 
