@@ -240,7 +240,7 @@ impl Cert {
         Ok(cert.into())
     }
 
-    pub fn bytes(&self) -> PyResult<Cow<[u8]>> {
+    pub fn __bytes__(&self) -> PyResult<Cow<[u8]>> {
         Ok(self.cert.to_vec()?.into())
     }
 
