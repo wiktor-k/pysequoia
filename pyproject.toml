@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pysequoia"
-version = "0.1.27"
+version = "0.1.28"
 requires-python = ">=3.7"
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
