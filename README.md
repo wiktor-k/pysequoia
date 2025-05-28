@@ -15,6 +15,7 @@ package is for you!
 [OpenPGP]: https://en.wikipedia.org/wiki/Pretty_Good_Privacy#OpenPGP
 [SQ]: https://sequoia-pgp.org/
 [4880]: https://www.rfc-editor.org/rfc/rfc4880
+[9580]: https://www.rfc-editor.org/rfc/rfc9580
 
 Note: This is a work in progress. The API is **not** stable!
 
@@ -294,6 +295,20 @@ content = "content to encrypt".encode("utf8")
 encrypted = encrypt(signer = alice.secrets.signer(), recipients = [bob], bytes = content)
 print(f"Encrypted data: {encrypted}")
 ```
+
+The default is to generate keys according to [RFC4880][4880]. By
+providing a `profile` parameter to the generate function, [modern PGP
+keys][9580] can also be generated:
+
+```python
+from pysequoia import Profile
+
+mary = Cert.generate("Modern Mary <mary@example.com", profile=Profile.RFC9580)
+print(f"Generated cert with fingerprint {mary.fingerprint}:\n{mary}")
+```
+
+Note that legacy PGP implementations may not be able to consume these
+certificates yet.
 
 ### merge
 

@@ -93,6 +93,7 @@ impl Decrypted {
 #[pymodule]
 fn pysequoia(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<cert::Cert>()?;
+    m.add_class::<cert::Profile>()?;
     m.add_class::<signature::Sig>()?;
     m.add_class::<notation::Notation>()?;
     m.add_class::<sign::SignatureMode>()?;
