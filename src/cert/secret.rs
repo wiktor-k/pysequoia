@@ -19,7 +19,7 @@ impl SecretCert {
             policy: Arc::clone(policy),
         }
     }
-    pub fn policy(&self) -> MutexGuard<Box<dyn Policy>> {
+    pub fn policy(&self) -> MutexGuard<'_, Box<dyn Policy>> {
         self.policy.lock().unwrap()
     }
 }
