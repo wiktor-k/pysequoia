@@ -1,6 +1,6 @@
 [package]
 name = "pysequoia"
-version = "0.1.28"
+version = "0.1.29"
 edition = "2021"
 description = "Python bindings for Sequoia PGP"
 homepage = "https://github.com/wiktor-k/pysequoia"
