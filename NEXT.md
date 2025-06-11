@@ -1,16 +1,13 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v0.1.28
+v0.1.29
 
 New:
-  - `verify` can be used to verify detached signatures through the new `signature` keyword parameter([#42])
-  - `verify` accepts a `file` parameter for direct verification of files
+  - `Cert.generate` has a new `profile` parameter. The default is `Profile.RFC4880` which generates widely compatible certificates. The new option - `Profile.RFC9580` - generates newer, v6 certificates. Thanks to @jap for the contribution! [#47]
 
 Changed:
-  - `Sig.bytes()` is now `Sig.__bytes__()` to align with idiomatic Python. Convert all instances of `sig.bytes()` to `bytes(sig)` which automatically calls the magic function.
-  - `Cert.bytes()` is now `Cert.__bytes__()` to align with idiomatic Python. Convert all instances of `cert.bytes()` to `bytes(cert)` which automatically calls the magic function.
 
 Removed:
 
-[#42]: https://github.com/wiktor-k/pysequoia/issues/42
+[#47]: https://github.com/wiktor-k/pysequoia/pull/47
 ### git tag --edit -s -F NEXT.md v...

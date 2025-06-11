@@ -1,6 +1,6 @@
 [package]
 name = "pysequoia"
-version = "0.1.28"
+version = "0.1.29"
 edition = "2021"
 description = "Python bindings for Sequoia PGP"
 homepage = "https://github.com/wiktor-k/pysequoia"
@@ -24,7 +24,7 @@ testresult = "0.4"
 sequoia-openpgp = { version = "2", default-features = false, features = [ "crypto-rust", "allow-experimental-crypto", "allow-variable-time-crypto"] }
 
 [dependencies.pyo3]
-version = "0.24"
+version = "0.25"
 # "py-clone" feature added to keep the original behavior but it'd be good to avoid it
 # see: https://github.com/PyO3/pyo3/pull/4095
 features = ["extension-module", "anyhow", "chrono", "py-clone"]
