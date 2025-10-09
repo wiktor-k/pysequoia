@@ -76,15 +76,15 @@ from pysequoia import sign, SignatureMode
 
 s = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
-print(f"Signed data: {signed}")
+print(f"Signed data: {signed!r}")
 assert "PGP MESSAGE" in str(signed)
 
 detached = sign(s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED)
-print(f"Detached signature: {detached}")
+print(f"Detached signature: {detached!r}")
 assert "PGP SIGNATURE" in str(detached)
 
 clear = sign(s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.CLEAR)
-print(f"Clear signed: {clear}")
+print(f"Clear signed: {clear!r}")
 assert "PGP SIGNED MESSAGE" in str(clear)
 ```
 
@@ -134,13 +134,13 @@ from pysequoia import verify
 signing_key = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 
-def get_certs(key_ids):
+def get_certs_verify(key_ids):
   # key_ids is an array of required signing keys
   print(f"For verification, we need these keys: {key_ids}")
   return [signing_key]
 
 # verify the data
-result = verify(signed, get_certs)
+result = verify(signed, get_certs_verify)
 assert result.bytes.decode("utf8") == "data to be signed"
 
 # let's check the valid signature's certificate and signing subkey fingerprints
@@ -148,16 +148,16 @@ assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86
 assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
 ```
 
-The function that returns certificates (here `get_certs`) may return more certificates than necessary.
+The function that returns certificates (here `get_certs_verify`) may return more certificates than necessary.
 
 Detached signatures can be verified by passing additional parameter with the detached signature:
 
 ```python
 data = "data to be signed".encode("utf8")
 detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
-detached = Sig.from_bytes(detached)
+signature = Sig.from_bytes(detached)
 
-result = verify(bytes=data, store=get_certs, signature=detached)
+result = verify(bytes=data, store=get_certs_verify, signature=signature)
 
 # let's check the valid signature's certificate and signing subkey fingerprints
 assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
@@ -171,13 +171,13 @@ import tempfile
 with tempfile.NamedTemporaryFile(delete=False) as tmp:
   data = "data to be signed".encode("utf8")
   detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
-  detached = Sig.from_bytes(detached)
+  signature = Sig.from_bytes(detached)
 
   tmp.write(data)
   tmp.close()
 
   # verify a detached signature against a file name
-  result = verify(file=tmp.name, store=get_certs, signature=detached)
+  result = verify(file=tmp.name, store=get_certs_verify, signature=signature)
 
   # let's check the valid signature's certificate and signing subkey fingerprints
   assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
@@ -195,9 +195,9 @@ from pysequoia import encrypt
 
 s = Cert.from_file("passwd.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
-content = "content to encrypt".encode("utf8")
-encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = content).decode("utf8")
-print(f"Encrypted data: {encrypted}")
+content = "content to encrypt"
+encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = content.encode("utf8"))
+print(f"Encrypted data: {encrypted.decode("utf8")}")
 ```
 
 The `signer` argument is optional and when omitted the function will return an unsigned (but encrypted) message.
@@ -207,9 +207,9 @@ Encryption to symmetric keys is available via the `passwords` optional argument:
 ```python
 from pysequoia import encrypt
 
-content = "content to encrypt".encode("utf8")
-encrypted = encrypt(passwords = ["sekrit"], bytes = content).decode("utf8")
-print(f"Encrypted data: {encrypted}")
+content = "content to encrypt"
+encrypted = encrypt(passwords = ["sekrit"], bytes = content.encode("utf8"))
+print(f"Encrypted data: {encrypted.decode("utf8")}")
 ```
 
 ### encrypt_file
@@ -232,8 +232,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as out:
   output_path = out.name
 
 encrypt_file(signer = s.secrets.signer("hunter22"), recipients = [r], input = input_path, output = output_path)
-encrypted = open(output_path, "rb").read()
-assert b"PGP MESSAGE" in encrypted
+assert b"PGP MESSAGE" in open(output_path, "rb").read()
 
 os.unlink(input_path)
 os.unlink(output_path)
@@ -273,11 +272,11 @@ content = "Red Green Blue"
 
 encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
 
-def get_certs(key_ids):
+def get_certs_decrypt(key_ids):
   print(f"For verification after decryption, we need these keys: {key_ids}")
   return [sender]
 
-decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted, store = get_certs)
+decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted, store = get_certs_decrypt)
 
 assert content == decrypted.bytes.decode("utf8")
 
@@ -294,10 +293,10 @@ Decryption using symmetric keys is available via the `passwords` optional argume
 from pysequoia import encrypt
 
 content = "content to encrypt"
-encrypted = encrypt(passwords = ["sekrit"], bytes = content.encode("utf8")).decode("utf8")
-print(f"Encrypted data: {encrypted}")
-decrypted = decrypt(passwords = ["sekrit"], bytes = encrypted.encode("utf-8"))
-print(f"Decrypted bytes: {decrypted.bytes}")
+encrypted = encrypt(passwords = ["sekrit"], bytes = content.encode("utf8"))
+print(f"Encrypted data: {encrypted.decode("utf8")}")
+decrypted = decrypt(passwords = ["sekrit"], bytes = encrypted)
+print(f"Decrypted bytes: {decrypted.bytes!r}")
 
 assert content == decrypted.bytes.decode("utf8")
 ```
@@ -361,11 +360,11 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as inp:
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as out:
   output_path = out.name
 
-def get_certs(key_ids):
+def get_certs_decrypt_file(key_ids):
   print(f"For verification after decryption, we need these keys: {key_ids}")
   return [sender]
 
-decrypted = decrypt_file(decryptor = receiver.secrets.decryptor("hunter22"), input = input_path, output = output_path, store = get_certs)
+decrypted = decrypt_file(decryptor = receiver.secrets.decryptor("hunter22"), input = input_path, output = output_path, store = get_certs_decrypt_file)
 
 assert open(output_path, "rb").read().decode("utf8") == content
 
@@ -397,7 +396,7 @@ Certificates have two forms, one is ASCII armored and one is raw bytes:
 cert = Cert.generate("Test <test@example.com>")
 
 print(f"Armored cert: {cert}")
-print(f"Bytes of the cert: {bytes(cert)}")
+print(f"Bytes of the cert: {bytes(cert)!r}")
 ```
 
 ### Parsing
@@ -451,10 +450,10 @@ contexts:
 alice = Cert.generate("Alice <alice@example.com>")
 bob = Cert.generate("Bob <bob@example.com>")
 
-content = "content to encrypt".encode("utf8")
+content = "content to encrypt"
 
-encrypted = encrypt(signer = alice.secrets.signer(), recipients = [bob], bytes = content)
-print(f"Encrypted data: {encrypted}")
+encrypted = encrypt(signer = alice.secrets.signer(), recipients = [bob], bytes = content.encode("utf8"))
+print(f"Encrypted data: {encrypted!r}")
 ```
 
 The default is to generate keys according to [RFC4880][4880]. By

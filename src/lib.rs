@@ -91,18 +91,37 @@ impl Decrypted {
 }
 
 #[pymodule]
-fn pysequoia(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<cert::Cert>()?;
-    m.add_class::<cert::Profile>()?;
-    m.add_class::<signature::Sig>()?;
-    m.add_class::<notation::Notation>()?;
-    m.add_class::<sign::SignatureMode>()?;
-    m.add_function(wrap_pyfunction!(sign::sign, m)?)?;
-    m.add_function(wrap_pyfunction!(sign::sign_file, m)?)?;
-    m.add_function(wrap_pyfunction!(encrypt::encrypt, m)?)?;
-    m.add_function(wrap_pyfunction!(encrypt::encrypt_file, m)?)?;
-    m.add_function(wrap_pyfunction!(decrypt::decrypt, m)?)?;
-    m.add_function(wrap_pyfunction!(decrypt::decrypt_file, m)?)?;
-    m.add_function(wrap_pyfunction!(verify::verify, m)?)?;
-    Ok(())
+pub mod pysequoia {
+    #[pymodule_export]
+    pub use super::cert::Cert;
+    #[pymodule_export]
+    pub use super::cert::Profile;
+    #[pymodule_export]
+    pub use super::decrypt::decrypt;
+    #[pymodule_export]
+    pub use super::decrypt::decrypt_file;
+    #[pymodule_export]
+    pub use super::decrypt::PyDecryptor;
+    #[pymodule_export]
+    pub use super::encrypt::encrypt;
+    #[pymodule_export]
+    pub use super::encrypt::encrypt_file;
+    #[pymodule_export]
+    pub use super::notation::Notation;
+    #[pymodule_export]
+    pub use super::sign::sign;
+    #[pymodule_export]
+    pub use super::sign::sign_file;
+    #[pymodule_export]
+    pub use super::sign::SignatureMode;
+    #[pymodule_export]
+    pub use super::signature::Sig;
+    #[pymodule_export]
+    pub use super::signer::PySigner;
+    #[pymodule_export]
+    pub use super::user_id::UserId;
+    #[pymodule_export]
+    pub use super::verify::verify;
+    #[pymodule_export]
+    pub use super::Decrypted;
 }
