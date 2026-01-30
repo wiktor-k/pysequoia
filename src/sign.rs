@@ -20,16 +20,21 @@ pub enum SignatureMode {
 }
 
 #[pyfunction]
-#[pyo3(signature = (signer, bytes, *, mode=&SignatureMode::Inline))]
-pub fn sign(signer: PySigner, bytes: &[u8], mode: &SignatureMode) -> PyResult<Cow<'static, [u8]>> {
+#[pyo3(signature = (signer, bytes, *, mode=&SignatureMode::Inline, armor=true))]
+pub fn sign(
+    signer: PySigner,
+    bytes: &[u8],
+    mode: &SignatureMode,
+    armor: bool,
+) -> PyResult<Cow<'static, [u8]>> {
     use sequoia_openpgp::serialize::stream::Signer;
 
     let mut sink = vec![];
     {
         let message = Message::new(&mut sink);
-        let message = if mode == &SignatureMode::Inline {
+        let message = if mode == &SignatureMode::Inline && armor {
             Armorer::new(message).kind(armor::Kind::Message).build()?
-        } else if mode == &SignatureMode::Detached {
+        } else if mode == &SignatureMode::Detached && armor {
             Armorer::new(message).kind(armor::Kind::Signature).build()?
         } else {
             message

@@ -14,11 +14,12 @@ use crate::cert::Cert;
 use crate::signer::PySigner;
 
 #[pyfunction]
-#[pyo3(signature = (recipients, bytes, signer=None))]
+#[pyo3(signature = (recipients, bytes, signer=None, *, armor=true))]
 pub fn encrypt(
     recipients: Vec<PyRef<Cert>>,
     bytes: &[u8],
     signer: Option<PySigner>,
+    armor: bool,
 ) -> PyResult<Cow<'static, [u8]>> {
     let mode = KeyFlags::empty()
         .set_storage_encryption()
@@ -67,7 +68,11 @@ pub fn encrypt(
 
     let message = Message::new(&mut sink);
 
-    let message = Armorer::new(message).build()?;
+    let message = if armor {
+        Armorer::new(message).build()?
+    } else {
+        message
+    };
 
     let mut message = Encryptor::for_recipients(
         message,
