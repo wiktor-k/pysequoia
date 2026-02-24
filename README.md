@@ -51,11 +51,11 @@ The tests assume that these keys exist:
 
 ```bash
 # generate a key with password
-gpg --batch --pinentry-mode loopback --passphrase hunter22 --quick-gen-key passwd@example.com
+gpg --batch --pinentry-mode loopback --passphrase hunter22 --quick-gen-key passwd@example.com rsa sign,encrypt
 gpg --batch --pinentry-mode loopback --passphrase hunter22 --export-secret-key passwd@example.com > passwd.pgp
 
 # generate a key without password
-gpg --batch --pinentry-mode loopback --passphrase '' --quick-gen-key no-passwd@example.com future-default
+gpg --batch --pinentry-mode loopback --passphrase '' --quick-gen-key no-passwd@example.com rsa sign,encrypt
 gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-passwd@example.com > no-passwd.pgp
 ```
 
