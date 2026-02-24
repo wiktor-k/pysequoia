@@ -202,6 +202,16 @@ print(f"Encrypted data: {encrypted}")
 
 The `signer` argument is optional and when omitted the function will return an unsigned (but encrypted) message.
 
+Encryption to symmetric keys is available via the `passwords` optional argument:
+
+```python
+from pysequoia import encrypt
+
+content = "content to encrypt".encode("utf8")
+encrypted = encrypt(passwords = ["sekrit"], bytes = content).decode("utf8")
+print(f"Encrypted data: {encrypted}")
+```
+
 ### encrypt_file
 
 Encrypts data from a file and writes the encrypted output to another file:
@@ -269,7 +279,7 @@ def get_certs(key_ids):
 
 decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted, store = get_certs)
 
-assert content == decrypted.bytes.decode("utf8");
+assert content == decrypted.bytes.decode("utf8")
 
 # let's check the valid signature's certificate and signing subkey fingerprints
 assert decrypted.valid_sigs[0].certificate == sender.fingerprint
@@ -277,6 +287,20 @@ assert decrypted.valid_sigs[0].signing_key == sender.fingerprint
 ```
 
 Here, the same remarks as to [`verify`](#verify) also apply.
+
+Decryption using symmetric keys is available via the `passwords` optional argument:
+
+```python
+from pysequoia import encrypt
+
+content = "content to encrypt"
+encrypted = encrypt(passwords = ["sekrit"], bytes = content.encode("utf8")).decode("utf8")
+print(f"Encrypted data: {encrypted}")
+decrypted = decrypt(passwords = ["sekrit"], bytes = encrypted.encode("utf-8"))
+print(f"Decrypted bytes: {decrypted.bytes}")
+
+assert content == decrypted.bytes.decode("utf8")
+```
 
 ### decrypt_file
 

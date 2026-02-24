@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -69,13 +70,21 @@ fn resolve_recipient_keys(recipients: &[PyRef<Cert>]) -> PyResult<Vec<RecipientK
 }
 
 #[pyfunction]
-#[pyo3(signature = (recipients, bytes, signer=None, *, armor=true))]
+#[pyo3(signature = (bytes, recipients=vec![], signer=None, passwords=vec![], *, armor=true))]
 pub fn encrypt(
-    recipients: Vec<PyRef<Cert>>,
     bytes: &[u8],
+    recipients: Vec<PyRef<Cert>>,
     signer: Option<PySigner>,
+    passwords: Vec<String>,
     armor: bool,
 ) -> PyResult<Cow<'static, [u8]>> {
+    if recipients.is_empty() && passwords.is_empty() {
+        return Err(anyhow::anyhow!(
+            "Either `recipients` or `passwords` parameter should be given and non-empty."
+        )
+        .into());
+    }
+
     let recipient_keys = resolve_recipient_keys(&recipients)?;
 
     let mut sink = vec![];
@@ -88,14 +97,15 @@ pub fn encrypt(
         message
     };
 
-    let mut message = Encryptor::for_recipients(
+    let encryptor = Encryptor::for_recipients(
         message,
         recipient_keys
             .iter()
             .map(|(features, key)| Recipient::new(features.clone(), key.key_handle(), key)),
     )
-    .build()
-    .context("Failed to create encryptor")?;
+    .add_passwords(passwords);
+
+    let mut message = encryptor.build().context("Failed to create encryptor")?;
 
     if let Some(signer) = signer {
         message = Signer::new(message, signer)?.build()?;
@@ -112,17 +122,24 @@ pub fn encrypt(
 }
 
 #[pyfunction]
-#[pyo3(signature = (recipients, input, output, signer=None, *, armor=true))]
+#[pyo3(signature = (input, output, recipients=vec![], signer=None, passwords=vec![], *, armor=true))]
 pub fn encrypt_file(
-    recipients: Vec<PyRef<Cert>>,
     input: PathBuf,
     output: PathBuf,
+    recipients: Vec<PyRef<Cert>>,
     signer: Option<PySigner>,
+    passwords: Vec<String>,
     armor: bool,
 ) -> PyResult<()> {
+    if recipients.is_empty() && passwords.is_empty() {
+        return Err(anyhow::anyhow!(
+            "Either `recipients` or `passwords` parameter should be given and non-empty."
+        )
+        .into());
+    }
     let recipient_keys = resolve_recipient_keys(&recipients)?;
 
-    let mut sink = std::fs::File::create(&output).context("Failed to create output file")?;
+    let mut sink = File::create(&output).context("Failed to create output file")?;
 
     let message = Message::new(&mut sink);
 
@@ -138,6 +155,7 @@ pub fn encrypt_file(
             .iter()
             .map(|(features, key)| Recipient::new(features.clone(), key.key_handle(), key)),
     )
+    .add_passwords(passwords)
     .build()
     .context("Failed to create encryptor")?;
 
@@ -148,7 +166,7 @@ pub fn encrypt_file(
         .build()
         .context("Failed to create literal writer")?;
 
-    let mut input_file = std::fs::File::open(&input).context("Failed to open input file")?;
+    let mut input_file = File::open(&input).context("Failed to open input file")?;
     std::io::copy(&mut input_file, &mut message)?;
 
     message.finalize()?;
