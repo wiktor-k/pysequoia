@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use pyo3::prelude::*;
 use sequoia_openpgp::{crypto, packet, types};
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub struct PySigner {
     inner: Arc<Mutex<Box<dyn crypto::Signer + Send + Sync + 'static>>>,
