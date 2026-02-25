@@ -11,7 +11,7 @@ use sequoia_openpgp::{cert, KeyHandle};
 use crate::verify::PyVerifier;
 use crate::{Decrypted, ValidSig};
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub struct PyDecryptor {
     inner: Arc<Mutex<Box<dyn Decryptor + Send + Sync + 'static>>>,

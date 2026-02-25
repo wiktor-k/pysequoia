@@ -108,7 +108,7 @@ impl PyVerifier {
 impl VerificationHelper for PyVerifier {
     fn get_certs(&mut self, ids: &[KeyHandle]) -> sequoia_openpgp::Result<Vec<cert::Cert>> {
         let mut certs = vec![];
-        let result: Vec<crate::cert::Cert> = Python::with_gil(|py| {
+        let result: Vec<crate::cert::Cert> = Python::attach(|py| {
             let str_ids = ids
                 .iter()
                 .map(|key_id| format!("{key_id:x}"))

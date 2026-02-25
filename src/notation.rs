@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use sequoia_openpgp::packet::signature::subpacket::NotationData;
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub struct Notation {
     key: String,

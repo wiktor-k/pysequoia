@@ -31,7 +31,7 @@ where
     Ok(sink)
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug, Clone)]
 pub struct ValidSig {
     certificate: String,
@@ -68,7 +68,7 @@ impl ValidSig {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Clone)]
 pub struct Decrypted {
     valid_sigs: Vec<ValidSig>,

@@ -21,7 +21,7 @@ static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
     Lazy::new(|| Arc::new(Mutex::new(Box::new(StandardPolicy::new()))));
 
 #[derive(Clone)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct Cert {
     cert: cert::Cert,
     policy: Arc<Mutex<Box<dyn Policy>>>,
@@ -47,7 +47,7 @@ impl Cert {
 }
 
 #[derive(Clone, Copy, Default)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub enum Profile {
     #[default]
     RFC4880,
