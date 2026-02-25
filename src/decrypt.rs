@@ -1,5 +1,7 @@
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
+use anyhow::Context;
 use pyo3::prelude::*;
 use sequoia_openpgp::crypto::{Decryptor, SessionKey};
 use sequoia_openpgp::packet::{PKESK, SKESK};
@@ -59,6 +61,32 @@ pub fn decrypt(
     let decryptor = decryptor.into_helper();
     Ok(Decrypted {
         content: Some(sink),
+        valid_sigs: decryptor.valid_sigs(),
+    })
+}
+
+#[pyfunction]
+#[pyo3(signature = (decryptor, input, output, store=None))]
+pub fn decrypt_file(
+    mut decryptor: PyDecryptor,
+    input: PathBuf,
+    output: PathBuf,
+    store: Option<Py<PyAny>>,
+) -> PyResult<Decrypted> {
+    if let Some(store) = store {
+        decryptor.set_verifier(PyVerifier::from_callback(store));
+    }
+    let policy = &P::new();
+
+    let mut decryptor = DecryptorBuilder::from_file(&input)
+        .context("Failed to open input file")?
+        .with_policy(policy, None, decryptor)?;
+
+    let mut sink = std::fs::File::create(&output).context("Failed to create output file")?;
+    std::io::copy(&mut decryptor, &mut sink)?;
+    let decryptor = decryptor.into_helper();
+    Ok(Decrypted {
+        content: None,
         valid_sigs: decryptor.valid_sigs(),
     })
 }

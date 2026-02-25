@@ -88,6 +88,41 @@ print(f"Clear signed: {clear}")
 assert "PGP SIGNED MESSAGE" in str(clear)
 ```
 
+### sign_file
+
+Signs data from a file and writes the signed output to another file:
+
+```python
+from pysequoia import sign_file, SignatureMode
+import tempfile, os
+
+s = Cert.from_file("signing-key.asc")
+
+# create a file with data to sign
+with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
+  inp.write("data to be signed".encode("utf8"))
+  input_path = inp.name
+
+with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as out:
+  output_path = out.name
+
+sign_file(s.secrets.signer(), input_path, output_path)
+signed = open(output_path, "rb").read()
+assert b"PGP MESSAGE" in signed
+
+# detached signature to file
+with tempfile.NamedTemporaryFile(delete=False, suffix=".sig") as out:
+  detached_path = out.name
+
+sign_file(s.secrets.signer(), input_path, detached_path, mode=SignatureMode.DETACHED)
+detached = open(detached_path, "rb").read()
+assert b"PGP SIGNATURE" in detached
+
+os.unlink(input_path)
+os.unlink(output_path)
+os.unlink(detached_path)
+```
+
 ### verify
 
 Verifies signed data and returns verified data:
@@ -167,6 +202,33 @@ print(f"Encrypted data: {encrypted}")
 
 The `signer` argument is optional and when omitted the function will return an unsigned (but encrypted) message.
 
+### encrypt_file
+
+Encrypts data from a file and writes the encrypted output to another file:
+
+```python
+from pysequoia import encrypt_file
+import tempfile, os
+
+s = Cert.from_file("passwd.pgp")
+r = Cert.from_bytes(open("wiktor.asc", "rb").read())
+
+# create a file with content to encrypt
+with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
+  inp.write("content to encrypt".encode("utf8"))
+  input_path = inp.name
+
+with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as out:
+  output_path = out.name
+
+encrypt_file(signer = s.secrets.signer("hunter22"), recipients = [r], input = input_path, output = output_path)
+encrypted = open(output_path, "rb").read()
+assert b"PGP MESSAGE" in encrypted
+
+os.unlink(input_path)
+os.unlink(output_path)
+```
+
 ### decrypt
 
 Decrypts plain data:
@@ -215,6 +277,81 @@ assert decrypted.valid_sigs[0].signing_key == sender.fingerprint
 ```
 
 Here, the same remarks as to [`verify`](#verify) also apply.
+
+### decrypt_file
+
+Decrypts data from a file and writes the decrypted output to another file:
+
+```python
+from pysequoia import decrypt_file
+import tempfile, os
+
+sender = Cert.from_file("no-passwd.pgp")
+receiver = Cert.from_file("passwd.pgp")
+
+content = "Red Green Blue"
+
+encrypted = encrypt(recipients = [receiver], bytes = content.encode("utf8"))
+
+# write encrypted data to a file
+with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as inp:
+  inp.write(encrypted)
+  input_path = inp.name
+
+with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as out:
+  output_path = out.name
+
+decrypted = decrypt_file(decryptor = receiver.secrets.decryptor("hunter22"), input = input_path, output = output_path)
+
+# content is written to the output file, not returned in memory
+assert decrypted.bytes is None
+
+# read decrypted content from the output file
+assert open(output_path, "rb").read().decode("utf8") == content
+
+# this message did not contain any valid signatures
+assert len(decrypted.valid_sigs) == 0
+
+os.unlink(input_path)
+os.unlink(output_path)
+```
+
+Decrypt file can also verify signatures while decrypting:
+
+```python
+from pysequoia import decrypt_file
+import tempfile, os
+
+sender = Cert.from_file("no-passwd.pgp")
+receiver = Cert.from_file("passwd.pgp")
+
+content = "Red Green Blue"
+
+encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
+
+# write encrypted data to a file
+with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as inp:
+  inp.write(encrypted)
+  input_path = inp.name
+
+with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as out:
+  output_path = out.name
+
+def get_certs(key_ids):
+  print(f"For verification after decryption, we need these keys: {key_ids}")
+  return [sender]
+
+decrypted = decrypt_file(decryptor = receiver.secrets.decryptor("hunter22"), input = input_path, output = output_path, store = get_certs)
+
+assert open(output_path, "rb").read().decode("utf8") == content
+
+# let's check the valid signature's certificate and signing subkey fingerprints
+assert decrypted.valid_sigs[0].certificate == sender.fingerprint
+assert decrypted.valid_sigs[0].signing_key == sender.fingerprint
+
+os.unlink(input_path)
+os.unlink(output_path)
+```
 
 ## Certificates
 
