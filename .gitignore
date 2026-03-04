@@ -74,3 +74,7 @@ docs/_build/
 
 # Pyenv
 .python-version
+
+# Build artifacts
+no-passwd.pgp
+passwd.pgp

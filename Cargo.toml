@@ -5,6 +5,7 @@ edition = "2021"
 description = "Python bindings for Sequoia PGP"
 homepage = "https://github.com/wiktor-k/pysequoia"
 repository = "https://github.com/wiktor-k/pysequoia"
+license = "Apache-2.0"
 
 # The crate is useless for Rust clients, it's mainly used via Python:
 # https://pypi.org/project/pysequoia/
@@ -18,9 +19,7 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1"
 chrono = "0.4"
-hex = "0.4.3"
 once_cell = "1.21"
-testresult = "0.4"
 sequoia-openpgp = { version = "2", default-features = false, features = [ "crypto-rust", "allow-experimental-crypto", "allow-variable-time-crypto"] }
 
 [dependencies.pyo3]

@@ -1,54 +1,33 @@
 name: CI
 
-on:
-  pull_request:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+on: [pull_request]
 
 jobs:
-  e2e:
-    name: End-to-end tests
+  generate-matrix:
+    name: Generate jobs
     runs-on: ubuntu-latest
+    outputs:
+      jobs: ${{ steps.set-matrix.outputs.jobs }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: linux/amd64
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build image
-        run: |
-          docker buildx build --platform linux/amd64 --file ci/e2e.dockerfile .
+      - uses: actions/checkout@v6
+      - uses: taiki-e/install-action@just
+      - run: node ./scripts/ci/create-github-checks.js
+        id: set-matrix
 
-  build:
-    name: Build and check
+  run-task:
+    name: ${{ matrix.jobs.doc }}
+    runs-on: ubuntu-latest
+    needs: [generate-matrix]
+    container:
+      image: archlinux
     strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            toolchain: stable
-            continue-on-error: false
-          - os: ubuntu-latest
-            toolchain: beta
-            continue-on-error: false
-          - os: ubuntu-latest
-            toolchain: nightly
-            continue-on-error: true
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.continue-on-error }}
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{fromJSON(needs.generate-matrix.outputs.jobs)}}
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: linux/amd64
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build image
-        run: |
-          docker buildx build --build-arg RUST_TOOLCHAIN=${{ matrix.toolchain }} --platform linux/amd64 --file ci/build.dockerfile .
+      - uses: actions/checkout@v6
+      - run: pacman-key --init
+      - run: pacman -Sy --needed --noconfirm archlinux-keyring
+      - run: pacman -Syu --needed --noconfirm ${{ matrix.jobs.packages }}
+      - run: just --justfile ${{ matrix.jobs.file }} ${{ matrix.jobs.name }}
