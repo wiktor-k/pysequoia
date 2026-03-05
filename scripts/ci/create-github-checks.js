@@ -22,6 +22,7 @@ const getRecipePackages = (recipes, name) => {
         .filter(item => String(item[0]).startsWith('just '))
         .flatMap(item => item[0].split(' '))
         .filter(item => item !== 'just' && !item.startsWith('--'));
+    indirectDeps.push(...recipe.dependencies.map(dep => dep.recipe));
     direct.push(...indirectDeps.flatMap(dep => getRecipePackages(recipes, dep)));
     return direct;
 }
