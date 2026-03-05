@@ -27,3 +27,9 @@ homepage = "https://github.com/wiktor-k/pysequoia"
 changelog = "https://github.com/wiktor-k/pysequoia/tags"
 repository = "https://github.com/wiktor-k/pysequoia"
 "Bug Tracker" = "https://github.com/wiktor-k/pysequoia/issues"
+
+[tool.mypy]
+# There are a couple of minor issues in the generated stub files that mypy
+# doesn't like. Suppressing these warnings.
+# See https://github.com/PyO3/pyo3/issues/5137#issuecomment-3384975623
+disable_error_code = "override,union-attr"

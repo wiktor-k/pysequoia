@@ -46,8 +46,8 @@ impl Cert {
     }
 }
 
-#[derive(Clone, Copy, Default)]
-#[pyclass(from_py_object)]
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[pyclass(from_py_object, eq)]
 pub enum Profile {
     #[default]
     RFC4880,

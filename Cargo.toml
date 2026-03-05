@@ -16,6 +16,11 @@ publish = false
 name = "pysequoia"
 crate-type = ["cdylib"]
 
+[workspace]
+members = [".", "xtask"]
+resolver = "3"
+package.edition = "2024"
+
 [dependencies]
 anyhow = "1"
 chrono = "0.4"
@@ -26,4 +31,4 @@ sequoia-openpgp = { version = "2", default-features = false, features = [ "crypt
 version = "0.28"
 # "py-clone" feature added to keep the original behavior but it'd be good to avoid it
 # see: https://github.com/PyO3/pyo3/pull/4095
-features = ["extension-module", "anyhow", "chrono", "py-clone"]
+features = ["extension-module", "anyhow", "chrono", "py-clone", "experimental-inspect"]
