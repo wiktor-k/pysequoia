@@ -1,22 +1,14 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v0.1.30
+v0.1.31
 
 New:
-  - `Cert.generate` has a new `profile` parameter. The default is `Profile.RFC4880` which generates widely compatible certificates. The new option - `Profile.RFC9580` - generates newer, v6 certificates. Thanks to @jap for the contribution! [#47]
-  - `encrypt_file` and `decrypt_file` added for handling bigger files. Thanks to @dnet for the contribution! [#53]
-  - `encrypt`, `encrypt_file`, `decrypt` and `decrypt_file` can use symmetric encryption via the `passwords` argument [#55]
-  - stub files available for PySequoia types [#51]
 
 Changed:
+  - This release changes metadata of the project and the release workflow. There are no functional changes. See changelog for version 0.1.30.
   - Changed Rust edition from 2021 to 2024.
 
 Removed:
-
-[#47]: https://github.com/wiktor-k/pysequoia/pull/47
-[#51]: https://github.com/wiktor-k/pysequoia/pull/51
-[#53]: https://github.com/wiktor-k/pysequoia/pull/53
-[#55]: https://github.com/wiktor-k/pysequoia/pull/55
 
 ### Release checklist:
 ###  [ ] Change version in `Cargo.toml` and `pyproject.toml` and `NEXT.md`
