@@ -9,6 +9,7 @@ New:
   - stub files available for PySequoia types [#51]
 
 Changed:
+  - Changed Rust edition from 2021 to 2024.
 
 Removed:
 

@@ -5,10 +5,10 @@ use anyhow::Context;
 use pyo3::prelude::*;
 use sequoia_openpgp::crypto::{Decryptor, Password, SessionKey};
 use sequoia_openpgp::packet::{PKESK, SKESK};
-use sequoia_openpgp::parse::{stream::*, Parse};
+use sequoia_openpgp::parse::{Parse, stream::*};
 use sequoia_openpgp::policy::StandardPolicy as P;
 use sequoia_openpgp::types::SymmetricAlgorithm;
-use sequoia_openpgp::{cert, KeyHandle};
+use sequoia_openpgp::{KeyHandle, cert};
 
 use crate::verify::PyVerifier;
 use crate::{Decrypted, ValidSig};
@@ -144,10 +144,10 @@ impl DecryptionHelper for PyDecryptor {
     ) -> sequoia_openpgp::Result<Option<cert::Cert>> {
         for skesk in skesks.iter() {
             for password in self.passwords.iter() {
-                if let Ok((algo, session_key)) = skesk.decrypt(password) {
-                    if decrypt(algo, &session_key) {
-                        return Ok(None);
-                    }
+                if let Ok((algo, session_key)) = skesk.decrypt(password)
+                    && decrypt(algo, &session_key)
+                {
+                    return Ok(None);
                 }
             }
         }

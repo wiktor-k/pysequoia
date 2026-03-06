@@ -3,15 +3,15 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use once_cell::sync::Lazy;
 use pyo3::prelude::*;
+use sequoia_openpgp::Packet;
 use sequoia_openpgp::cert::{self, prelude::*};
-use sequoia_openpgp::packet::signature::subpacket::NotationDataFlags;
 use sequoia_openpgp::packet::signature::SignatureBuilder;
-use sequoia_openpgp::packet::{signature, UserID};
+use sequoia_openpgp::packet::signature::subpacket::NotationDataFlags;
+use sequoia_openpgp::packet::{UserID, signature};
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::policy::{Policy, StandardPolicy};
 use sequoia_openpgp::serialize::SerializeInto;
 use sequoia_openpgp::types::{KeyFlags, ReasonForRevocation, RevocationStatus, SignatureType};
-use sequoia_openpgp::Packet;
 
 use crate::notation::Notation;
 use crate::signer::PySigner;

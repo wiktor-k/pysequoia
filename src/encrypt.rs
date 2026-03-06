@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use pyo3::prelude::*;
-use sequoia_openpgp::cert::amalgamation::ValidAmalgamation;
 use sequoia_openpgp::cert::Preferences;
+use sequoia_openpgp::cert::amalgamation::ValidAmalgamation;
 use sequoia_openpgp::serialize::stream::Recipient;
 use sequoia_openpgp::serialize::stream::{Armorer, Signer};
 use sequoia_openpgp::serialize::stream::{Encryptor, LiteralWriter, Message};

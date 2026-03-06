@@ -15,7 +15,7 @@ use sequoia_openpgp::armor::Kind;
 use sequoia_openpgp::packet::Packet;
 use sequoia_openpgp::parse::stream::GoodChecksum;
 use sequoia_openpgp::serialize::stream::Armorer;
-use sequoia_openpgp::serialize::{stream::Message, Marshal};
+use sequoia_openpgp::serialize::{Marshal, stream::Message};
 
 pub(crate) fn serialize<T>(p: Packet, armor_kind: T) -> sequoia_openpgp::Result<Vec<u8>>
 where
@@ -93,15 +93,17 @@ impl Decrypted {
 #[pymodule]
 pub mod pysequoia {
     #[pymodule_export]
+    pub use super::Decrypted;
+    #[pymodule_export]
     pub use super::cert::Cert;
     #[pymodule_export]
     pub use super::cert::Profile;
     #[pymodule_export]
+    pub use super::decrypt::PyDecryptor;
+    #[pymodule_export]
     pub use super::decrypt::decrypt;
     #[pymodule_export]
     pub use super::decrypt::decrypt_file;
-    #[pymodule_export]
-    pub use super::decrypt::PyDecryptor;
     #[pymodule_export]
     pub use super::encrypt::encrypt;
     #[pymodule_export]
@@ -109,11 +111,11 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::notation::Notation;
     #[pymodule_export]
+    pub use super::sign::SignatureMode;
+    #[pymodule_export]
     pub use super::sign::sign;
     #[pymodule_export]
     pub use super::sign::sign_file;
-    #[pymodule_export]
-    pub use super::sign::SignatureMode;
     #[pymodule_export]
     pub use super::signature::Sig;
     #[pymodule_export]
@@ -122,6 +124,4 @@ pub mod pysequoia {
     pub use super::user_id::UserId;
     #[pymodule_export]
     pub use super::verify::verify;
-    #[pymodule_export]
-    pub use super::Decrypted;
 }
