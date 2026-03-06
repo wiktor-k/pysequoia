@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use anyhow::anyhow;
 use pyo3::prelude::*;
-use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::KeyHandle;
+use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
 
 use crate::signature::Sig;

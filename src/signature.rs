@@ -3,10 +3,9 @@ use std::borrow::Cow;
 use anyhow::anyhow;
 use pyo3::prelude::*;
 use sequoia_openpgp::{
-    armor,
+    Packet, armor,
     packet::Signature as SqSignature,
     parse::{PacketParser, PacketParserResult, Parse as _},
-    Packet,
 };
 
 #[pyclass]
