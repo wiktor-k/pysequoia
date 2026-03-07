@@ -64,10 +64,20 @@ impl Sig {
 
     /// The fingerprint of the key that made this signature, as a lowercase hex string.
     ///
+    /// Alias for ``issuer_fingerprint``.
+    ///
     /// Returns ``None`` if the signature does not carry an issuer fingerprint subpacket.
     /// Prefer this over ``issuer_key_id`` when available, as fingerprints are collision-resistant.
     #[getter]
     pub fn issuer_fpr(&self) -> Option<String> {
+        self.issuer_fingerprint()
+    }
+
+    /// The fingerprint of the key that made this signature, as a lowercase hex string.
+    ///
+    /// Returns ``None`` if the signature does not carry an issuer fingerprint subpacket.
+    #[getter]
+    pub fn issuer_fingerprint(&self) -> Option<String> {
         self.sig
             .issuer_fingerprints()
             .next()
@@ -89,7 +99,10 @@ impl Sig {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("<Sig issuer_fpr={}>", self.issuer_fpr().unwrap_or_default())
+        format!(
+            "<Sig issuer_fpr={}>",
+            self.issuer_fingerprint().unwrap_or_default()
+        )
     }
 }
 
