@@ -4,9 +4,11 @@ mod cert;
 mod decrypt;
 mod encrypt;
 mod notation;
+mod packet;
 mod sign;
 mod signature;
 mod signer;
+mod types;
 mod user_id;
 mod verify;
 
@@ -111,6 +113,10 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::notation::Notation;
     #[pymodule_export]
+    pub use super::packet::PacketPile;
+    #[pymodule_export]
+    pub use super::packet::PyPacket;
+    #[pymodule_export]
     pub use super::sign::SignatureMode;
     #[pymodule_export]
     pub use super::sign::sign;
@@ -120,6 +126,18 @@ pub mod pysequoia {
     pub use super::signature::Sig;
     #[pymodule_export]
     pub use super::signer::PySigner;
+    #[pymodule_export]
+    pub use super::types::DataFormat;
+    #[pymodule_export]
+    pub use super::types::HashAlgorithm;
+    #[pymodule_export]
+    pub use super::types::KeyFlags;
+    #[pymodule_export]
+    pub use super::types::PublicKeyAlgorithm;
+    #[pymodule_export]
+    pub use super::types::SignatureType;
+    #[pymodule_export]
+    pub use super::types::Tag;
     #[pymodule_export]
     pub use super::user_id::UserId;
     #[pymodule_export]

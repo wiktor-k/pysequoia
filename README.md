@@ -651,6 +651,49 @@ assert sig.expiration == None
 assert sig.signers_user_id == None
 ```
 
+## Packet iteration
+
+The `PacketPile` class provides low-level access to individual OpenPGP
+packets in a key block, signed message, or other OpenPGP data. Each
+packet exposes a `tag` property identifying the packet type, along with
+type-specific accessors for extracting fields.
+
+```python
+from pysequoia import PacketPile, Tag, SignatureType
+
+cert = Cert.generate("Test <test@example.com>")
+pile = PacketPile.from_bytes(bytes(cert))
+
+for packet in pile:
+    if packet.tag == Tag.PublicKey or packet.tag == Tag.PublicSubkey:
+        print(f"Key: fpr={packet.fingerprint}, algo={packet.key_algorithm}, created={packet.key_created}")
+
+    elif packet.tag == Tag.UserID:
+        print(f"User ID: {packet.user_id} (name={packet.user_id_name}, email={packet.user_id_email})")
+
+    elif packet.tag == Tag.Signature:
+        print(f"Signature: type={packet.signature_type}, hash={packet.hash_algorithm}, created={packet.signature_created}")
+        if packet.issuer_fingerprint is not None:
+            print(f"  issuer: {packet.issuer_fingerprint}")
+        if packet.signature_validity_period is not None:
+            print(f"  expires in: {packet.signature_validity_period}")
+        if packet.signature_expiration_time is not None:
+            print(f"  expiration time: {packet.signature_expiration_time}")
+        if packet.key_flags is not None:
+            print(f"  key flags: {packet.key_flags}")
+        if packet.signature_type == SignatureType.DirectKey and packet.key_validity_period is not None:
+            print(f"  key validity period: {packet.key_validity_period}")
+```
+
+Individual packets also carry their raw body bytes (without the tag and
+length header), which can be useful for hashing or storing packet data:
+
+```python
+packet = list(PacketPile.from_bytes(bytes(cert)))[0]
+assert packet.tag == Tag.PublicKey
+assert len(packet.body) > 0
+```
+
 ## License
 
 This project is licensed under [Apache License, Version 2.0][APL].

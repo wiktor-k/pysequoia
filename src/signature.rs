@@ -10,6 +10,8 @@ use sequoia_openpgp::{
     parse::{PacketParser, PacketParserResult, Parse as _},
 };
 
+use crate::types::{HashAlgorithm, PublicKeyAlgorithm, SignatureType};
+
 #[pyclass]
 pub struct Sig {
     sig: SqSignature,
@@ -117,13 +119,40 @@ impl Sig {
 
     /// The time at which this signature expires, or `None` if it does not expire.
     ///
-    /// Computed as the signature creation time plus the signature validity period.
     /// Returns `None` if either subpacket is absent.
     #[getter]
     pub fn expiration(&self) -> Option<chrono::DateTime<chrono::Utc>> {
-        let created = self.sig.signature_creation_time()?;
-        let validity = self.sig.signature_validity_period()?;
-        Some(created.checked_add(validity)?.into())
+        self.sig.signature_expiration_time().map(Into::into)
+    }
+
+    /// The signature type (e.g. `SignatureType.SubkeyBinding`).
+    #[getter]
+    pub fn signature_type(&self) -> PyResult<SignatureType> {
+        Ok(self.sig.typ().try_into()?)
+    }
+
+    /// The hash algorithm used by this signature.
+    #[getter]
+    pub fn hash_algorithm(&self) -> PyResult<HashAlgorithm> {
+        Ok(self.sig.hash_algo().try_into()?)
+    }
+
+    /// The public key algorithm used by this signature.
+    #[getter]
+    pub fn key_algorithm(&self) -> PyResult<PublicKeyAlgorithm> {
+        Ok(self.sig.pk_algo().try_into()?)
+    }
+
+    /// The key validity period as a timedelta from key creation.
+    ///
+    /// This is the duration after the key's creation time at which the key expires.
+    /// Found in Subkey Binding and Direct Key signatures.
+    /// Returns `None` if the subpacket is not present.
+    #[getter]
+    pub fn key_validity_period(&self) -> Option<chrono::TimeDelta> {
+        self.sig
+            .key_validity_period()
+            .and_then(|d| chrono::TimeDelta::from_std(d).ok())
     }
 
     /// Return the ASCII-armored representation of the signature.
