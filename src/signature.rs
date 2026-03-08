@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use std::borrow::Cow;
 
 use anyhow::anyhow;
@@ -62,13 +64,14 @@ impl Sig {
         Ok(crate::serialize(self.sig.clone().into(), None)?.into())
     }
 
-    /// The fingerprint of the key that made this signature, as a lowercase hex string.
+    /// DEPRECATED: The fingerprint of the key that made this signature, as a lowercase hex string.
     ///
-    /// Alias for `issuer_fingerprint`.
+    /// Alias for `issuer_fingerprint`. Prefer `issuer_fingerprint` going forwards.
     ///
     /// Returns `None` if the signature does not carry an issuer fingerprint subpacket.
     /// Prefer this over `issuer_key_id` when available, as fingerprints are collision-resistant.
     #[getter]
+    #[deprecated = "Prefer Sig.issuer_fingerprint"]
     pub fn issuer_fpr(&self) -> Option<String> {
         self.issuer_fingerprint()
     }
