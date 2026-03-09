@@ -644,8 +644,11 @@ sig = Sig.from_file("sig.pgp")
 
 print(f"Parsed signature: {repr(sig)}")
 
-assert sig.issuer_fpr == "e8f23996f23218640cb44cbe75cf5ac418b8e74c"
+assert sig.issuer_fingerprint == "e8f23996f23218640cb44cbe75cf5ac418b8e74c"
+assert sig.issuer_key_id == "75cf5ac418b8e74c"
 assert sig.created == datetime.fromisoformat("2023-07-19T18:14:01+00:00")
+assert sig.expiration == None
+assert sig.signers_user_id == None
 ```
 
 ## License
