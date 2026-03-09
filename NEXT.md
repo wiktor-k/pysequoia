@@ -3,12 +3,15 @@
 v0.1.31
 
 New:
+  - Added `Sig.issuer_fingerprint`, `Sig.issuer_key_id`, `Sig.signers_user_id`, and `Sig.expiration` [#60]
+  - Added docstrings to the `Sig` API [#60]
 
 Changed:
-  - This release changes metadata of the project and the release workflow. There are no functional changes. See changelog for version 0.1.30.
-  - Changed Rust edition from 2021 to 2024.
+  - `Sig.issuer_fpr` is now considered deprecated, use `Sig.issuer_fingerprint` instead [#60]
 
 Removed:
+
+[#60]: https://github.com/wiktor-k/pysequoia/pull/60
 
 ### Release checklist:
 ###  [ ] Change version in `Cargo.toml` and `pyproject.toml` and `NEXT.md`
