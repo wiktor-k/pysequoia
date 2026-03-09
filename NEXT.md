@@ -8,6 +8,7 @@ New:
   - Added `PacketPile` and `Packet` for low-level reading of individual packet fields [#61]
   - Added `Sig.signature_type`, `Sig.hash_algorithm`, `Sig.key_algorithm`, `Sig.key_validity_period`, and `Sig.version` [#61]
   - Added `SignatureType`, `PublicKeyAlgorithm`, `HashAlgorithm`, `DataFormat`, `Tag` and `KeyFlags` as returned types [#61]
+  - Added Sequoia's `armor::Writer` for applying Ascii Armor to data, via the `armor()` function and `ArmorKind` type [#61]
 
 Changed:
   - `Sig.issuer_fpr` is now considered deprecated, use `Sig.issuer_fingerprint` instead [#60]

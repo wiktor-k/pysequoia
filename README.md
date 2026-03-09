@@ -694,6 +694,30 @@ assert packet.tag == Tag.PublicKey
 assert len(packet.body) > 0
 ```
 
+## ASCII armor
+
+The `armor` function wraps raw binary OpenPGP data in ASCII armor,
+adding the appropriate header, base64 encoding, and CRC24 checksum:
+
+```python
+from pysequoia import armor, ArmorKind
+
+cert = Cert.generate("Test <test@example.com>")
+armored = armor(bytes(cert), ArmorKind.PublicKey)
+assert "-----BEGIN PGP PUBLIC KEY BLOCK-----" in armored
+assert "-----END PGP PUBLIC KEY BLOCK-----" in armored
+```
+
+Other armor kinds are available for different data types:
+
+```python
+armored_msg = armor(b"dummy data", ArmorKind.Message)
+assert "BEGIN PGP MESSAGE" in armored_msg
+
+armored_sig = armor(b"dummy data", ArmorKind.Signature)
+assert "BEGIN PGP SIGNATURE" in armored_sig
+```
+
 ## License
 
 This project is licensed under [Apache License, Version 2.0][APL].

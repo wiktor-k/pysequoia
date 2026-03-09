@@ -283,6 +283,31 @@ impl TryFrom<SqTag> for Tag {
     }
 }
 
+/// The type of ASCII armor to use when wrapping OpenPGP data.
+#[pyclass(eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ArmorKind {
+    /// "PGP PUBLIC KEY BLOCK"
+    PublicKey,
+    /// "PGP PRIVATE KEY BLOCK"
+    SecretKey,
+    /// "PGP MESSAGE"
+    Message,
+    /// "PGP SIGNATURE"
+    Signature,
+}
+
+impl From<ArmorKind> for sequoia_openpgp::armor::Kind {
+    fn from(kind: ArmorKind) -> Self {
+        match kind {
+            ArmorKind::PublicKey => Self::PublicKey,
+            ArmorKind::SecretKey => Self::SecretKey,
+            ArmorKind::Message => Self::Message,
+            ArmorKind::Signature => Self::Signature,
+        }
+    }
+}
+
 /// The key usage flags from an OpenPGP signature.
 ///
 /// Indicates what operations a key is authorized to perform.

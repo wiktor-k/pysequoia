@@ -19,6 +19,8 @@ use sequoia_openpgp::parse::stream::GoodChecksum;
 use sequoia_openpgp::serialize::stream::Armorer;
 use sequoia_openpgp::serialize::{Marshal, stream::Message};
 
+use crate::types::ArmorKind;
+
 pub(crate) fn serialize<T>(p: Packet, armor_kind: T) -> sequoia_openpgp::Result<Vec<u8>>
 where
     T: Into<Option<Kind>>,
@@ -92,10 +94,31 @@ impl Decrypted {
     }
 }
 
+/// Wrap raw OpenPGP data in ASCII armor.
+///
+/// Takes raw binary OpenPGP data and an `ArmorKind` specifying the armor
+/// header type, and returns the ASCII-armored string.
+#[pyfunction]
+pub fn armor(data: &[u8], kind: ArmorKind) -> PyResult<String> {
+    let mut output = vec![];
+    {
+        let mut writer = sequoia_openpgp::armor::Writer::new(&mut output, kind.into())
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        std::io::Write::write_all(&mut writer, data)
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        writer
+            .finalize()
+            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    }
+    String::from_utf8(output).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))
+}
+
 #[pymodule]
 pub mod pysequoia {
     #[pymodule_export]
     pub use super::Decrypted;
+    #[pymodule_export]
+    pub use super::armor;
     #[pymodule_export]
     pub use super::cert::Cert;
     #[pymodule_export]
@@ -126,6 +149,8 @@ pub mod pysequoia {
     pub use super::signature::Sig;
     #[pymodule_export]
     pub use super::signer::PySigner;
+    #[pymodule_export]
+    pub use super::types::ArmorKind;
     #[pymodule_export]
     pub use super::types::DataFormat;
     #[pymodule_export]
