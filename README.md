@@ -659,7 +659,7 @@ packet exposes a `tag` property identifying the packet type, along with
 type-specific accessors for extracting fields.
 
 ```python
-from pysequoia import PacketPile, Tag, SignatureType
+from pysequoia.packet import PacketPile, Tag, SignatureType
 
 cert = Cert.generate("Test <test@example.com>")
 pile = PacketPile.from_bytes(bytes(cert))
@@ -689,6 +689,8 @@ Individual packets also carry their raw body bytes (without the tag and
 length header), which can be useful for hashing or storing packet data:
 
 ```python
+from pysequoia.packet import PacketPile, Tag
+
 packet = list(PacketPile.from_bytes(bytes(cert)))[0]
 assert packet.tag == Tag.PublicKey
 assert len(packet.body) > 0
@@ -711,6 +713,8 @@ assert "-----END PGP PUBLIC KEY BLOCK-----" in armored
 Other armor kinds are available for different data types:
 
 ```python
+from pysequoia import armor, ArmorKind
+
 armored_msg = armor(b"dummy data", ArmorKind.Message)
 assert "BEGIN PGP MESSAGE" in armored_msg
 

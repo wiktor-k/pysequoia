@@ -116,6 +116,8 @@ pub fn armor(data: &[u8], kind: ArmorKind) -> PyResult<String> {
 
 #[pymodule]
 pub mod pysequoia {
+    use pyo3::prelude::*;
+
     #[pymodule_export]
     pub use super::Decrypted;
     #[pymodule_export]
@@ -137,10 +139,6 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::notation::Notation;
     #[pymodule_export]
-    pub use super::packet::PacketPile;
-    #[pymodule_export]
-    pub use super::packet::PyPacket;
-    #[pymodule_export]
     pub use super::sign::SignatureMode;
     #[pymodule_export]
     pub use super::sign::sign;
@@ -153,19 +151,28 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::types::ArmorKind;
     #[pymodule_export]
-    pub use super::types::DataFormat;
-    #[pymodule_export]
-    pub use super::types::HashAlgorithm;
-    #[pymodule_export]
-    pub use super::types::KeyFlags;
-    #[pymodule_export]
-    pub use super::types::PublicKeyAlgorithm;
-    #[pymodule_export]
-    pub use super::types::SignatureType;
-    #[pymodule_export]
-    pub use super::types::Tag;
-    #[pymodule_export]
     pub use super::user_id::UserId;
     #[pymodule_export]
     pub use super::verify::verify;
+
+    #[pymodule]
+    pub mod packet {
+        #[pymodule_export]
+        pub use crate::packet::PacketPile;
+        #[pymodule_export]
+        pub use crate::packet::PyPacket;
+
+        #[pymodule_export]
+        pub use crate::types::DataFormat;
+        #[pymodule_export]
+        pub use crate::types::HashAlgorithm;
+        #[pymodule_export]
+        pub use crate::types::KeyFlags;
+        #[pymodule_export]
+        pub use crate::types::PublicKeyAlgorithm;
+        #[pymodule_export]
+        pub use crate::types::SignatureType;
+        #[pymodule_export]
+        pub use crate::types::Tag;
+    }
 }
