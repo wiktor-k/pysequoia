@@ -237,19 +237,15 @@ readme:
     source <(tangler bash < README.md)
     tangler python < README.md | python -
 
-# Update stubs file (pysequoia.pyi)
-[metadata('pacman', 'python-pip', 'python', 'rust')]
+# Update stubs (python/pysequoia/__init__.pyi, python/pysequoia/packet.pyi, ...)
+[metadata('pacman', 'rust')]
 update-stubs:
     #!/usr/bin/bash
     set -euo pipefail
-    rm -rf .env pysequoia.pyi
-    python -m venv .env
-    # shellcheck disable=SC1091
-    source .env/bin/activate
-    pip install maturin
-    maturin develop
-    SO=$(find .env -name '*.so')
-    cargo xtask generate-stubs "$SO"
+    cargo build
+    LIB=$(find target/debug -maxdepth 1 \( -name 'libpysequoia.so' -o -name 'libpysequoia.dylib' \) -print -quit)
+    find python/pysequoia -name '*.pyi' -delete 2>/dev/null || true
+    cargo xtask generate-stubs "$LIB"
 
 # Check types in the README
 [metadata('pacman', 'mypy', 'python', 'rust', 'tangler')]

@@ -15,11 +15,16 @@ fn main() -> testresult::TestResult {
         Commands::GenerateStubs { library } => {
             let module = pyo3_introspection::introspect_cdylib(library, "pysequoia")?;
             let result = pyo3_introspection::module_stub_files(&module);
-            println!("{result:?}");
-            let value = result
-                .get(&PathBuf::from("__init__.pyi"))
-                .expect("stubs to be there");
-            std::fs::write("pysequoia.pyi", value)?;
+            let out_dir = PathBuf::from("python/pysequoia");
+            std::fs::create_dir_all(&out_dir)?;
+            for (path, content) in &result {
+                let out_path = out_dir.join(path);
+                if let Some(parent) = out_path.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                std::fs::write(&out_path, content)?;
+                println!("Wrote {}", out_path.display());
+            }
         }
     }
 

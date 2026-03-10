@@ -161,7 +161,6 @@ pub mod pysequoia {
         pub use crate::packet::PacketPile;
         #[pymodule_export]
         pub use crate::packet::PyPacket;
-
         #[pymodule_export]
         pub use crate::types::DataFormat;
         #[pymodule_export]
