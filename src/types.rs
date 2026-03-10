@@ -1,3 +1,4 @@
+// Lint suppression is needed due to how pyo3 generates code.
 #![allow(deprecated)]
 
 use anyhow::anyhow;
@@ -80,10 +81,13 @@ pub enum PublicKeyAlgorithm {
     /// RSA (Encrypt or Sign)
     RSAEncryptSign,
     /// RSA Encrypt-Only, deprecated
+    #[deprecated]
     RSAEncrypt,
     /// RSA Sign-Only, deprecated
+    #[deprecated]
     RSASign,
     /// ElGamal Encrypt-Only, deprecated
+    #[deprecated]
     ElGamalEncrypt,
     /// DSA
     DSA,
@@ -92,6 +96,7 @@ pub enum PublicKeyAlgorithm {
     /// Elliptic Curve DSA
     ECDSA,
     /// ElGamal Encrypt or Sign, deprecated
+    #[deprecated]
     ElGamalEncryptSign,
     /// "Twisted" Edwards Curve DSA
     EdDSA,
@@ -187,6 +192,7 @@ pub enum DataFormat {
     /// UTF-8 text data
     Unicode,
     /// Text data, encoding unspecified. Deprecated.
+    #[deprecated]
     Text,
 }
 
@@ -287,13 +293,13 @@ impl TryFrom<SqTag> for Tag {
 #[pyclass(eq)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ArmorKind {
-    /// "PGP PUBLIC KEY BLOCK"
+    /// `PGP PUBLIC KEY BLOCK`
     PublicKey,
-    /// "PGP PRIVATE KEY BLOCK"
+    /// `PGP PRIVATE KEY BLOCK`
     SecretKey,
-    /// "PGP MESSAGE"
+    /// `PGP MESSAGE`
     Message,
-    /// "PGP SIGNATURE"
+    /// `PGP SIGNATURE`
     Signature,
 }
 

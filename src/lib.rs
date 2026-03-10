@@ -94,6 +94,10 @@ impl Decrypted {
     }
 }
 
+fn runtime_err<E: std::fmt::Display>(e: E) -> pyo3::PyErr {
+    pyo3::exceptions::PyRuntimeError::new_err(e.to_string())
+}
+
 /// Wrap raw OpenPGP data in ASCII armor.
 ///
 /// Takes raw binary OpenPGP data and an `ArmorKind` specifying the armor
@@ -102,15 +106,12 @@ impl Decrypted {
 pub fn armor(data: &[u8], kind: ArmorKind) -> PyResult<String> {
     let mut output = vec![];
     {
-        let mut writer = sequoia_openpgp::armor::Writer::new(&mut output, kind.into())
-            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-        std::io::Write::write_all(&mut writer, data)
-            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-        writer
-            .finalize()
-            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+        let mut writer =
+            sequoia_openpgp::armor::Writer::new(&mut output, kind.into()).map_err(runtime_err)?;
+        std::io::Write::write_all(&mut writer, data).map_err(runtime_err)?;
+        writer.finalize().map_err(runtime_err)?;
     }
-    String::from_utf8(output).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))
+    String::from_utf8(output).map_err(runtime_err)
 }
 
 #[pymodule]
