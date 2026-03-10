@@ -6,7 +6,7 @@ New:
   - Added `Sig.issuer_fingerprint`, `Sig.issuer_key_id`, `Sig.signers_user_id`, and `Sig.expiration` [#60]
   - Added docstrings to the `Sig` API [#60]
   - Added `PacketPile` and `Packet` for low-level reading of individual packet fields [#61]
-  - Added `Sig.signature_type`, `Sig.hash_algorithm`, `Sig.key_algorithm`, and `Sig.key_validity_period` [#61]
+  - Added `Sig.signature_type`, `Sig.hash_algorithm`, `Sig.key_algorithm`, `Sig.key_validity_period`, and `Sig.version` [#61]
   - Added `SignatureType`, `PublicKeyAlgorithm`, `HashAlgorithm`, `DataFormat`, `Tag` and `KeyFlags` as returned types [#61]
 
 Changed:

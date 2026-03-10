@@ -125,6 +125,12 @@ impl Sig {
         self.sig.signature_expiration_time().map(Into::into)
     }
 
+    /// The version of this signature packet (e.g. 4 or 6).
+    #[getter]
+    pub fn version(&self) -> u8 {
+        self.sig.version()
+    }
+
     /// The signature type (e.g. `SignatureType.SubkeyBinding`).
     #[getter]
     pub fn signature_type(&self) -> PyResult<SignatureType> {

@@ -210,6 +210,17 @@ impl PyPacket {
 
     // -- Signature packet accessors --
 
+    /// The version of a signature packet (e.g. 4 or 6).
+    ///
+    /// Returns `None` for non-Signature packets.
+    #[getter]
+    pub fn signature_version(&self) -> Option<u8> {
+        match &self.packet {
+            Packet::Signature(sig) => Some(sig.version()),
+            _ => None,
+        }
+    }
+
     /// The signature type (e.g. `SignatureType.SubkeyBinding`).
     ///
     /// Returns `None` for non-Signature packets.
