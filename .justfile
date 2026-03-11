@@ -243,7 +243,7 @@ update-stubs:
     #!/usr/bin/bash
     set -euo pipefail
     cargo build
-    LIB=$(find target/debug -maxdepth 1 \( -name 'libpysequoia.so' -o -name 'libpysequoia.dylib' \) -print -quit)
+    LIB=$(find "${CARGO_TARGET_DIR:-target}/debug" -maxdepth 1 \( -name 'libpysequoia.so' -o -name 'libpysequoia.dylib' \) -print -quit)
     find python/pysequoia -name '*.pyi' -delete 2>/dev/null || true
     cargo xtask generate-stubs "$LIB"
 

@@ -4,7 +4,7 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 enum Commands {
-    /// Generate stub file (pysequoia.pyi)
+    /// Generate stub files
     GenerateStubs { library: PathBuf },
 }
 
