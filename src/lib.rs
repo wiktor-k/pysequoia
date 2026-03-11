@@ -4,9 +4,11 @@ mod cert;
 mod decrypt;
 mod encrypt;
 mod notation;
+mod packet;
 mod sign;
 mod signature;
 mod signer;
+mod types;
 mod user_id;
 mod verify;
 
@@ -16,6 +18,8 @@ use sequoia_openpgp::packet::Packet;
 use sequoia_openpgp::parse::stream::GoodChecksum;
 use sequoia_openpgp::serialize::stream::Armorer;
 use sequoia_openpgp::serialize::{Marshal, stream::Message};
+
+use crate::types::ArmorKind;
 
 pub(crate) fn serialize<T>(p: Packet, armor_kind: T) -> sequoia_openpgp::Result<Vec<u8>>
 where
@@ -90,10 +94,34 @@ impl Decrypted {
     }
 }
 
+fn runtime_err<E: std::fmt::Display>(e: E) -> pyo3::PyErr {
+    pyo3::exceptions::PyRuntimeError::new_err(e.to_string())
+}
+
+/// Wrap raw OpenPGP data in ASCII armor.
+///
+/// Takes raw binary OpenPGP data and an `ArmorKind` specifying the armor
+/// header type, and returns the ASCII-armored string.
+#[pyfunction]
+pub fn armor(data: &[u8], kind: ArmorKind) -> PyResult<String> {
+    let mut output = vec![];
+    {
+        let mut writer =
+            sequoia_openpgp::armor::Writer::new(&mut output, kind.into()).map_err(runtime_err)?;
+        std::io::Write::write_all(&mut writer, data).map_err(runtime_err)?;
+        writer.finalize().map_err(runtime_err)?;
+    }
+    String::from_utf8(output).map_err(runtime_err)
+}
+
 #[pymodule]
 pub mod pysequoia {
+    use pyo3::prelude::*;
+
     #[pymodule_export]
     pub use super::Decrypted;
+    #[pymodule_export]
+    pub use super::armor;
     #[pymodule_export]
     pub use super::cert::Cert;
     #[pymodule_export]
@@ -121,7 +149,29 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::signer::PySigner;
     #[pymodule_export]
+    pub use super::types::ArmorKind;
+    #[pymodule_export]
     pub use super::user_id::UserId;
     #[pymodule_export]
     pub use super::verify::verify;
+
+    #[pymodule]
+    pub mod packet {
+        #[pymodule_export]
+        pub use crate::packet::PacketPile;
+        #[pymodule_export]
+        pub use crate::packet::PyPacket;
+        #[pymodule_export]
+        pub use crate::types::DataFormat;
+        #[pymodule_export]
+        pub use crate::types::HashAlgorithm;
+        #[pymodule_export]
+        pub use crate::types::KeyFlags;
+        #[pymodule_export]
+        pub use crate::types::PublicKeyAlgorithm;
+        #[pymodule_export]
+        pub use crate::types::SignatureType;
+        #[pymodule_export]
+        pub use crate::types::Tag;
+    }
 }

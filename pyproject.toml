@@ -35,3 +35,7 @@ repository = "https://github.com/wiktor-k/pysequoia"
 # doesn't like. Suppressing these warnings.
 # See https://github.com/PyO3/pyo3/issues/5137#issuecomment-3384975623
 disable_error_code = "override,union-attr"
+mypy_path = ["python"]
+
+[tool.maturin]
+python-source = "python"
