@@ -291,7 +291,7 @@ impl TryFrom<SqTag> for Tag {
 }
 
 /// The type of ASCII armor to use when wrapping OpenPGP data.
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ArmorKind {
     /// `PGP PUBLIC KEY BLOCK`
