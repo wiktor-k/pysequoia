@@ -28,7 +28,7 @@ impl From<SignedData<'_>> for Option<Vec<u8>> {
 pub fn verify(
     bytes: Option<&[u8]>,
     store: Option<Py<PyAny>>,
-    #[allow(unused)] file: Option<PathBuf>,
+    file: Option<PathBuf>,
     signature: Option<&Sig>,
 ) -> PyResult<Decrypted> {
     let Some(store) = store else {
