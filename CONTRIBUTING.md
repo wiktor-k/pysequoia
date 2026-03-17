@@ -20,6 +20,11 @@ To run all checks locally before sending them to CI you can set your git hooks d
 git config core.hooksPath scripts/hooks/
 ```
 
+## AI Policy
+
+When using AI tools in this project, ensure you understand and verify the resulting code.
+For transparency, add an `Assisted-by:` git commit trailer to commits that include AI-generated or AI-assisted changes.
+
 ## Developer Certificate of Origin
 
 The sign-off is a simple line at the end of the git commit message, which certifies that you wrote it or otherwise have the right to pass it on as a open-source patch.
