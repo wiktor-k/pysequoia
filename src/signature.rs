@@ -1,5 +1,3 @@
-#![allow(deprecated)]
-
 use std::borrow::Cow;
 
 use anyhow::anyhow;
@@ -73,7 +71,10 @@ impl Sig {
     /// Returns `None` if the signature does not carry an issuer fingerprint subpacket.
     /// Prefer this over `issuer_key_id` when available, as fingerprints are collision-resistant.
     #[getter]
-    #[deprecated = "Prefer Sig.issuer_fingerprint"]
+    #[pyo3(warn(
+        message = "Prefer Sig.issuer_fingerprint",
+        category = pyo3::exceptions::PyDeprecationWarning
+    ))]
     pub fn issuer_fpr(&self) -> Option<String> {
         self.issuer_fingerprint()
     }

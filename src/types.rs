@@ -1,5 +1,7 @@
-// Lint suppression is needed due to how pyo3 generates code.
-#![allow(deprecated)]
+#![expect(
+    deprecated,
+    reason = "Lint suppression is needed due to how pyo3 generates code. See: https://github.com/PyO3/pyo3/issues/5888"
+)]
 
 use anyhow::anyhow;
 use pyo3::prelude::*;
@@ -199,7 +201,6 @@ pub enum DataFormat {
 impl TryFrom<SqDataFormat> for DataFormat {
     type Error = anyhow::Error;
 
-    #[allow(deprecated)]
     fn try_from(fmt: SqDataFormat) -> Result<Self, Self::Error> {
         match fmt {
             SqDataFormat::Binary => Ok(Self::Binary),
