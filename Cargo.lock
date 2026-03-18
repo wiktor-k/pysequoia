@@ -1432,7 +1432,7 @@ dependencies = [
 
 [[package]]
 name = "pysequoia"
-version = "0.1.31"
+version = "0.1.32"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2165,7 +2165,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.1.32"
 dependencies = [
  "clap",
  "pyo3-introspection",
