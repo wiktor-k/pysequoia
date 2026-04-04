@@ -23,6 +23,11 @@ impl From<SignedData<'_>> for Option<Vec<u8>> {
     }
 }
 
+/// Verify an OpenPGP signature.
+///
+/// Provide either `bytes` or `file` as the signed data source. The `store` callback
+/// is called with a list of key ID strings and must return a list of `Cert` objects.
+/// For detached signature verification, pass a `Sig` object as `signature`.
 #[pyfunction]
 #[pyo3(signature = (bytes=None, store=None, file=None, signature=None))]
 pub fn verify(

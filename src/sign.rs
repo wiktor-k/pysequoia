@@ -10,6 +10,7 @@ use sequoia_openpgp::serialize::stream::{LiteralWriter, Message};
 
 use crate::signer::PySigner;
 
+/// The mode of signature to produce.
 #[pyclass(eq, eq_int)]
 #[derive(PartialEq)]
 pub enum SignatureMode {
@@ -21,6 +22,10 @@ pub enum SignatureMode {
     Clear,
 }
 
+/// Sign data with the given signer.
+///
+/// The `mode` controls whether the signature is inline (the default), detached, or cleartext.
+/// Set `armor=False` to produce binary output instead of ASCII-armored.
 #[pyfunction]
 #[pyo3(signature = (signer, bytes, *, mode=&SignatureMode::Inline, armor=true))]
 pub fn sign(
@@ -56,6 +61,10 @@ pub fn sign(
     Ok(sink.into())
 }
 
+/// Sign a file with the given signer, writing the result to an output file.
+///
+/// The `mode` controls whether the signature is inline (the default), detached, or cleartext.
+/// Set `armor=False` to produce binary output instead of ASCII-armored.
 #[pyfunction]
 #[pyo3(signature = (signer, input, output, *, mode=&SignatureMode::Inline, armor=true))]
 pub fn sign_file(

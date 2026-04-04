@@ -3,6 +3,9 @@ use std::sync::{Arc, Mutex};
 use pyo3::prelude::*;
 use sequoia_openpgp::{crypto, packet, types};
 
+/// A handle to a signing key, used for creating signatures, certifications, and revocations.
+///
+/// Obtain a `PySigner` via `Cert.secrets.signer()` or `Cert.secrets.certifier()`.
 #[pyclass(from_py_object)]
 #[derive(Clone)]
 pub struct PySigner {

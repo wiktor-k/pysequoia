@@ -10,6 +10,7 @@ use sequoia_openpgp::{
 
 use crate::types::{HashAlgorithm, PublicKeyAlgorithm, SignatureType};
 
+/// A detached OpenPGP signature.
 #[pyclass]
 pub struct Sig {
     sig: SqSignature,

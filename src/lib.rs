@@ -35,6 +35,7 @@ where
     Ok(sink)
 }
 
+/// A verified valid signature, containing the certificate and signing key fingerprints.
 #[pyclass(skip_from_py_object)]
 #[derive(Debug, Clone)]
 pub struct ValidSig {
@@ -53,11 +54,13 @@ impl From<GoodChecksum<'_>> for ValidSig {
 
 #[pymethods]
 impl ValidSig {
+    /// The fingerprint of the certificate that made the signature.
     #[getter]
     fn certificate(&self) -> &str {
         &self.certificate
     }
 
+    /// The fingerprint of the specific signing key (may be a subkey).
     #[getter]
     fn signing_key(&self) -> &str {
         &self.signing_key
@@ -72,6 +75,9 @@ impl ValidSig {
     }
 }
 
+/// The result of a decryption or verification operation.
+///
+/// Contains the decrypted/verified content (if available) and any valid signatures found.
 #[pyclass(skip_from_py_object)]
 #[derive(Clone)]
 pub struct Decrypted {
@@ -81,6 +87,7 @@ pub struct Decrypted {
 
 #[pymethods]
 impl Decrypted {
+    /// The decrypted or verified content bytes, or `None` for file-based operations.
     #[getter]
     pub fn bytes(&self) -> Option<Cow<'_, [u8]>> {
         self.content
@@ -88,6 +95,7 @@ impl Decrypted {
             .map(|content| Cow::Borrowed(&content[..]))
     }
 
+    /// The list of valid signatures found during verification.
     #[getter]
     pub fn valid_sigs(&self) -> Vec<ValidSig> {
         self.valid_sigs.clone()
