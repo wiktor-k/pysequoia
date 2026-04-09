@@ -69,6 +69,10 @@ fn resolve_recipient_keys(recipients: &[PyRef<Cert>]) -> PyResult<Vec<RecipientK
     Ok(recipient_keys)
 }
 
+/// Encrypt data for the given recipients and/or passwords.
+///
+/// Optionally sign the message with the given `signer`.
+/// Set `armor=False` to produce binary output instead of ASCII-armored.
 #[pyfunction]
 #[pyo3(signature = (bytes, recipients=vec![], signer=None, passwords=vec![], *, armor=true))]
 pub fn encrypt(
@@ -121,6 +125,10 @@ pub fn encrypt(
     Ok(sink.into())
 }
 
+/// Encrypt a file for the given recipients and/or passwords, writing to an output file.
+///
+/// Optionally sign the message with the given `signer`.
+/// Set `armor=False` to produce binary output instead of ASCII-armored.
 #[pyfunction]
 #[pyo3(signature = (input, output, recipients=vec![], signer=None, passwords=vec![], *, armor=true))]
 pub fn encrypt_file(

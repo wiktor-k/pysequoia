@@ -81,10 +81,16 @@ impl PacketIter {
 /// Provides the packet tag and type-specific accessors for extracting
 /// data from different packet types (keys, signatures, user IDs, etc.).
 /// Accessors return `None` when called on the wrong packet type.
-#[pyclass(name = "Packet", skip_from_py_object)]
+#[pyclass(name = "Packet", from_py_object)]
 #[derive(Clone)]
 pub struct PyPacket {
     packet: Packet,
+}
+
+impl PyPacket {
+    pub fn into_inner(self) -> Packet {
+        self.packet
+    }
 }
 
 #[pymethods]

@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 use sequoia_openpgp::packet::signature::subpacket::NotationData;
 
+/// A key-value notation attached to an OpenPGP signature.
 #[pyclass(from_py_object)]
 #[derive(Clone)]
 pub struct Notation {
@@ -19,16 +20,19 @@ impl From<&NotationData> for Notation {
 
 #[pymethods]
 impl Notation {
+    /// Create a new notation with the given key and value.
     #[new]
     pub fn new(key: String, value: String) -> Self {
         Self { key, value }
     }
 
+    /// The notation key (name).
     #[getter]
     pub fn key(&self) -> &String {
         &self.key
     }
 
+    /// The notation value.
     #[getter]
     pub fn value(&self) -> &String {
         &self.value

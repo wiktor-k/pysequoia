@@ -3,6 +3,7 @@ use sequoia_openpgp::{cert::prelude::ValidComponentAmalgamation, packet::UserID}
 
 use crate::notation::Notation;
 
+/// A User ID component of an OpenPGP certificate (e.g. `"Alice <alice@example.com>"`).
 #[pyclass]
 pub struct UserId {
     value: String,
@@ -25,6 +26,7 @@ impl UserId {
 
 #[pymethods]
 impl UserId {
+    /// Return the User ID string value.
     pub fn __str__(&self) -> &str {
         &self.value
     }
@@ -33,6 +35,7 @@ impl UserId {
         format!("<UserId value='{}'>", self.value)
     }
 
+    /// The human-readable notations from this User ID's binding signature.
     #[getter]
     fn notations(&self) -> Vec<Notation> {
         self.notations.clone()

@@ -6,6 +6,10 @@ use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
 use crate::decrypt;
 use crate::signer::PySigner;
 
+/// A certificate that contains secret key material.
+///
+/// Provides access to signing, certification, and decryption operations
+/// that require private keys.
 #[pyclass]
 pub struct SecretCert {
     cert: cert::Cert,
@@ -26,11 +30,15 @@ impl SecretCert {
 
 #[pymethods]
 impl SecretCert {
+    /// Return the ASCII-armored secret key representation (Transferable Secret Key).
     pub fn __str__(&self) -> PyResult<String> {
         let armored = self.cert.as_tsk().armored();
         Ok(String::from_utf8(armored.to_vec()?)?)
     }
 
+    /// Get a signer using this certificate's signing component key.
+    ///
+    /// If the secret key is password-protected, provide the password to decrypt it.
     #[pyo3(signature = (password=None))]
     pub fn signer(&self, password: Option<String>) -> PyResult<PySigner> {
         if let Some(key) = self
@@ -54,6 +62,9 @@ impl SecretCert {
         }
     }
 
+    /// Get a certifier using this certificate's certification-capable primary key.
+    ///
+    /// If the secret key is password-protected, provide the password to decrypt it.
     #[pyo3(signature = (password=None))]
     pub fn certifier(&self, password: Option<String>) -> PyResult<PySigner> {
         if let Some(key) = self
@@ -77,6 +88,9 @@ impl SecretCert {
         }
     }
 
+    /// Get a decryptor using this certificate's encryption component key.
+    ///
+    /// If the secret key is password-protected, provide the password to decrypt it.
     #[pyo3(signature = (password=None))]
     pub fn decryptor(&self, password: Option<String>) -> PyResult<decrypt::PyDecryptor> {
         if let Some(key) = self

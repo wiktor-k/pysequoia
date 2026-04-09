@@ -13,6 +13,9 @@ use sequoia_openpgp::{KeyHandle, cert};
 use crate::verify::PyVerifier;
 use crate::{Decrypted, ValidSig};
 
+/// A decryption helper that holds the key material needed to decrypt messages.
+///
+/// Obtain a `PyDecryptor` via `Cert.secrets.decryptor()`.
 #[pyclass(from_py_object)]
 #[derive(Clone, Default)]
 pub struct PyDecryptor {
@@ -47,6 +50,10 @@ impl PyDecryptor {
     }
 }
 
+/// Decrypt an OpenPGP message from bytes.
+///
+/// Provide either a `decryptor` (from a secret key) or `passwords` for password-based decryption.
+/// Optionally provide a `store` callback for signature verification during decryption.
 #[pyfunction]
 #[pyo3(signature = (bytes, decryptor=None, store=None, passwords=vec![]))]
 pub fn decrypt(
@@ -81,6 +88,10 @@ pub fn decrypt(
     })
 }
 
+/// Decrypt an OpenPGP message from a file, writing the plaintext to another file.
+///
+/// Provide either a `decryptor` (from a secret key) or `passwords` for password-based decryption.
+/// Optionally provide a `store` callback for signature verification during decryption.
 #[pyfunction]
 #[pyo3(signature = (input, output, decryptor=None, store=None, passwords=vec![]))]
 pub fn decrypt_file(
