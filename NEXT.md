@@ -1,22 +1,15 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v0.1.31
+v0.1.32
 
 New:
-  - Added `Sig.issuer_fingerprint`, `Sig.issuer_key_id`, `Sig.signers_user_id`, and `Sig.expiration` [#60]
-  - Added docstrings to the `Sig` API [#60]
-  - Added `PacketPile` and `Packet` for low-level reading of individual packet fields in the `pysequoia.packet` module [#61]
-  - Added `Sig.signature_type`, `Sig.hash_algorithm`, `Sig.key_algorithm`, `Sig.key_validity_period`, and `Sig.version` [#61]
-  - Added `SignatureType`, `PublicKeyAlgorithm`, `HashAlgorithm`, `DataFormat`, `Tag` and `KeyFlags` as returned types [#61]
-  - Added Sequoia's `armor::Writer` for applying ASCII Armor to data, via the `armor()` function and `ArmorKind` type [#61]
+  - 
 
 Changed:
-  - `Sig.issuer_fpr` is now considered deprecated, use `Sig.issuer_fingerprint` instead [#60]
+  - 
 
 Removed:
-
-[#60]: https://github.com/wiktor-k/pysequoia/pull/60
-[#61]: https://github.com/wiktor-k/pysequoia/pull/61
+  - 
 
 ### Release checklist:
 ###  [ ] Change version in `Cargo.toml` and `pyproject.toml` and `NEXT.md`

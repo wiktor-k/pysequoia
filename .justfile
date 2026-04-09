@@ -7,7 +7,7 @@ udeps_args := "--quiet --workspace --all-features --all-targets"
 
 # Perform all checks
 [parallel]
-check: spell fmt doc lints deps unused-deps recipes test integration-test
+check: spell fmt fmt-readme doc lints deps unused-deps recipes test integration-test
 
 # Check spelling
 [group('ci')]
@@ -23,6 +23,12 @@ fmt:
     # We're using nightly to properly group imports, see .rustfmt.toml
     rustup component add --toolchain nightly rustfmt
     cargo +nightly fmt --quiet --all -- --check
+
+# Check formatting of code blocks in README.md
+[group('ci')]
+[metadata('pacman', 'ruff')]
+fmt-readme:
+    ruff format --preview --check README.md
 
 # Lint the source code
 [group('ci')]
@@ -205,6 +211,7 @@ recipes:
     done
 
 # Fixes common issues. Files need to be git add'ed
+[metadata('pacman', 'codespell', 'ruff', 'cargo')]
 fix:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -214,11 +221,14 @@ fix:
     fi
 
     codespell --write-changes
+
+    ruff format --preview README.md
+
     just --unstable --fmt
     # try to fix rustc issues
-    cargo fix --allow-staged
+    cargo fix --allow-staged --allow-dirty
     # try to fix clippy issues
-    cargo clippy --fix --allow-staged
+    cargo clippy --fix --allow-staged --allow-dirty
 
     # fmt must be last as clippy changes may break formatting
     cargo +nightly fmt --all
