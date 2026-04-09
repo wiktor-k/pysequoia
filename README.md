@@ -79,11 +79,15 @@ signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 print(f"Signed data: {signed!r}")
 assert "PGP MESSAGE" in str(signed)
 
-detached = sign(s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED)
+detached = sign(
+    s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED
+)
 print(f"Detached signature: {detached!r}")
 assert "PGP SIGNATURE" in str(detached)
 
-clear = sign(s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.CLEAR)
+clear = sign(
+    s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.CLEAR
+)
 print(f"Clear signed: {clear!r}")
 assert "PGP SIGNED MESSAGE" in str(clear)
 ```
@@ -100,11 +104,11 @@ s = Cert.from_file("signing-key.asc")
 
 # create a file with data to sign
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
-  inp.write("data to be signed".encode("utf8"))
-  input_path = inp.name
+    inp.write("data to be signed".encode("utf8"))
+    input_path = inp.name
 
 with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as out:
-  output_path = out.name
+    output_path = out.name
 
 sign_file(s.secrets.signer(), input_path, output_path)
 signed = open(output_path, "rb").read()
@@ -112,7 +116,7 @@ assert b"PGP MESSAGE" in signed
 
 # detached signature to file
 with tempfile.NamedTemporaryFile(delete=False, suffix=".sig") as out:
-  detached_path = out.name
+    detached_path = out.name
 
 sign_file(s.secrets.signer(), input_path, detached_path, mode=SignatureMode.DETACHED)
 detached = open(detached_path, "rb").read()
@@ -134,10 +138,12 @@ from pysequoia import verify
 signing_key = Cert.from_file("signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 
+
 def get_certs_verify(key_ids):
-  # key_ids is an array of required signing keys
-  print(f"For verification, we need these keys: {key_ids}")
-  return [signing_key]
+    # key_ids is an array of required signing keys
+    print(f"For verification, we need these keys: {key_ids}")
+    return [signing_key]
+
 
 # verify the data
 result = verify(signed, get_certs_verify)
@@ -168,20 +174,25 @@ This function can also work with files directly, which is beneficial if the file
 
 ```python
 import tempfile
+
 with tempfile.NamedTemporaryFile(delete=False) as tmp:
-  data = "data to be signed".encode("utf8")
-  detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
-  signature = Sig.from_bytes(detached)
+    data = "data to be signed".encode("utf8")
+    detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+    signature = Sig.from_bytes(detached)
 
-  tmp.write(data)
-  tmp.close()
+    tmp.write(data)
+    tmp.close()
 
-  # verify a detached signature against a file name
-  result = verify(file=tmp.name, store=get_certs_verify, signature=signature)
+    # verify a detached signature against a file name
+    result = verify(file=tmp.name, store=get_certs_verify, signature=signature)
 
-  # let's check the valid signature's certificate and signing subkey fingerprints
-  assert result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
-  assert result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+    # let's check the valid signature's certificate and signing subkey fingerprints
+    assert (
+        result.valid_sigs[0].certificate == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+    )
+    assert (
+        result.valid_sigs[0].signing_key == "afcf5405e8f49dbcd5dc548a86375b854b86acf9"
+    )
 ```
 
 `verify` succeeds if *at least one* correct signature has been made by any of the certificates supplied. If you need more advanced policies they can be implemented by inspecting the `valid_sigs` property.
@@ -196,8 +207,10 @@ from pysequoia import encrypt
 s = Cert.from_file("passwd.pgp")
 r = Cert.from_bytes(open("wiktor.asc", "rb").read())
 content = "content to encrypt"
-encrypted = encrypt(signer = s.secrets.signer("hunter22"), recipients = [r], bytes = content.encode("utf8"))
-print(f"Encrypted data: {encrypted.decode("utf8")}")
+encrypted = encrypt(
+    signer=s.secrets.signer("hunter22"), recipients=[r], bytes=content.encode("utf8")
+)
+print(f"Encrypted data: {encrypted.decode('utf8')}")
 ```
 
 The `signer` argument is optional and when omitted the function will return an unsigned (but encrypted) message.
@@ -208,8 +221,8 @@ Encryption to symmetric keys is available via the `passwords` optional argument:
 from pysequoia import encrypt
 
 content = "content to encrypt"
-encrypted = encrypt(passwords = ["sekrit"], bytes = content.encode("utf8"))
-print(f"Encrypted data: {encrypted.decode("utf8")}")
+encrypted = encrypt(passwords=["sekrit"], bytes=content.encode("utf8"))
+print(f"Encrypted data: {encrypted.decode('utf8')}")
 ```
 
 ### encrypt_file
@@ -225,13 +238,18 @@ r = Cert.from_bytes(open("wiktor.asc", "rb").read())
 
 # create a file with content to encrypt
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
-  inp.write("content to encrypt".encode("utf8"))
-  input_path = inp.name
+    inp.write("content to encrypt".encode("utf8"))
+    input_path = inp.name
 
 with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as out:
-  output_path = out.name
+    output_path = out.name
 
-encrypt_file(signer = s.secrets.signer("hunter22"), recipients = [r], input = input_path, output = output_path)
+encrypt_file(
+    signer=s.secrets.signer("hunter22"),
+    recipients=[r],
+    input=input_path,
+    output=output_path,
+)
 assert b"PGP MESSAGE" in open(output_path, "rb").read()
 
 os.unlink(input_path)
@@ -250,12 +268,11 @@ receiver = Cert.from_file("passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(recipients = [receiver], bytes = content.encode("utf8"))
+encrypted = encrypt(recipients=[receiver], bytes=content.encode("utf8"))
 
-decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted)
+decrypted = decrypt(decryptor=receiver.secrets.decryptor("hunter22"), bytes=encrypted)
 
-assert content == decrypted.bytes.decode("utf8");
-
+assert content == decrypted.bytes.decode("utf8")
 # this message did not contain any valid signatures
 assert len(decrypted.valid_sigs) == 0
 ```
@@ -270,13 +287,21 @@ receiver = Cert.from_file("passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
+encrypted = encrypt(
+    signer=sender.secrets.signer(), recipients=[receiver], bytes=content.encode("utf8")
+)
+
 
 def get_certs_decrypt(key_ids):
-  print(f"For verification after decryption, we need these keys: {key_ids}")
-  return [sender]
+    print(f"For verification after decryption, we need these keys: {key_ids}")
+    return [sender]
 
-decrypted = decrypt(decryptor = receiver.secrets.decryptor("hunter22"), bytes = encrypted, store = get_certs_decrypt)
+
+decrypted = decrypt(
+    decryptor=receiver.secrets.decryptor("hunter22"),
+    bytes=encrypted,
+    store=get_certs_decrypt,
+)
 
 assert content == decrypted.bytes.decode("utf8")
 
@@ -293,9 +318,9 @@ Decryption using symmetric keys is available via the `passwords` optional argume
 from pysequoia import encrypt
 
 content = "content to encrypt"
-encrypted = encrypt(passwords = ["sekrit"], bytes = content.encode("utf8"))
-print(f"Encrypted data: {encrypted.decode("utf8")}")
-decrypted = decrypt(passwords = ["sekrit"], bytes = encrypted)
+encrypted = encrypt(passwords=["sekrit"], bytes=content.encode("utf8"))
+print(f"Encrypted data: {encrypted.decode('utf8')}")
+decrypted = decrypt(passwords=["sekrit"], bytes=encrypted)
 print(f"Decrypted bytes: {decrypted.bytes!r}")
 
 assert content == decrypted.bytes.decode("utf8")
@@ -314,17 +339,21 @@ receiver = Cert.from_file("passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(recipients = [receiver], bytes = content.encode("utf8"))
+encrypted = encrypt(recipients=[receiver], bytes=content.encode("utf8"))
 
 # write encrypted data to a file
 with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as inp:
-  inp.write(encrypted)
-  input_path = inp.name
+    inp.write(encrypted)
+    input_path = inp.name
 
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as out:
-  output_path = out.name
+    output_path = out.name
 
-decrypted = decrypt_file(decryptor = receiver.secrets.decryptor("hunter22"), input = input_path, output = output_path)
+decrypted = decrypt_file(
+    decryptor=receiver.secrets.decryptor("hunter22"),
+    input=input_path,
+    output=output_path,
+)
 
 # content is written to the output file, not returned in memory
 assert decrypted.bytes is None
@@ -350,21 +379,30 @@ receiver = Cert.from_file("passwd.pgp")
 
 content = "Red Green Blue"
 
-encrypted = encrypt(signer = sender.secrets.signer(), recipients = [receiver], bytes = content.encode("utf8"))
+encrypted = encrypt(
+    signer=sender.secrets.signer(), recipients=[receiver], bytes=content.encode("utf8")
+)
 
 # write encrypted data to a file
 with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as inp:
-  inp.write(encrypted)
-  input_path = inp.name
+    inp.write(encrypted)
+    input_path = inp.name
 
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as out:
-  output_path = out.name
+    output_path = out.name
+
 
 def get_certs_decrypt_file(key_ids):
-  print(f"For verification after decryption, we need these keys: {key_ids}")
-  return [sender]
+    print(f"For verification after decryption, we need these keys: {key_ids}")
+    return [sender]
 
-decrypted = decrypt_file(decryptor = receiver.secrets.decryptor("hunter22"), input = input_path, output = output_path, store = get_certs_decrypt_file)
+
+decrypted = decrypt_file(
+    decryptor=receiver.secrets.decryptor("hunter22"),
+    input=input_path,
+    output=output_path,
+    store=get_certs_decrypt_file,
+)
 
 assert open(output_path, "rb").read().decode("utf8") == content
 
@@ -439,7 +477,7 @@ print(f"Generated cert with fingerprint {fpr}:\n{alice}")
 Multiple User IDs can be passed as a list to the `generate` function:
 
 ```python
-cert = Cert.generate(user_ids = ["First", "Second", "Third"])
+cert = Cert.generate(user_ids=["First", "Second", "Third"])
 assert len(cert.user_ids) == 3
 ```
 
@@ -452,7 +490,9 @@ bob = Cert.generate("Bob <bob@example.com>")
 
 content = "content to encrypt"
 
-encrypted = encrypt(signer = alice.secrets.signer(), recipients = [bob], bytes = content.encode("utf8"))
+encrypted = encrypt(
+    signer=alice.secrets.signer(), recipients=[bob], bytes=content.encode("utf8")
+)
 print(f"Encrypted data: {encrypted!r}")
 ```
 
@@ -494,11 +534,12 @@ Adding new User IDs:
 
 ```python
 cert = Cert.generate("Alice <alice@example.com>")
-assert len(cert.user_ids) == 1;
+assert len(cert.user_ids) == 1
+cert = cert.add_user_id(
+    value="Alice <alice@company.invalid>", certifier=cert.secrets.certifier()
+)
 
-cert = cert.add_user_id(value = "Alice <alice@company.invalid>", certifier = cert.secrets.certifier())
-
-assert len(cert.user_ids) == 2;
+assert len(cert.user_ids) == 2
 ```
 
 Revoking User IDs:
@@ -506,11 +547,15 @@ Revoking User IDs:
 ```python
 cert = Cert.generate("Bob <bob@example.com>")
 
-cert = cert.add_user_id(value = "Bob <bob@company.invalid>", certifier = cert.secrets.certifier())
+cert = cert.add_user_id(
+    value="Bob <bob@company.invalid>", certifier=cert.secrets.certifier()
+)
 assert len(cert.user_ids) == 2
 
 # create User ID revocation
-revocation = cert.revoke_user_id(user_id = cert.user_ids[1], certifier = cert.secrets.certifier())
+revocation = cert.revoke_user_id(
+    user_id=cert.user_ids[1], certifier=cert.secrets.certifier()
+)
 
 # merge the revocation with the cert
 cert = Cert.from_bytes(bytes(cert) + bytes(revocation))
@@ -530,8 +575,8 @@ cert = Cert.from_file("wiktor.asc")
 user_id = cert.user_ids[0]
 notation = user_id.notations[0]
 
-assert notation.key == "proof@metacode.biz";
-assert notation.value == "dns:metacode.biz?type=TXT";
+assert notation.key == "proof@metacode.biz"
+assert notation.value == "dns:metacode.biz?type=TXT"
 ```
 
 Notations can also be added:
@@ -542,19 +587,19 @@ from pysequoia import Notation
 cert = Cert.from_file("signing-key.asc")
 
 # No notations initially
-assert len(cert.user_ids[0].notations) == 0;
-
-cert = cert.set_notations(cert.secrets.certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")])
+assert len(cert.user_ids[0].notations) == 0
+cert = cert.set_notations(
+    cert.secrets.certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")]
+)
 
 # Has one notation now
 print(str(cert.user_ids[0].notations))
-assert len(cert.user_ids[0].notations) == 1;
-
+assert len(cert.user_ids[0].notations) == 1
 # Check the notation data
 notation = cert.user_ids[0].notations[0]
 
-assert notation.key == "proof@metacode.biz";
-assert notation.value == "dns:metacode.biz";
+assert notation.key == "proof@metacode.biz"
+assert notation.value == "dns:metacode.biz"
 ```
 
 ### Key expiration
@@ -585,7 +630,7 @@ assert cert.expiration is None
 
 # Set the expiration to some specified point in time
 expiration = datetime.fromisoformat("2021-11-04T00:05:23+00:00")
-cert = cert.set_expiration(expiration = expiration, certifier = cert.secrets.certifier())
+cert = cert.set_expiration(expiration=expiration, certifier=cert.secrets.certifier())
 assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 ```
 
@@ -599,7 +644,7 @@ irreversible.
 
 ```python
 cert = Cert.generate("Test Revocation <revoke@example.com>")
-revocation = cert.revoke(certifier = cert.secrets.certifier())
+revocation = cert.revoke(certifier=cert.secrets.certifier())
 
 # creating revocation signature does not revoke the key
 assert not cert.is_revoked
@@ -666,13 +711,19 @@ pile = PacketPile.from_bytes(bytes(cert))
 
 for packet in pile:
     if packet.tag == Tag.PublicKey or packet.tag == Tag.PublicSubkey:
-        print(f"Key: fpr={packet.fingerprint}, algo={packet.key_algorithm}, created={packet.key_created}")
+        print(
+            f"Key: fpr={packet.fingerprint}, algo={packet.key_algorithm}, created={packet.key_created}"
+        )
 
     elif packet.tag == Tag.UserID:
-        print(f"User ID: {packet.user_id} (name={packet.user_id_name}, email={packet.user_id_email})")
+        print(
+            f"User ID: {packet.user_id} (name={packet.user_id_name}, email={packet.user_id_email})"
+        )
 
     elif packet.tag == Tag.Signature:
-        print(f"Signature: type={packet.signature_type}, hash={packet.hash_algorithm}, created={packet.signature_created}")
+        print(
+            f"Signature: type={packet.signature_type}, hash={packet.hash_algorithm}, created={packet.signature_created}"
+        )
         if packet.issuer_fingerprint is not None:
             print(f"  issuer: {packet.issuer_fingerprint}")
         if packet.signature_validity_period is not None:
@@ -681,7 +732,10 @@ for packet in pile:
             print(f"  expiration time: {packet.signature_expiration_time}")
         if packet.key_flags is not None:
             print(f"  key flags: {packet.key_flags}")
-        if packet.signature_type == SignatureType.DirectKey and packet.key_validity_period is not None:
+        if (
+            packet.signature_type == SignatureType.DirectKey
+            and packet.key_validity_period is not None
+        ):
             print(f"  key validity period: {packet.key_validity_period}")
 ```
 
@@ -705,7 +759,7 @@ appropriate header, base64 encoding, and CRC24 checksum:
 from pysequoia import armor, ArmorKind
 
 cert = Cert.generate("Test <test@example.com>")
-armored = armor(bytes(cert), ArmorKind.PublicKey) # same as: str(cert)
+armored = armor(bytes(cert), ArmorKind.PublicKey)  # same as: str(cert)
 assert "-----BEGIN PGP PUBLIC KEY BLOCK-----" in armored
 assert "-----END PGP PUBLIC KEY BLOCK-----" in armored
 ```
