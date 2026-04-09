@@ -87,6 +87,16 @@ impl Cert {
         Ok(cert::Cert::from_bytes(bytes)?.into())
     }
 
+    /// Build a certificate from a sequence of OpenPGP packets.
+    ///
+    /// The packets must form a valid certificate (a primary key followed by
+    /// its associated user IDs, user attributes, subkeys, and signatures).
+    #[staticmethod]
+    pub fn from_packets(packets: Vec<crate::packet::PyPacket>) -> PyResult<Self> {
+        let sq_packets = packets.into_iter().map(|p| p.into_inner());
+        Ok(cert::Cert::from_packets(sq_packets)?.into())
+    }
+
     /// Parse multiple certificates from a file on disk.
     ///
     /// Returns a list of all certificates found in the file.
