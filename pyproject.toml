@@ -40,3 +40,6 @@ mypy_path = ["python"]
 
 [tool.maturin]
 python-source = "python"
+# workaround for sdist reproducibility
+# CHECK https://github.com/PyO3/maturin/issues/2609#issuecomment-2889403876
+sdist-generator = "git"
