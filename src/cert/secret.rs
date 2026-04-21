@@ -12,12 +12,12 @@ use crate::signer::PySigner;
 /// Provides access to signing, certification, and decryption operations
 /// that require private keys.
 #[pyclass]
-pub struct SecretCert {
+pub struct Tsk {
     cert: cert::Cert,
     policy: Arc<Mutex<Box<dyn Policy>>>,
 }
 
-impl SecretCert {
+impl Tsk {
     pub fn new(cert: cert::Cert, policy: &Arc<Mutex<Box<dyn Policy>>>) -> Self {
         Self {
             cert,
@@ -30,7 +30,7 @@ impl SecretCert {
 }
 
 #[pymethods]
-impl SecretCert {
+impl Tsk {
     /// Return the ASCII-armored secret key representation (Transferable Secret Key).
     pub fn __str__(&self) -> PyResult<String> {
         let armored = self.cert.as_tsk().armored();
@@ -38,7 +38,7 @@ impl SecretCert {
     }
 
     pub fn __repr__(&self) -> String {
-        format!("<SecretCert fingerprint={}>", self.cert.fingerprint())
+        format!("<Tsk fingerprint={}>", self.cert.fingerprint())
     }
 
     /// Return the raw binary encoding of this certificate.

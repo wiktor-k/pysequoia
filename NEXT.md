@@ -3,7 +3,7 @@
 v0.1.32
 
 New:
-  - `SecretCert` (obtained from `Cert.secrets`) now supports `__bytes__` and `__repr__`
+  - `Tsk` (obtained from `Cert.secrets`) now supports `__bytes__` and `__repr__`
 
 Changed:
   - 
