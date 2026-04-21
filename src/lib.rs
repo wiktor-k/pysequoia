@@ -135,7 +135,7 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::cert::Profile;
     #[pymodule_export]
-    pub use super::cert::secret::SecretCert;
+    pub use super::cert::secret::Tsk;
     #[pymodule_export]
     pub use super::decrypt::PyDecryptor;
     #[pymodule_export]

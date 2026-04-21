@@ -171,9 +171,9 @@ impl Cert {
     ///
     /// Returns `None` if the certificate does not contain secret keys.
     #[getter]
-    pub fn secrets(&self) -> Option<secret::SecretCert> {
+    pub fn secrets(&self) -> Option<secret::Tsk> {
         if self.cert.is_tsk() {
-            Some(secret::SecretCert::new(self.cert.clone(), &self.policy))
+            Some(secret::Tsk::new(self.cert.clone(), &self.policy))
         } else {
             None
         }
