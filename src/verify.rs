@@ -128,16 +128,9 @@ impl VerificationHelper for PyVerifier {
 
     fn check(&mut self, structure: MessageStructure) -> sequoia_openpgp::Result<()> {
         let mut valid_sigs = vec![];
-        for (i, layer) in structure.into_iter().enumerate() {
-            match layer {
-                MessageLayer::Encryption { .. } if i == 0 => (),
-                MessageLayer::Compression { .. } if i == 1 => (),
-                MessageLayer::SignatureGroup { results } if (0..2).contains(&i) => {
-                    for result in results.into_iter().flatten() {
-                        valid_sigs.push(result.into());
-                    }
-                }
-                _ => return Err(anyhow::anyhow!("Unexpected message structure")),
+        for layer in structure.into_iter() {
+            if let MessageLayer::SignatureGroup { results } = layer {
+                valid_sigs.extend(results.into_iter().flatten().map(Into::into));
             }
         }
 

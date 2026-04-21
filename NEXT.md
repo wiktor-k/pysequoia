@@ -9,11 +9,15 @@ New:
 Changed:
   - `Cert.generate` has a new option to control expiration: `validity_seconds` [#75]
 
+Fixed:
+  - `verify()` is now less prescriptive about OpenPGP message structures and should successfully verify any valid signature. [#76]
+
 Removed:
-  - 
+  -
 
 [#73]: https://github.com/wiktor-k/pysequoia/pull/73
 [#75]: https://github.com/wiktor-k/pysequoia/pull/75
+[#76]: https://github.com/wiktor-k/pysequoia/pull/76
 
 ### Release checklist:
 ###  [ ] Change version in `Cargo.toml` and `pyproject.toml` and `NEXT.md`
