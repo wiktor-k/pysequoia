@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use pyo3::prelude::*;
@@ -34,6 +35,15 @@ impl SecretCert {
     pub fn __str__(&self) -> PyResult<String> {
         let armored = self.cert.as_tsk().armored();
         Ok(String::from_utf8(armored.to_vec()?)?)
+    }
+
+    pub fn __repr__(&self) -> String {
+        format!("<SecretCert fingerprint={}>", self.cert.fingerprint())
+    }
+
+    /// Return the raw binary encoding of this certificate.
+    pub fn __bytes__(&self) -> PyResult<Cow<'_, [u8]>> {
+        Ok(self.cert.as_tsk().to_vec()?.into())
     }
 
     /// Get a signer using this certificate's signing component key.

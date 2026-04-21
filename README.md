@@ -437,6 +437,14 @@ print(f"Armored cert: {cert}")
 print(f"Bytes of the cert: {bytes(cert)!r}")
 ```
 
+By default no secret parts are exported and they need to be manually accessed:
+
+```python
+if cert.secrets is not None:
+    print(f"Armored TSK: {cert.secrets}")
+    print(f"Bytes of the TSK: {bytes(cert.secrets)!r}")
+```
+
 ### Parsing
 
 Certificates can be parsed from files (`Cert.from_file`) or bytes in
