@@ -518,6 +518,30 @@ print(f"Generated cert with fingerprint {mary.fingerprint}:\n{mary}")
 Note that legacy PGP implementations may not be able to consume these
 certificates yet.
 
+#### Expiration
+
+The expiration is controlled via `validity_seconds` keyword argument:
+
+```python
+assert Cert.generate(user_id="test", validity_seconds=3600).expiration is not None
+```
+
+Using `None` generates a certificate with no expiration:
+
+```python
+assert Cert.generate(user_id="test", validity_seconds=None).expiration is None
+```
+
+By default certificates are generated *with* expiration time:
+
+```python
+assert Cert.generate("test").expiration is not None
+```
+
+> [!WARNING]
+> If you rely on a particular value of expiration, set the argument explicitly.
+> The current default (3 * 52 * 7 * 24 * 60 * 60) will change to `None`.
+
 ### merge
 
 Merges packets from a new version into an old version of a certificate:

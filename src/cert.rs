@@ -130,17 +130,17 @@ impl Cert {
     ///
     /// The generated certificate has a validity period of 3 years.
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None))]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,
         profile: Option<Profile>,
+        validity_seconds: Option<u64>,
     ) -> PyResult<Self> {
         let mut builder = CertBuilder::new()
             .set_profile(profile.unwrap_or_default().into())?
             .set_cipher_suite(CipherSuite::default())
             .set_primary_key_flags(KeyFlags::empty().set_certification())
-            .set_validity_period(std::time::Duration::new(3 * 52 * 7 * 24 * 60 * 60, 0))
             .add_signing_subkey()
             .add_subkey(
                 KeyFlags::empty()
@@ -149,6 +149,9 @@ impl Cert {
                 None,
                 None,
             );
+        if let Some(validity_seconds) = validity_seconds {
+            builder = builder.set_validity_period(std::time::Duration::new(validity_seconds, 0))
+        }
         if let Some(u) = user_id {
             builder = builder.add_userid(u);
         }
