@@ -131,7 +131,7 @@ impl VerificationHelper for PyVerifier {
         for (i, layer) in structure.into_iter().enumerate() {
             match layer {
                 MessageLayer::Encryption { .. } if i == 0 => (),
-                MessageLayer::Compression { .. } if i == 1 => (),
+                MessageLayer::Compression { .. } if (0..1).contains(&i) => (),
                 MessageLayer::SignatureGroup { results } if (0..2).contains(&i) => {
                     for result in results.into_iter().flatten() {
                         valid_sigs.push(result.into());
@@ -158,6 +158,25 @@ mod tests {
     use sequoia_openpgp::Cert;
 
     use super::*;
+
+    #[test]
+    fn verify_compressed_signature() {
+        Python::initialize();
+        Python::attach(|py| {
+            #[pyfunction]
+            fn test(_key_ids: Vec<String>) -> Vec<crate::cert::Cert> {
+                vec![crate::cert::Cert::from(
+                    Cert::from_file("tests/fixtures/compressed-pubkey.pgp")
+                        .expect("reading pubkey for compressed signature works"),
+                )]
+            }
+            let f = pyo3::wrap_pyfunction!(test)(py).expect("wrapping pyfunction works");
+            let bytes = std::fs::read("tests/fixtures/compressed-sig.pgp")
+                .expect("reading compressed signature from disk works");
+
+            verify(Some(&bytes), Some(f.into()), None, None).expect("verification to succeed");
+        });
+    }
 
     #[test]
     fn verify_example_from_readme() {
