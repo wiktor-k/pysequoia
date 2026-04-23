@@ -183,6 +183,6 @@ mod tests {
 
     #[test]
     fn test_reading_sig() {
-        Sig::from_packets(PacketParser::from_file("sig.pgp").unwrap()).unwrap();
+        Sig::from_packets(PacketParser::from_file("tests/fixtures/sig.pgp").unwrap()).unwrap();
     }
 }
