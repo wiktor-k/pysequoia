@@ -1,6 +1,6 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v0.1.32
+v0.1.33
 
 New:
   - `Tsk` now supports `__bytes__` and `__repr__` [#73]

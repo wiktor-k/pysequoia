@@ -1,9 +1,9 @@
 [package]
 name = "xtask"
-version = "0.1.32"
+version = "0.1.33"
 edition = "2024"
 
 [dependencies]
-clap = { version = "4.6.0", features = ["derive", "env"] }
+clap = { version = "4.6.1", features = ["derive", "env"] }
 testresult = "0.4.1"
 pyo3-introspection = "0.28"
