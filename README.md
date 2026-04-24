@@ -74,7 +74,7 @@ Signs data and returns armored output:
 ```python
 from pysequoia import sign, SignatureMode
 
-s = Cert.from_file("signing-key.asc")
+s = Cert.from_file("tests/fixtures/signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 print(f"Signed data: {signed!r}")
 assert "PGP MESSAGE" in str(signed)
@@ -100,7 +100,7 @@ Signs data from a file and writes the signed output to another file:
 from pysequoia import sign_file, SignatureMode
 import tempfile, os
 
-s = Cert.from_file("signing-key.asc")
+s = Cert.from_file("tests/fixtures/signing-key.asc")
 
 # create a file with data to sign
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
@@ -135,7 +135,7 @@ Verifies signed data and returns verified data:
 from pysequoia import verify
 
 # sign some data
-signing_key = Cert.from_file("signing-key.asc")
+signing_key = Cert.from_file("tests/fixtures/signing-key.asc")
 signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
 
 
@@ -205,7 +205,7 @@ Signs and encrypts a string to one or more recipients:
 from pysequoia import encrypt
 
 s = Cert.from_file("passwd.pgp")
-r = Cert.from_bytes(open("wiktor.asc", "rb").read())
+r = Cert.from_bytes(open("tests/fixtures/wiktor.asc", "rb").read())
 content = "content to encrypt"
 encrypted = encrypt(
     signer=s.secrets.signer("hunter22"), recipients=[r], bytes=content.encode("utf8")
@@ -234,7 +234,7 @@ from pysequoia import encrypt_file
 import tempfile, os
 
 s = Cert.from_file("passwd.pgp")
-r = Cert.from_bytes(open("wiktor.asc", "rb").read())
+r = Cert.from_bytes(open("tests/fixtures/wiktor.asc", "rb").read())
 
 # create a file with content to encrypt
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
@@ -511,7 +511,7 @@ keys][9580] can also be generated:
 ```python
 from pysequoia import Profile
 
-mary = Cert.generate("Modern Mary <mary@example.com", profile=Profile.RFC9580)
+mary = Cert.generate("Modern Mary <mary@example.com>", profile=Profile.RFC9580)
 print(f"Generated cert with fingerprint {mary.fingerprint}:\n{mary}")
 ```
 
@@ -547,8 +547,8 @@ assert Cert.generate("test").expiration is not None
 Merges packets from a new version into an old version of a certificate:
 
 ```python
-old = Cert.from_file("wiktor.asc")
-new = Cert.from_file("wiktor-fresh.asc")
+old = Cert.from_file("tests/fixtures/wiktor.asc")
+new = Cert.from_file("tests/fixtures/wiktor-fresh.asc")
 merged = old.merge(new)
 ```
 
@@ -557,7 +557,7 @@ merged = old.merge(new)
 Listing existing User IDs:
 
 ```python
-cert = Cert.from_file("wiktor.asc")
+cert = Cert.from_file("tests/fixtures/wiktor.asc")
 user_id = cert.user_ids[0]
 assert str(user_id).startswith("Wiktor Kwapisiewicz")
 ```
@@ -603,7 +603,7 @@ The following example reads and displays a [Keyoxide][KX] proof URI:
 [KX]: https://keyoxide.org/
 
 ```python
-cert = Cert.from_file("wiktor.asc")
+cert = Cert.from_file("tests/fixtures/wiktor.asc")
 user_id = cert.user_ids[0]
 notation = user_id.notations[0]
 
@@ -616,7 +616,7 @@ Notations can also be added:
 ```python
 from pysequoia import Notation
 
-cert = Cert.from_file("signing-key.asc")
+cert = Cert.from_file("tests/fixtures/signing-key.asc")
 
 # No notations initially
 assert len(cert.user_ids[0].notations) == 0
@@ -640,12 +640,12 @@ Certs have an `expiration` getter for retrieving the current key
 expiry time:
 
 ```python
-cert = Cert.from_file("signing-key.asc")
+cert = Cert.from_file("tests/fixtures/signing-key.asc")
 
 # Cert does not have any expiration date:
 assert cert.expiration is None
 
-cert = Cert.from_file("wiktor.asc")
+cert = Cert.from_file("tests/fixtures/wiktor.asc")
 # Cert expires on New Year's Eve
 assert str(cert.expiration) == "2022-12-31 12:00:02+00:00"
 ```
@@ -655,7 +655,7 @@ Key expiration can also be adjusted with `set_expiration`:
 ```python
 from datetime import datetime
 
-cert = Cert.from_file("signing-key.asc")
+cert = Cert.from_file("tests/fixtures/signing-key.asc")
 
 # Cert does not have any expiration date:
 assert cert.expiration is None
@@ -717,7 +717,7 @@ Detached signatures can be read directly from files (`Sig.from_file`) or bytes i
 ```python
 from pysequoia import Sig
 
-sig = Sig.from_file("sig.pgp")
+sig = Sig.from_file("tests/fixtures/sig.pgp")
 
 print(f"Parsed signature: {repr(sig)}")
 

@@ -3,17 +3,19 @@
 v0.1.32
 
 New:
-  - `Cert.secrets` is now typed as `Tsk` instead of `Any`
   - `Tsk` now supports `__bytes__` and `__repr__` [#73]
+  - `verify` now supports compressed signatures [#77]
+  - `Cert.generate` has a new option to control expiration: `validity_seconds` [#75]
 
 Changed:
-  - `Cert.generate` has a new option to control expiration: `validity_seconds` [#75]
+  - `Cert.secrets` is now typed as `Tsk` instead of `Any`
 
 Removed:
   - 
 
 [#73]: https://github.com/wiktor-k/pysequoia/pull/73
 [#75]: https://github.com/wiktor-k/pysequoia/pull/75
+[#77]: https://github.com/wiktor-k/pysequoia/pull/77
 
 ### Release checklist:
 ###  [ ] Change version in `Cargo.toml` and `pyproject.toml` and `NEXT.md`
