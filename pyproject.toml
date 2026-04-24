@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pysequoia"
-version = "0.1.32"
+version = "0.1.33"
 requires-python = ">=3.7"
 readme = "README.md"
 classifiers = [
