@@ -64,7 +64,7 @@ gpg --batch --pinentry-mode loopback --passphrase '' --export-secret-key no-pass
 All examples assume that these basic classes have been imported:
 
 ```python
-from pysequoia import Cert, Sig
+from pysequoia import Cert, Sig, Tsk
 ```
 
 ### sign
@@ -74,20 +74,18 @@ Signs data and returns armored output:
 ```python
 from pysequoia import sign, SignatureMode
 
-s = Cert.from_file("tests/fixtures/signing-key.asc")
-signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
+s = Tsk.from_file("tests/fixtures/signing-key.asc")
+signed = sign(s.signer(), "data to be signed".encode("utf8"))
 print(f"Signed data: {signed!r}")
 assert "PGP MESSAGE" in str(signed)
 
 detached = sign(
-    s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED
+    s.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED
 )
 print(f"Detached signature: {detached!r}")
 assert "PGP SIGNATURE" in str(detached)
 
-clear = sign(
-    s.secrets.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.CLEAR
-)
+clear = sign(s.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.CLEAR)
 print(f"Clear signed: {clear!r}")
 assert "PGP SIGNED MESSAGE" in str(clear)
 ```
@@ -100,7 +98,7 @@ Signs data from a file and writes the signed output to another file:
 from pysequoia import sign_file, SignatureMode
 import tempfile, os
 
-s = Cert.from_file("tests/fixtures/signing-key.asc")
+s = Tsk.from_file("tests/fixtures/signing-key.asc")
 
 # create a file with data to sign
 with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
@@ -110,7 +108,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
 with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as out:
     output_path = out.name
 
-sign_file(s.secrets.signer(), input_path, output_path)
+sign_file(s.signer(), input_path, output_path)
 signed = open(output_path, "rb").read()
 assert b"PGP MESSAGE" in signed
 
@@ -118,7 +116,7 @@ assert b"PGP MESSAGE" in signed
 with tempfile.NamedTemporaryFile(delete=False, suffix=".sig") as out:
     detached_path = out.name
 
-sign_file(s.secrets.signer(), input_path, detached_path, mode=SignatureMode.DETACHED)
+sign_file(s.signer(), input_path, detached_path, mode=SignatureMode.DETACHED)
 detached = open(detached_path, "rb").read()
 assert b"PGP SIGNATURE" in detached
 
@@ -135,14 +133,14 @@ Verifies signed data and returns verified data:
 from pysequoia import verify
 
 # sign some data
-signing_key = Cert.from_file("tests/fixtures/signing-key.asc")
-signed = sign(s.secrets.signer(), "data to be signed".encode("utf8"))
+signing_key = Tsk.from_file("tests/fixtures/signing-key.asc")
+signed = sign(signing_key.signer(), "data to be signed".encode("utf8"))
 
 
 def get_certs_verify(key_ids):
     # key_ids is an array of required signing keys
     print(f"For verification, we need these keys: {key_ids}")
-    return [signing_key]
+    return [signing_key.extract_certificate()]
 
 
 # verify the data
@@ -160,7 +158,7 @@ Detached signatures can be verified by passing additional parameter with the det
 
 ```python
 data = "data to be signed".encode("utf8")
-detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+detached = sign(signing_key.signer(), data, mode=SignatureMode.DETACHED)
 signature = Sig.from_bytes(detached)
 
 result = verify(bytes=data, store=get_certs_verify, signature=signature)
@@ -177,7 +175,7 @@ import tempfile
 
 with tempfile.NamedTemporaryFile(delete=False) as tmp:
     data = "data to be signed".encode("utf8")
-    detached = sign(s.secrets.signer(), data, mode=SignatureMode.DETACHED)
+    detached = sign(signing_key.signer(), data, mode=SignatureMode.DETACHED)
     signature = Sig.from_bytes(detached)
 
     tmp.write(data)
@@ -204,11 +202,11 @@ Signs and encrypts a string to one or more recipients:
 ```python
 from pysequoia import encrypt
 
-s = Cert.from_file("passwd.pgp")
+s = Tsk.from_file("passwd.pgp")
 r = Cert.from_bytes(open("tests/fixtures/wiktor.asc", "rb").read())
 content = "content to encrypt"
 encrypted = encrypt(
-    signer=s.secrets.signer("hunter22"), recipients=[r], bytes=content.encode("utf8")
+    signer=s.signer("hunter22"), recipients=[r], bytes=content.encode("utf8")
 )
 print(f"Encrypted data: {encrypted.decode('utf8')}")
 ```
@@ -233,7 +231,7 @@ Encrypts data from a file and writes the encrypted output to another file:
 from pysequoia import encrypt_file
 import tempfile, os
 
-s = Cert.from_file("passwd.pgp")
+s = Tsk.from_file("passwd.pgp")
 r = Cert.from_bytes(open("tests/fixtures/wiktor.asc", "rb").read())
 
 # create a file with content to encrypt
@@ -245,7 +243,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as out:
     output_path = out.name
 
 encrypt_file(
-    signer=s.secrets.signer("hunter22"),
+    signer=s.signer("hunter22"),
     recipients=[r],
     input=input_path,
     output=output_path,
@@ -270,7 +268,9 @@ content = "Red Green Blue"
 
 encrypted = encrypt(recipients=[receiver], bytes=content.encode("utf8"))
 
-decrypted = decrypt(decryptor=receiver.secrets.decryptor("hunter22"), bytes=encrypted)
+decrypted = decrypt(
+    decryptor=Tsk.from_file("passwd.pgp").decryptor("hunter22"), bytes=encrypted
+)
 
 assert content == decrypted.bytes.decode("utf8")
 # this message did not contain any valid signatures
@@ -288,7 +288,9 @@ receiver = Cert.from_file("passwd.pgp")
 content = "Red Green Blue"
 
 encrypted = encrypt(
-    signer=sender.secrets.signer(), recipients=[receiver], bytes=content.encode("utf8")
+    signer=Tsk.from_file("no-passwd.pgp").signer(),
+    recipients=[receiver],
+    bytes=content.encode("utf8"),
 )
 
 
@@ -298,7 +300,7 @@ def get_certs_decrypt(key_ids):
 
 
 decrypted = decrypt(
-    decryptor=receiver.secrets.decryptor("hunter22"),
+    decryptor=Tsk.from_file("passwd.pgp").decryptor("hunter22"),
     bytes=encrypted,
     store=get_certs_decrypt,
 )
@@ -350,7 +352,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as out:
     output_path = out.name
 
 decrypted = decrypt_file(
-    decryptor=receiver.secrets.decryptor("hunter22"),
+    decryptor=Tsk.from_file("passwd.pgp").decryptor("hunter22"),
     input=input_path,
     output=output_path,
 )
@@ -380,7 +382,9 @@ receiver = Cert.from_file("passwd.pgp")
 content = "Red Green Blue"
 
 encrypted = encrypt(
-    signer=sender.secrets.signer(), recipients=[receiver], bytes=content.encode("utf8")
+    signer=Tsk.from_file("no-passwd.pgp").signer(),
+    recipients=[receiver],
+    bytes=content.encode("utf8"),
 )
 
 # write encrypted data to a file
@@ -398,7 +402,7 @@ def get_certs_decrypt_file(key_ids):
 
 
 decrypted = decrypt_file(
-    decryptor=receiver.secrets.decryptor("hunter22"),
+    decryptor=Tsk.from_file("passwd.pgp").decryptor("hunter22"),
     input=input_path,
     output=output_path,
     store=get_certs_decrypt_file,
@@ -431,7 +435,7 @@ by this package).
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 
 ```python
-cert = Cert.generate("Test <test@example.com>")
+cert = Tsk.generate("Test <test@example.com>").extract_certificate()
 
 print(f"Armored cert: {cert}")
 print(f"Bytes of the cert: {bytes(cert)!r}")
@@ -451,7 +455,7 @@ Certificates can be parsed from files (`Cert.from_file`) or bytes in
 memory (`Cert.from_bytes`).
 
 ```python
-cert1 = Cert.generate("Test <test@example.com>")
+cert1 = Tsk.generate("Test <test@example.com>").extract_certificate()
 buffer = bytes(cert1)
 
 parsed_cert = Cert.from_bytes(buffer)
@@ -463,9 +467,9 @@ bytes in memory (`Cert.split_bytes`) which are collections of binary
 certificates.
 
 ```python
-cert1 = Cert.generate("Test 1 <test-1@example.com>")
-cert2 = Cert.generate("Test 2 <test-2@example.com>")
-cert3 = Cert.generate("Test 3 <test-3@example.com>")
+cert1 = Tsk.generate("Test 1 <test-1@example.com>").extract_certificate()
+cert2 = Tsk.generate("Test 2 <test-2@example.com>").extract_certificate()
+cert3 = Tsk.generate("Test 3 <test-3@example.com>").extract_certificate()
 
 buffer = bytes(cert1) + bytes(cert2) + bytes(cert3)
 certs = Cert.split_bytes(buffer)
@@ -477,15 +481,16 @@ assert len(certs) == 3
 Creates a new general purpose key with a given User ID:
 
 ```python
-alice = Cert.generate("Alice <alice@example.com>")
-fpr = alice.fingerprint
-print(f"Generated cert with fingerprint {fpr}:\n{alice}")
+alice = Tsk.generate("Alice <alice@example.com>")
+alice_pub = alice.extract_certificate()
+fpr = alice_pub.fingerprint
+print(f"Generated cert with fingerprint {fpr}:\n{alice_pub}")
 ```
 
 Multiple User IDs can be passed as a list to the `generate` function:
 
 ```python
-cert = Cert.generate(user_ids=["First", "Second", "Third"])
+cert = Tsk.generate(user_ids=["First", "Second", "Third"]).extract_certificate()
 assert len(cert.user_ids) == 3
 ```
 
@@ -493,13 +498,13 @@ Newly generated certificates are usable in both encryption and signing
 contexts:
 
 ```python
-alice = Cert.generate("Alice <alice@example.com>")
-bob = Cert.generate("Bob <bob@example.com>")
+alice = Tsk.generate("Alice <alice@example.com>")
+bob = Tsk.generate("Bob <bob@example.com>").extract_certificate()
 
 content = "content to encrypt"
 
 encrypted = encrypt(
-    signer=alice.secrets.signer(), recipients=[bob], bytes=content.encode("utf8")
+    signer=alice.signer(), recipients=[bob], bytes=content.encode("utf8")
 )
 print(f"Encrypted data: {encrypted!r}")
 ```
@@ -511,7 +516,9 @@ keys][9580] can also be generated:
 ```python
 from pysequoia import Profile
 
-mary = Cert.generate("Modern Mary <mary@example.com>", profile=Profile.RFC9580)
+mary = Tsk.generate(
+    "Modern Mary <mary@example.com>", profile=Profile.RFC9580
+).extract_certificate()
 print(f"Generated cert with fingerprint {mary.fingerprint}:\n{mary}")
 ```
 
@@ -523,19 +530,25 @@ certificates yet.
 The expiration is controlled via `validity_seconds` keyword argument:
 
 ```python
-assert Cert.generate(user_id="test", validity_seconds=3600).expiration is not None
+assert (
+    Tsk.generate(user_id="test", validity_seconds=3600).extract_certificate().expiration
+    is not None
+)
 ```
 
 Using `None` generates a certificate with no expiration:
 
 ```python
-assert Cert.generate(user_id="test", validity_seconds=None).expiration is None
+assert (
+    Tsk.generate(user_id="test", validity_seconds=None).extract_certificate().expiration
+    is None
+)
 ```
 
 By default certificates are generated *with* expiration time:
 
 ```python
-assert Cert.generate("test").expiration is not None
+assert Tsk.generate("test").extract_certificate().expiration is not None
 ```
 
 > [!WARNING]
@@ -565,10 +578,11 @@ assert str(user_id).startswith("Wiktor Kwapisiewicz")
 Adding new User IDs:
 
 ```python
-cert = Cert.generate("Alice <alice@example.com>")
+tsk = Tsk.generate("Alice <alice@example.com>")
+cert = tsk.extract_certificate()
 assert len(cert.user_ids) == 1
 cert = cert.add_user_id(
-    value="Alice <alice@company.invalid>", certifier=cert.secrets.certifier()
+    value="Alice <alice@company.invalid>", certifier=tsk.certifier()
 )
 
 assert len(cert.user_ids) == 2
@@ -577,17 +591,14 @@ assert len(cert.user_ids) == 2
 Revoking User IDs:
 
 ```python
-cert = Cert.generate("Bob <bob@example.com>")
+tsk = Tsk.generate("Bob <bob@example.com>")
+cert = tsk.extract_certificate()
 
-cert = cert.add_user_id(
-    value="Bob <bob@company.invalid>", certifier=cert.secrets.certifier()
-)
+cert = cert.add_user_id(value="Bob <bob@company.invalid>", certifier=tsk.certifier())
 assert len(cert.user_ids) == 2
 
 # create User ID revocation
-revocation = cert.revoke_user_id(
-    user_id=cert.user_ids[1], certifier=cert.secrets.certifier()
-)
+revocation = cert.revoke_user_id(user_id=cert.user_ids[1], certifier=tsk.certifier())
 
 # merge the revocation with the cert
 cert = Cert.from_bytes(bytes(cert) + bytes(revocation))
@@ -616,12 +627,13 @@ Notations can also be added:
 ```python
 from pysequoia import Notation
 
-cert = Cert.from_file("tests/fixtures/signing-key.asc")
+tsk = Tsk.from_file("tests/fixtures/signing-key.asc")
+cert = tsk.extract_certificate()
 
 # No notations initially
 assert len(cert.user_ids[0].notations) == 0
 cert = cert.set_notations(
-    cert.secrets.certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")]
+    tsk.certifier(), [Notation("proof@metacode.biz", "dns:metacode.biz")]
 )
 
 # Has one notation now
@@ -655,14 +667,15 @@ Key expiration can also be adjusted with `set_expiration`:
 ```python
 from datetime import datetime
 
-cert = Cert.from_file("tests/fixtures/signing-key.asc")
+tsk = Tsk.from_file("tests/fixtures/signing-key.asc")
+cert = tsk.extract_certificate()
 
 # Cert does not have any expiration date:
 assert cert.expiration is None
 
 # Set the expiration to some specified point in time
 expiration = datetime.fromisoformat("2021-11-04T00:05:23+00:00")
-cert = cert.set_expiration(expiration=expiration, certifier=cert.secrets.certifier())
+cert = cert.set_expiration(expiration=expiration, certifier=tsk.certifier())
 assert str(cert.expiration) == "2021-11-04 00:05:23+00:00"
 ```
 
@@ -675,8 +688,9 @@ irreversible.
 [EXP]: https://blogs.gentoo.org/mgorny/2018/08/13/openpgp-key-expiration-is-not-a-security-measure/
 
 ```python
-cert = Cert.generate("Test Revocation <revoke@example.com>")
-revocation = cert.revoke(certifier=cert.secrets.certifier())
+tsk = Tsk.generate("Test Revocation <revoke@example.com>")
+cert = tsk.extract_certificate()
+revocation = cert.revoke(certifier=tsk.certifier())
 
 # creating revocation signature does not revoke the key
 assert not cert.is_revoked
@@ -688,26 +702,11 @@ assert revoked_cert.is_revoked
 
 ## Secret keys
 
-Certificates generated through `Cert.generate()` contain secret keys
+Certificates with secret keys are generated through `Tsk.generate()`
 and can be used for signing and decryption.
 
-To avoid accidental leakage secret keys are never directly printed
-when the Cert is written to a string. To enable this behavior use
-`Cert.secrets`. `secrets` returns `None` on certificates which do
-not contain any secret key material ("public keys").
-
 ```python
-c = Cert.generate("Testing key <test@example.com>")
-assert c.has_secret_keys
-
-# by default only public parts are exported
-public_parts = Cert.from_bytes(f"{c}".encode("utf8"))
-assert not public_parts.has_secret_keys
-assert public_parts.secrets is None
-
-# to export secret parts use the following:
-private_parts = Cert.from_bytes(f"{c.secrets}".encode("utf8"))
-assert private_parts.has_secret_keys
+c = Tsk.generate("Testing key <test@example.com>")
 ```
 
 ## Signatures
@@ -738,7 +737,7 @@ type-specific accessors for extracting fields.
 ```python
 from pysequoia.packet import PacketPile, Tag, SignatureType
 
-cert = Cert.generate("Test <test@example.com>")
+cert = Tsk.generate("Test <test@example.com>").extract_certificate()
 pile = PacketPile.from_bytes(bytes(cert))
 
 for packet in pile:
@@ -790,7 +789,7 @@ appropriate header, base64 encoding, and CRC24 checksum:
 ```python
 from pysequoia import armor, ArmorKind
 
-cert = Cert.generate("Test <test@example.com>")
+cert = Tsk.generate("Test <test@example.com>").extract_certificate()
 armored = armor(bytes(cert), ArmorKind.PublicKey)  # same as: str(cert)
 assert "-----BEGIN PGP PUBLIC KEY BLOCK-----" in armored
 assert "-----END PGP PUBLIC KEY BLOCK-----" in armored
