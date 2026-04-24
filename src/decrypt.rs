@@ -15,7 +15,7 @@ use crate::{Decrypted, ValidSig};
 
 /// A decryption helper that holds the key material needed to decrypt messages.
 ///
-/// Obtain a `PyDecryptor` via `Cert.secrets.decryptor()`.
+/// Obtain a `PyDecryptor` via `Tsk.decryptor()`.
 #[pyclass(from_py_object)]
 #[derive(Clone, Default)]
 pub struct PyDecryptor {
