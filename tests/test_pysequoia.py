@@ -20,7 +20,7 @@ from pysequoia import (
     sign_file,
     verify,
 )
-from pysequoia.packet import PacketPile, SignatureType, Tag
+from pysequoia.packet import PacketPile, Tag
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 
@@ -110,6 +110,7 @@ class TestVerify:
     def _store(self, signing_key):
         def get_certs(key_ids):
             return [signing_key]
+
         return get_certs
 
     def test_inline_verify(self, signing_key):
@@ -121,9 +122,7 @@ class TestVerify:
 
     def test_detached_verify_bytes(self, signing_key):
         data = b"data to be signed"
-        detached = sign(
-            signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED
-        )
+        detached = sign(signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED)
         signature = Sig.from_bytes(detached)
         result = verify(bytes=data, store=self._store(signing_key), signature=signature)
         assert result.valid_sigs[0].certificate == SIGNING_KEY_FPR
@@ -131,9 +130,7 @@ class TestVerify:
 
     def test_detached_verify_file(self, signing_key):
         data = b"data to be signed"
-        detached = sign(
-            signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED
-        )
+        detached = sign(signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED)
         signature = Sig.from_bytes(detached)
 
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -188,9 +185,7 @@ class TestEncryptDecrypt:
         content = "Red Green Blue"
 
         encrypted = encrypt(recipients=[receiver], bytes=content.encode("utf8"))
-        decrypted = decrypt(
-            decryptor=receiver.secrets.decryptor(), bytes=encrypted
-        )
+        decrypted = decrypt(decryptor=receiver.secrets.decryptor(), bytes=encrypted)
 
         assert decrypted.bytes.decode("utf8") == content
         assert len(decrypted.valid_sigs) == 0
@@ -383,6 +378,13 @@ class TestCert:
         cert = Cert.from_bytes(bytes(cert) + bytes(revocation))
         assert len(cert.user_ids) == 1
 
+    def test_split_file(self, tmp_path):
+        certs = [Cert.generate(f"Test {i}") for i in range(3)]
+        keyring = tmp_path / "keyring.pgp"
+        keyring.write_bytes(b"".join(bytes(c) for c in certs))
+        split = Cert.split_file(str(keyring))
+        assert len(split) == 3
+
     def test_has_secret_keys(self):
         c = Cert.generate("Testing key <test@example.com>")
         assert c.has_secret_keys
@@ -447,6 +449,39 @@ class TestSig:
         assert sig.created == datetime.fromisoformat("2023-07-19T18:14:01+00:00")
         assert sig.expiration is None
         assert sig.signers_user_id is None
+        assert sig.version == 4
+
+
+class TestRFC9580:
+    def test_sign_verify_roundtrip(self):
+        cert = Cert.generate("V6 <v6@example.com>", profile=Profile.RFC9580)
+        data = b"v6 signed data"
+        signed = sign(cert.secrets.signer(), data)
+
+        def store(key_ids):
+            return [cert]
+
+        result = verify(signed, store)
+        assert result.bytes == data
+
+    def test_detached_signature(self):
+        cert = Cert.generate("V6 <v6@example.com>", profile=Profile.RFC9580)
+        detached = sign(cert.secrets.signer(), b"data", mode=SignatureMode.DETACHED)
+        sig = Sig.from_bytes(detached)
+        assert sig.version == 6
+
+    def test_encrypt_decrypt_roundtrip(self):
+        sender = Cert.generate("V6 Sender <s@example.com>", profile=Profile.RFC9580)
+        receiver = Cert.generate("V6 Receiver <r@example.com>", profile=Profile.RFC9580)
+        content = b"v6 encrypted data"
+
+        encrypted = encrypt(
+            signer=sender.secrets.signer(),
+            recipients=[receiver],
+            bytes=content,
+        )
+        decrypted = decrypt(decryptor=receiver.secrets.decryptor(), bytes=encrypted)
+        assert decrypted.bytes == content
 
 
 class TestPacketPile:
@@ -479,3 +514,79 @@ class TestArmor:
     def test_armor_signature(self):
         armored = armor(b"dummy data", ArmorKind.Signature)
         assert "BEGIN PGP SIGNATURE" in armored
+
+
+class TestPasswordProtectedKeys:
+    @pytest.fixture
+    def protected_key(self):
+        cert = Cert.generate("Protected <protected@example.com>")
+        tsk_bytes = f"{cert.secrets}".encode("utf8")
+        return Cert.from_bytes(tsk_bytes)
+
+    def test_sign_with_password(self):
+        cert = Cert.generate("PW <pw@example.com>")
+        signed = sign(cert.secrets.signer(), b"hello")
+        assert "PGP MESSAGE" in str(signed)
+
+    def test_encrypt_decrypt_with_password(self):
+        sender = Cert.generate("Sender <s@example.com>")
+        receiver = Cert.generate("Receiver <r@example.com>")
+        content = b"secret message"
+
+        encrypted = encrypt(
+            signer=sender.secrets.signer(),
+            recipients=[receiver],
+            bytes=content,
+        )
+        decrypted = decrypt(decryptor=receiver.secrets.decryptor(), bytes=encrypted)
+        assert decrypted.bytes == content
+
+    def test_decrypt_wrong_password_fails(self):
+        receiver = Cert.generate("Receiver <r@example.com>")
+        content = b"secret"
+        encrypted = encrypt(passwords=["correct"], bytes=content)
+        with pytest.raises(Exception):
+            decrypt(passwords=["wrong"], bytes=encrypted)
+
+    def test_decrypt_wrong_key_fails(self):
+        alice = Cert.generate("Alice <alice@example.com>")
+        bob = Cert.generate("Bob <bob@example.com>")
+        encrypted = encrypt(recipients=[alice], bytes=b"for alice only")
+        with pytest.raises(Exception):
+            decrypt(decryptor=bob.secrets.decryptor(), bytes=encrypted)
+
+
+class TestErrorCases:
+    def test_verify_with_wrong_key(self, signing_key):
+        wrong_key = Cert.generate("Wrong <wrong@example.com>")
+        signed = sign(signing_key.secrets.signer(), b"data")
+
+        def store(key_ids):
+            return [wrong_key]
+
+        with pytest.raises(Exception):
+            verify(signed, store)
+
+    def test_verify_missing_store(self):
+        with pytest.raises(Exception):
+            verify(bytes=b"not a real message")
+
+    def test_verify_bytes_and_file_mutually_exclusive(self, signing_key, tmp_path):
+        data = b"data"
+        signed = sign(signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED)
+        signature = Sig.from_bytes(signed)
+        f = tmp_path / "data.bin"
+        f.write_bytes(data)
+
+        def store(key_ids):
+            return [signing_key]
+
+        with pytest.raises(Exception):
+            verify(bytes=data, file=str(f), store=store, signature=signature)
+
+    def test_verify_no_bytes_or_file(self):
+        def store(key_ids):
+            return []
+
+        with pytest.raises(Exception):
+            verify(store=store)
