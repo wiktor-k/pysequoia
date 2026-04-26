@@ -2,12 +2,11 @@
 
 clippy := "cargo clippy --quiet --workspace --no-deps --all-targets"
 clippy_args := "-D warnings"
-nextest_args := "--locked --workspace"
 udeps_args := "--quiet --workspace --all-features --all-targets"
 
 # Perform all checks
 [parallel]
-check: spell fmt fmt-readme doc lints deps unused-deps recipes test integration-test
+check: spell fmt fmt-readme doc lints deps unused-deps recipes test readme-shell
 
 # Check spelling
 [group('ci')]
@@ -94,23 +93,26 @@ unused-deps:
     cargo +nightly machete
 
 # Run unit tests
-[metadata('pacman', 'cargo-nextest')]
+[metadata('pacman', 'maturin', 'python')]
 test:
     #!/usr/bin/bash
     set -euxo pipefail
 
+    python -m venv .venv
+    # shellcheck disable=SC1091
+    source .venv/bin/activate
+    pip install --quiet pytest
+    maturin develop
     if [ "${CI:-}" = "true" ]; then
-        PROFILE=ci
+        mkdir -p target/pytest
+        python -m pytest --junit-xml=target/pytest/junit.xml tests/
     else
-        PROFILE=default
+        python -m pytest tests/
     fi
 
-    cargo +nightly nextest run {{ nextest_args }} --profile "$PROFILE"
-    cargo +nightly nextest run --no-default-features {{ nextest_args }} --profile "$PROFILE"
-
-# Run integration tests
+# Run readme shell snippets
 [metadata('pacman', 'git', 'jq', 'openssh', 'tangler', 'tree')]
-integration-test:
+readme-shell:
     #!/usr/bin/bash
     set -euo pipefail
     cargo +nightly build --locked
@@ -119,8 +121,8 @@ integration-test:
 
 # Report on all tests
 [group('ci')]
-[metadata('gitlabci-job', '{"coverage":"/Line coverage: ([0-9.]*)%/","artifacts":{"when":"always","reports":{"junit":"target/nextest/ci/junit.xml","metrics":"target/metrics.txt","coverage_report":{"coverage_format":"cobertura","path":"target/coverage.xml"}}}}')]
-[metadata('pacman', 'rust', 'cargo-llvm-cov', 'rustup', 'python')]
+[metadata('gitlabci-job', '{"coverage":"/Line coverage: ([0-9.]*)%/","artifacts":{"when":"always","reports":{"junit":"target/pytest/junit.xml","metrics":"target/metrics.txt","coverage_report":{"coverage_format":"cobertura","path":"target/coverage.xml"}}}}')]
+[metadata('pacman', 'rust', 'cargo-llvm-cov', 'rustup', 'maturin', 'python')]
 report-test:
     #!/usr/bin/bash
     # enabling "x" here will garble text output that's parsed by GitLab for code coverage
@@ -129,10 +131,10 @@ report-test:
     rustup component add --toolchain nightly llvm-tools-preview
 
     # shellcheck disable=SC1090
-    source <(cargo +nightly llvm-cov show-env --export-prefix --doctests --branch)
+    source <(cargo +nightly llvm-cov show-env --export-prefix --branch)
     cargo +nightly llvm-cov clean
 
-    just test integration-test
+    RUSTUP_TOOLCHAIN=nightly just test
 
     # explicitly use "target" (even if CARGO_TARGET_DIR is somewhere else) so that
     # local tools (such as https://github.com/ryanluker/vscode-coverage-gutters) can find the file
@@ -233,10 +235,10 @@ fix:
     # fmt must be last as clippy changes may break formatting
     cargo +nightly fmt --all
 
-# Run README integration tests
+# Run README code snippets
 [group('ci')]
 [metadata('pacman', 'rust', 'python', 'tangler')]
-readme:
+readme-python:
     #!/usr/bin/env bash
     set -euo pipefail
 
