@@ -31,6 +31,9 @@ repository = "https://github.com/wiktor-k/pysequoia"
 issues = "https://github.com/wiktor-k/pysequoia/issues"
 funding = "https://github.com/sponsors/wiktor-k"
 
+[dependency-groups]
+test = ["pytest"]
+
 [tool.mypy]
 # There are a couple of minor issues in the generated stub files that mypy
 # doesn't like. Suppressing these warnings.

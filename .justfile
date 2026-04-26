@@ -93,21 +93,19 @@ unused-deps:
     cargo +nightly machete
 
 # Run unit tests
-[metadata('pacman', 'maturin', 'python')]
+[metadata('pacman', 'maturin', 'python', 'uv')]
 test:
     #!/usr/bin/bash
     set -euxo pipefail
-
-    python -m venv .venv
+    uv venv .venv
     # shellcheck disable=SC1091
     source .venv/bin/activate
-    pip install --quiet pytest
     maturin develop
     if [ "${CI:-}" = "true" ]; then
         mkdir -p target/pytest
-        python -m pytest --junit-xml=target/pytest/junit.xml tests/
+        uv run --group test -- pytest --junit-xml=target/pytest/junit.xml tests/
     else
-        python -m pytest tests/
+        uv run --group test -- pytest tests/
     fi
 
 # Run readme shell snippets
@@ -122,7 +120,7 @@ readme-shell:
 # Report on all tests
 [group('ci')]
 [metadata('gitlabci-job', '{"coverage":"/Line coverage: ([0-9.]*)%/","artifacts":{"when":"always","reports":{"junit":"target/pytest/junit.xml","metrics":"target/metrics.txt","coverage_report":{"coverage_format":"cobertura","path":"target/coverage.xml"}}}}')]
-[metadata('pacman', 'rust', 'cargo-llvm-cov', 'rustup', 'maturin', 'python')]
+[metadata('pacman', 'rust', 'cargo-llvm-cov', 'rustup', 'maturin', 'python', 'uv')]
 report-test:
     #!/usr/bin/bash
     # enabling "x" here will garble text output that's parsed by GitLab for code coverage
