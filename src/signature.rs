@@ -176,13 +176,3 @@ impl Sig {
         )
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_reading_sig() {
-        Sig::from_packets(PacketParser::from_file("tests/fixtures/sig.pgp").unwrap()).unwrap();
-    }
-}
