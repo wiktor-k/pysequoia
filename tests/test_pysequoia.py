@@ -151,6 +151,35 @@ class TestVerify:
             finally:
                 os.unlink(tmp.name)
 
+    def test_verify_compressed_signature(self):
+        pubkey = Cert.from_file(fixture_path("compressed-pubkey.pgp"))
+        sig_bytes = open(fixture_path("compressed-sig.pgp"), "rb").read()
+
+        def store(key_ids):
+            return [pubkey]
+
+        verify(bytes=sig_bytes, store=store)
+
+    def test_verify_inline_armored_message(self):
+        signing_key = Cert.from_file(fixture_path("signing-key.asc"))
+        message = (
+            b"-----BEGIN PGP MESSAGE-----\n"
+            b"\n"
+            b"xA0DAAoWhjdbhUuGrPkByxdiAAAAAABkYXRhIHRvIGJlIHNpZ25lZMK9BAAWCgBv\n"
+            b"BYJp6ftzCRCGN1uFS4as+UcUAAAAAAAeACBzYWx0QG5vdGF0aW9ucy5zZXF1b2lh\n"
+            b"LXBncC5vcmc3UxaVh0GrzpGDSqwKe1nVnBGmDiTYQC/rYRhi3yQ/2BYhBK/PVAXo\n"
+            b"9J281dxUioY3W4VLhqz5AAD9hAEA1HX+UXFdqAwgRXH0g3+qN85spOnG1aiuML1N\n"
+            b"lXgKeTwBAO2QVu2VLjpFnFu8zZ12V0iRqA1xLUxkZyqburTeTlMM\n"
+            b"=y77Y\n"
+            b"-----END PGP MESSAGE-----\n"
+        )
+
+        def store(key_ids):
+            return [signing_key]
+
+        result = verify(bytes=message, store=store)
+        assert result.bytes.decode("utf8") == "data to be signed"
+
 
 class TestEncryptDecrypt:
     def test_encrypt_decrypt_no_signature(self):
