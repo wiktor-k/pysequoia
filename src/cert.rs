@@ -11,13 +11,14 @@ use sequoia_openpgp::packet::{UserID, signature};
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::policy::{Policy, StandardPolicy};
 use sequoia_openpgp::serialize::SerializeInto;
-use sequoia_openpgp::types::{KeyFlags, ReasonForRevocation, RevocationStatus, SignatureType};
+use sequoia_openpgp::types::{ReasonForRevocation, RevocationStatus, SignatureType};
 
 use crate::notation::Notation;
+use crate::pysequoia::Tsk;
 use crate::signer::PySigner;
 use crate::user_id::UserId;
 
-static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
+pub static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
     Lazy::new(|| Arc::new(Mutex::new(Box::new(StandardPolicy::new()))));
 
 /// An OpenPGP certificate (public key with associated user IDs, subkeys, and signatures).
@@ -131,41 +132,26 @@ impl Cert {
     /// The generated certificate has a validity period of 3 years.
     #[staticmethod]
     #[pyo3(signature = (user_id=None, user_ids=None, profile=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60))]
+    #[pyo3(warn(
+        message = "Use Tsk::generate",
+        category = pyo3::exceptions::PyDeprecationWarning
+    ))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,
         profile: Option<Profile>,
         validity_seconds: Option<u64>,
     ) -> PyResult<Self> {
-        let mut builder = CertBuilder::new()
-            .set_profile(profile.unwrap_or_default().into())?
-            .set_cipher_suite(CipherSuite::default())
-            .set_primary_key_flags(KeyFlags::empty().set_certification())
-            .add_signing_subkey()
-            .add_subkey(
-                KeyFlags::empty()
-                    .set_transport_encryption()
-                    .set_storage_encryption(),
-                None,
-                None,
-            );
-        if let Some(validity_seconds) = validity_seconds {
-            builder = builder.set_validity_period(std::time::Duration::new(validity_seconds, 0))
-        }
-        if let Some(u) = user_id {
-            builder = builder.add_userid(u);
-        }
-        if let Some(user_ids) = user_ids {
-            for user_id in user_ids {
-                builder = builder.add_userid(user_id);
-            }
-        }
-
-        Ok(builder.generate()?.0.into())
+        let tsk = Tsk::generate(user_id, user_ids, profile, validity_seconds)?;
+        tsk.extract_certificate()
     }
 
     /// Whether this certificate contains secret key material.
     #[getter]
+    #[pyo3(warn(
+        message = "Use Tsk::from_* functions",
+        category = pyo3::exceptions::PyDeprecationWarning
+    ))]
     pub fn has_secret_keys(&self) -> bool {
         self.cert.is_tsk()
     }
@@ -174,6 +160,10 @@ impl Cert {
     ///
     /// Returns `None` if the certificate does not contain secret keys.
     #[getter]
+    #[pyo3(warn(
+        message = "Use Tsk::from_* functions",
+        category = pyo3::exceptions::PyDeprecationWarning
+    ))]
     pub fn secrets(&self) -> Option<secret::Tsk> {
         if self.cert.is_tsk() {
             Some(secret::Tsk::new(self.cert.clone(), &self.policy))

@@ -260,7 +260,7 @@ update-stubs:
 # Check types in the README
 [metadata('pacman', 'mypy', 'python', 'rust', 'tangler')]
 check-types: update-stubs
-    tangler python < README.md > README.py
+    tangler --preserve-newlines python < README.md > README.py
     mypy --config-file pyproject.toml README.py
 
 # Generate stubs and check types
