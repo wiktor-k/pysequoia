@@ -221,6 +221,36 @@ class Decrypted:
         """
 
 @final
+class EncryptionAlgorithm:
+    """
+    The encryption algorithm to use when generating keys.
+
+    Used with `Cert.generate(encryption_algorithm=...)` to override the
+    encryption algorithm independently of the cipher suite. Requires
+    `Profile.RFC9580` for PQC algorithms (except `MLKEM768_X25519`).
+    """
+    MLKEM1024_X448: Final[EncryptionAlgorithm]
+    """
+    Composite ML-KEM-1024 + X448 (post-quantum)
+    """
+    MLKEM768_X25519: Final[EncryptionAlgorithm]
+    """
+    Composite ML-KEM-768 + X25519 (post-quantum)
+    """
+    X25519: Final[EncryptionAlgorithm]
+    """
+    X25519
+    """
+    X448: Final[EncryptionAlgorithm]
+    """
+    X448
+    """
+    def __eq__(self, value: object, /) -> bool: ...
+    def __int__(self, /) -> int: ...
+    def __ne__(self, value: object, /) -> bool: ...
+    def __repr__(self, /) -> str: ...
+
+@final
 class Notation:
     """
     A key-value notation attached to an OpenPGP signature.
@@ -391,6 +421,48 @@ class SignatureMode:
     def __repr__(self, /) -> str: ...
 
 @final
+class SigningAlgorithm:
+    """
+    The signing algorithm to use when generating keys.
+
+    Used with `Cert.generate(signing_algorithm=...)` to override the signing
+    algorithm independently of the cipher suite. Requires `Profile.RFC9580`
+    for PQC algorithms.
+    """
+    Ed25519: Final[SigningAlgorithm]
+    """
+    Ed25519
+    """
+    Ed448: Final[SigningAlgorithm]
+    """
+    Ed448
+    """
+    MLDSA65_Ed25519: Final[SigningAlgorithm]
+    """
+    Composite ML-DSA-65 + Ed25519 (post-quantum)
+    """
+    MLDSA87_Ed448: Final[SigningAlgorithm]
+    """
+    Composite ML-DSA-87 + Ed448 (post-quantum)
+    """
+    SLHDSA128f: Final[SigningAlgorithm]
+    """
+    SLH-DSA 128-bit fast signatures (post-quantum, stateless)
+    """
+    SLHDSA128s: Final[SigningAlgorithm]
+    """
+    SLH-DSA 128-bit small signatures (post-quantum, stateless)
+    """
+    SLHDSA256s: Final[SigningAlgorithm]
+    """
+    SLH-DSA 256-bit small signatures (post-quantum, stateless)
+    """
+    def __eq__(self, value: object, /) -> bool: ...
+    def __int__(self, /) -> int: ...
+    def __ne__(self, value: object, /) -> bool: ...
+    def __repr__(self, /) -> str: ...
+
+@final
 class Tsk:
     """
     A certificate that contains secret key material.
@@ -446,7 +518,7 @@ class Tsk:
         its associated user IDs, user attributes, subkeys, and signatures).
         """
     @staticmethod
-    def generate(user_id: str |None = None, user_ids: Sequence[str] |None = None, profile: Profile |None = None, cipher_suite: CipherSuite |None = None, validity_seconds: int |None = ...) -> Tsk:
+    def generate(user_id: str |None = None, user_ids: Sequence[str] |None = None, profile: Profile |None = None, cipher_suite: CipherSuite |None = None, validity_seconds: int |None = ..., *, signing_algorithm: SigningAlgorithm |None = None, encryption_algorithm: EncryptionAlgorithm |None = None) -> Tsk:
         """
         Generate a new TSK with a certification-capable primary key,
         a signing subkey, and an encryption subkey.

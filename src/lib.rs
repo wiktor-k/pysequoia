@@ -163,6 +163,10 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::types::ArmorKind;
     #[pymodule_export]
+    pub use super::types::EncryptionAlgorithm;
+    #[pymodule_export]
+    pub use super::types::SigningAlgorithm;
+    #[pymodule_export]
     pub use super::user_id::UserId;
     #[pymodule_export]
     pub use super::verify::verify;

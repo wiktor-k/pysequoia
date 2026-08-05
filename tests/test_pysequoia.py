@@ -8,10 +8,12 @@ from pysequoia import (
     ArmorKind,
     Cert,
     CipherSuite,
+    EncryptionAlgorithm,
     Notation,
     Profile,
     Sig,
     SignatureMode,
+    SigningAlgorithm,
     Tsk,
     armor,
     decrypt,
@@ -699,6 +701,82 @@ class TestPQC:
             store=store,
         )
         assert decrypted.bytes == content
+
+
+class TestAlgorithmSelection:
+    def test_slhdsa_signing(self):
+        tsk = Tsk.generate(
+            "SLH <slh@example.com>",
+            profile=Profile.RFC9580,
+            signing_algorithm=SigningAlgorithm.SLHDSA128f,
+        )
+        data = b"slh-dsa signed data"
+        signed = sign(tsk.signer(), data)
+
+        def store(key_ids):
+            return [tsk.extract_certificate()]
+
+        result = verify(signed, store)
+        assert result.bytes == data
+
+    def test_mixed_pqc_encryption_classical_signing(self):
+        tsk = Tsk.generate(
+            "Mixed <mixed@example.com>",
+            profile=Profile.RFC9580,
+            encryption_algorithm=EncryptionAlgorithm.MLKEM768_X25519,
+        )
+        data = b"mixed algorithm message"
+        signed = sign(tsk.signer(), data)
+
+        def store(key_ids):
+            return [tsk.extract_certificate()]
+
+        result = verify(signed, store)
+        assert result.bytes == data
+
+        encrypted = encrypt(recipients=[tsk.extract_certificate()], bytes=data)
+        decrypted = decrypt(decryptor=tsk.decryptor(), bytes=encrypted)
+        assert decrypted.bytes == data
+
+    def test_slhdsa_with_default_encryption(self):
+        tsk = Tsk.generate(
+            "SLH <slh@example.com>",
+            profile=Profile.RFC9580,
+            signing_algorithm=SigningAlgorithm.SLHDSA128s,
+        )
+        pile = PacketPile.from_bytes(bytes(tsk.extract_certificate()))
+        key_algorithms = [
+            p.key_algorithm
+            for p in pile
+            if p.tag in (Tag.PublicKey, Tag.PublicSubkey)
+        ]
+        assert PublicKeyAlgorithm.SLHDSA128s in key_algorithms
+        assert PublicKeyAlgorithm.X25519 in key_algorithms
+
+    def test_slhdsa_detached_sig_version(self):
+        tsk = Tsk.generate(
+            "SLH <slh@example.com>",
+            profile=Profile.RFC9580,
+            signing_algorithm=SigningAlgorithm.SLHDSA128f,
+        )
+        detached = sign(tsk.signer(), b"data", mode=SignatureMode.DETACHED)
+        sig = Sig.from_bytes(detached)
+        assert sig.version == 6
+
+    def test_signing_algorithm_variants_exist(self):
+        assert SigningAlgorithm.MLDSA65_Ed25519 is not None
+        assert SigningAlgorithm.MLDSA87_Ed448 is not None
+        assert SigningAlgorithm.SLHDSA128s is not None
+        assert SigningAlgorithm.SLHDSA128f is not None
+        assert SigningAlgorithm.SLHDSA256s is not None
+        assert SigningAlgorithm.Ed25519 is not None
+        assert SigningAlgorithm.Ed448 is not None
+
+    def test_encryption_algorithm_variants_exist(self):
+        assert EncryptionAlgorithm.MLKEM768_X25519 is not None
+        assert EncryptionAlgorithm.MLKEM1024_X448 is not None
+        assert EncryptionAlgorithm.X25519 is not None
+        assert EncryptionAlgorithm.X448 is not None
 
 
 class TestCipherSuite:

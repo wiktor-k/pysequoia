@@ -96,13 +96,15 @@ impl Tsk {
     ///
     /// The generated certificate has a validity period of 3 years.
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60))]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60, *, signing_algorithm=None, encryption_algorithm=None))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,
         profile: Option<Profile>,
         cipher_suite: Option<CipherSuite>,
         validity_seconds: Option<u64>,
+        signing_algorithm: Option<crate::types::SigningAlgorithm>,
+        encryption_algorithm: Option<crate::types::EncryptionAlgorithm>,
     ) -> PyResult<Self> {
         let mut builder = cert::CertBuilder::new()
             .set_profile(profile.unwrap_or_default().into())?
@@ -116,6 +118,12 @@ impl Tsk {
                 None,
                 None,
             );
+        if let Some(signing_algo) = signing_algorithm {
+            builder = builder.set_signing_algorithm(signing_algo.into());
+        }
+        if let Some(encryption_algo) = encryption_algorithm {
+            builder = builder.set_encryption_algorithm(encryption_algo.into());
+        }
         if let Some(validity_seconds) = validity_seconds {
             builder = builder.set_validity_period(std::time::Duration::new(validity_seconds, 0))
         }
