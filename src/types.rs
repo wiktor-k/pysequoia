@@ -79,6 +79,7 @@ impl TryFrom<SqSignatureType> for SignatureType {
 /// The public key algorithm used by an OpenPGP key.
 #[pyclass(eq, skip_from_py_object)]
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[expect(non_camel_case_types, reason = "type names aligned with the specification")]
 pub enum PublicKeyAlgorithm {
     /// RSA (Encrypt or Sign)
     RSAEncryptSign,
@@ -110,6 +111,20 @@ pub enum PublicKeyAlgorithm {
     Ed25519,
     /// Ed448
     Ed448,
+    /// Composite ML-DSA-65 + Ed25519 signing algorithm
+    MLDSA65_Ed25519,
+    /// Composite ML-DSA-87 + Ed448 signing algorithm
+    MLDSA87_Ed448,
+    /// SLH-DSA 128-bit small signatures
+    SLHDSA128s,
+    /// SLH-DSA 128-bit fast signatures
+    SLHDSA128f,
+    /// SLH-DSA 256-bit small signatures
+    SLHDSA256s,
+    /// Composite ML-KEM-768 + X25519 encryption algorithm
+    MLKEM768_X25519,
+    /// Composite ML-KEM-1024 + X448 encryption algorithm
+    MLKEM1024_X448,
 }
 
 impl TryFrom<SqPublicKeyAlgorithm> for PublicKeyAlgorithm {
@@ -130,6 +145,13 @@ impl TryFrom<SqPublicKeyAlgorithm> for PublicKeyAlgorithm {
             SqPublicKeyAlgorithm::X448 => Ok(Self::X448),
             SqPublicKeyAlgorithm::Ed25519 => Ok(Self::Ed25519),
             SqPublicKeyAlgorithm::Ed448 => Ok(Self::Ed448),
+            SqPublicKeyAlgorithm::MLDSA65_Ed25519 => Ok(Self::MLDSA65_Ed25519),
+            SqPublicKeyAlgorithm::MLDSA87_Ed448 => Ok(Self::MLDSA87_Ed448),
+            SqPublicKeyAlgorithm::SLHDSA128s => Ok(Self::SLHDSA128s),
+            SqPublicKeyAlgorithm::SLHDSA128f => Ok(Self::SLHDSA128f),
+            SqPublicKeyAlgorithm::SLHDSA256s => Ok(Self::SLHDSA256s),
+            SqPublicKeyAlgorithm::MLKEM768_X25519 => Ok(Self::MLKEM768_X25519),
+            SqPublicKeyAlgorithm::MLKEM1024_X448 => Ok(Self::MLKEM1024_X448),
             SqPublicKeyAlgorithm::Private(u) => Err(anyhow!("Private public key algorithm: {u}")),
             SqPublicKeyAlgorithm::Unknown(u) => Err(anyhow!("Unknown public key algorithm: {u}")),
             _ => Err(anyhow!(

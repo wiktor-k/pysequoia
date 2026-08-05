@@ -21,7 +21,7 @@ from pysequoia import (
     sign_file,
     verify,
 )
-from pysequoia.packet import PacketPile, Tag
+from pysequoia.packet import PacketPile, PublicKeyAlgorithm, Tag
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 
@@ -664,6 +664,25 @@ class TestPasswordProtectedKeys:
         )
         with pytest.raises(Exception):
             decrypt(decryptor=bob.decryptor(), bytes=encrypted)
+
+
+class TestPublicKeyAlgorithm:
+    def test_pqc_algorithm_variants_exist(self):
+        assert PublicKeyAlgorithm.MLDSA65_Ed25519 is not None
+        assert PublicKeyAlgorithm.MLDSA87_Ed448 is not None
+        assert PublicKeyAlgorithm.SLHDSA128s is not None
+        assert PublicKeyAlgorithm.SLHDSA128f is not None
+        assert PublicKeyAlgorithm.SLHDSA256s is not None
+        assert PublicKeyAlgorithm.MLKEM768_X25519 is not None
+        assert PublicKeyAlgorithm.MLKEM1024_X448 is not None
+
+    def test_pqc_and_classical_are_distinct(self):
+        assert PublicKeyAlgorithm.MLDSA65_Ed25519 != PublicKeyAlgorithm.Ed25519
+        assert PublicKeyAlgorithm.MLKEM768_X25519 != PublicKeyAlgorithm.X25519
+
+    def test_pqc_repr(self):
+        assert "MLDSA65_Ed25519" in repr(PublicKeyAlgorithm.MLDSA65_Ed25519)
+        assert "MLKEM768_X25519" in repr(PublicKeyAlgorithm.MLKEM768_X25519)
 
 
 class TestErrorCases:
