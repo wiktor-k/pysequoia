@@ -7,6 +7,7 @@ import pytest
 from pysequoia import (
     ArmorKind,
     Cert,
+    CipherSuite,
     Notation,
     Profile,
     Sig,
@@ -566,6 +567,162 @@ class TestRFC9580:
         )
         decrypted = decrypt(decryptor=receiver.decryptor(), bytes=encrypted)
         assert decrypted.bytes == content
+
+
+class TestPQC:
+    def test_generate_pqc_cert(self):
+        tsk = Tsk.generate(
+            "PQC <pqc@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA65_Ed25519,
+        )
+        cert = tsk.extract_certificate()
+        assert len(cert.fingerprint) > 0
+        assert str(cert.user_ids[0]) == "PQC <pqc@example.com>"
+
+    def test_pqc_sign_verify_roundtrip(self):
+        tsk = Tsk.generate(
+            "PQC <pqc@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA65_Ed25519,
+        )
+        data = b"post-quantum signed data"
+        signed = sign(tsk.signer(), data)
+
+        def store(key_ids):
+            return [tsk.extract_certificate()]
+
+        result = verify(signed, store)
+        assert result.bytes == data
+
+    def test_pqc_encrypt_decrypt_roundtrip(self):
+        sender = Tsk.generate(
+            "PQC Sender <s@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA65_Ed25519,
+        )
+        receiver = Tsk.generate(
+            "PQC Receiver <r@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA65_Ed25519,
+        )
+        content = b"post-quantum encrypted data"
+
+        encrypted = encrypt(
+            signer=sender.signer(),
+            recipients=[receiver.extract_certificate()],
+            bytes=content,
+        )
+
+        def store(key_ids):
+            return [sender.extract_certificate()]
+
+        decrypted = decrypt(
+            decryptor=receiver.decryptor(),
+            bytes=encrypted,
+            store=store,
+        )
+        assert decrypted.bytes == content
+        assert decrypted.valid_sigs[0].certificate == sender.extract_certificate().fingerprint
+
+    def test_pqc_detached_signature(self):
+        tsk = Tsk.generate(
+            "PQC <pqc@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA65_Ed25519,
+        )
+        detached = sign(tsk.signer(), b"data", mode=SignatureMode.DETACHED)
+        sig = Sig.from_bytes(detached)
+        assert sig.version == 6
+
+    def test_pqc_requires_rfc9580(self):
+        with pytest.raises(Exception):
+            Tsk.generate(
+                "PQC <pqc@example.com>",
+                cipher_suite=CipherSuite.MLDSA65_Ed25519,
+            )
+
+    def test_pqc_key_algorithm_introspection(self):
+        tsk = Tsk.generate(
+            "PQC <pqc@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA65_Ed25519,
+        )
+        pile = PacketPile.from_bytes(bytes(tsk.extract_certificate()))
+        key_algorithms = [
+            p.key_algorithm
+            for p in pile
+            if p.tag in (Tag.PublicKey, Tag.PublicSubkey)
+        ]
+        assert PublicKeyAlgorithm.MLDSA65_Ed25519 in key_algorithms
+        assert PublicKeyAlgorithm.MLKEM768_X25519 in key_algorithms
+
+    def test_pqc_mldsa87_ed448(self):
+        tsk = Tsk.generate(
+            "PQC87 <pqc87@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA87_Ed448,
+        )
+        data = b"higher security PQC"
+        signed = sign(tsk.signer(), data)
+
+        def store(key_ids):
+            return [tsk.extract_certificate()]
+
+        result = verify(signed, store)
+        assert result.bytes == data
+
+    def test_pqc_cross_encrypt_classical_to_pqc(self):
+        classical = Tsk.generate(
+            "Classical <classical@example.com>",
+            profile=Profile.RFC9580,
+        )
+        pqc = Tsk.generate(
+            "PQC <pqc@example.com>",
+            profile=Profile.RFC9580,
+            cipher_suite=CipherSuite.MLDSA65_Ed25519,
+        )
+        content = b"cross-algorithm message"
+
+        encrypted = encrypt(
+            signer=classical.signer(),
+            recipients=[pqc.extract_certificate()],
+            bytes=content,
+        )
+
+        def store(key_ids):
+            return [classical.extract_certificate()]
+
+        decrypted = decrypt(
+            decryptor=pqc.decryptor(),
+            bytes=encrypted,
+            store=store,
+        )
+        assert decrypted.bytes == content
+
+
+class TestCipherSuite:
+    def test_generate_rsa4k(self):
+        tsk = Tsk.generate("RSA <rsa@example.com>", cipher_suite=CipherSuite.RSA4k)
+        cert = tsk.extract_certificate()
+        assert len(cert.fingerprint) > 0
+
+    def test_generate_default_cipher_suite(self):
+        tsk = Tsk.generate("Default <default@example.com>")
+        cert = tsk.extract_certificate()
+        assert len(cert.fingerprint) > 0
+
+    def test_all_cipher_suite_variants_exist(self):
+        assert CipherSuite.Cv25519 is not None
+        assert CipherSuite.Cv448 is not None
+        assert CipherSuite.RSA2k is not None
+        assert CipherSuite.RSA3k is not None
+        assert CipherSuite.RSA4k is not None
+        assert CipherSuite.P256 is not None
+        assert CipherSuite.P384 is not None
+        assert CipherSuite.P521 is not None
+        assert CipherSuite.MLDSA65_Ed25519 is not None
+        assert CipherSuite.MLDSA87_Ed448 is not None
 
 
 class TestPacketPile:
