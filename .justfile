@@ -100,7 +100,7 @@ test:
     uv venv .venv
     # shellcheck disable=SC1091
     source .venv/bin/activate
-    maturin develop --release
+    maturin develop
     if [ "${CI:-}" = "true" ]; then
         mkdir -p target/pytest
         uv run --group test -- pytest --junit-xml=target/pytest/junit.xml tests/

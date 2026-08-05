@@ -32,3 +32,6 @@ version = "0.29.1"
 # "py-clone" feature added to keep the original behavior but it'd be good to avoid it
 # see: https://github.com/PyO3/pyo3/pull/4095
 features = ["anyhow", "chrono", "py-clone", "experimental-inspect"]
+
+[profile.dev.package."*"]
+opt-level = 3
