@@ -113,6 +113,10 @@ class Packet:
     data from different packet types (keys, signatures, user IDs, etc.).
     Accessors return `None` when called on the wrong packet type.
     """
+    def __bytes__(self, /) -> bytes:
+        """
+        The full serialized packet bytes (tag, length header, and body).
+        """
     def __repr__(self, /) -> str: ...
     @property
     def body(self, /) -> bytes:
