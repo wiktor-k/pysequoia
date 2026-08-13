@@ -50,8 +50,8 @@ impl Cert {
 /// The OpenPGP profile to use when generating certificates.
 ///
 /// Controls which packet format and algorithms are used.
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
-#[pyclass(from_py_object, eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
+#[pyclass(eq, from_py_object)]
 pub enum Profile {
     #[default]
     RFC4880,
