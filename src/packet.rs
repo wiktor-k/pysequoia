@@ -4,6 +4,7 @@ use pyo3::prelude::*;
 use sequoia_openpgp::{Packet, PacketPile as SqPacketPile, parse::Parse, serialize::Marshal};
 
 use crate::notation::Notation;
+use crate::runtime_err;
 use crate::types::{DataFormat, HashAlgorithm, KeyFlags, PublicKeyAlgorithm, SignatureType, Tag};
 
 /// A parsed collection of OpenPGP packets.
@@ -101,11 +102,39 @@ impl PyPacket {
         Ok(self.packet.tag().try_into()?)
     }
 
+    /// The full serialized packet bytes (tag, length header, and body).
+    pub fn __bytes__(&self) -> PyResult<Vec<u8>> {
+        let mut buf = Vec::new();
+        Marshal::serialize(&self.packet, &mut buf)?;
+        Ok(buf)
+    }
+
     /// The raw body bytes of this packet (without the tag and length header).
     #[getter]
     pub fn body(&self) -> PyResult<Cow<'_, [u8]>> {
         let mut buf = Vec::new();
-        Marshal::serialize(&self.packet, &mut buf)?;
+        match &self.packet {
+            Packet::PublicKey(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::PublicSubkey(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::SecretKey(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::SecretSubkey(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::Signature(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::OnePassSig(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::UserID(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::UserAttribute(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::Literal(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::CompressedData(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::PKESK(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::SKESK(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::SEIP(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::Unknown(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::Marker(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::Trust(p) => Marshal::serialize(p, &mut buf)?,
+            #[expect(deprecated)]
+            Packet::MDC(p) => Marshal::serialize(p, &mut buf)?,
+            Packet::Padding(p) => Marshal::serialize(p, &mut buf)?,
+            _ => Err(runtime_err("Unsupported packet type"))?,
+        }
         Ok(buf.into())
     }
 

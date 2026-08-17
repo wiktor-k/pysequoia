@@ -497,7 +497,24 @@ class TestPacketPile:
         cert = Cert.generate("Test <test@example.com>")
         packet = list(PacketPile.from_bytes(bytes(cert)))[0]
         assert packet.tag == Tag.PublicKey
-        assert len(packet.body) > 0
+        body = packet.body
+        assert len(body) > 0
+        assert body[0] in (4, 6)
+
+    def test_packet_body_excludes_header(self):
+        cert = Cert.generate("Test <test@example.com>")
+        for packet in PacketPile.from_bytes(bytes(cert)):
+            body = packet.body
+            full = bytes(packet)
+            assert len(full) > len(body)
+            assert full[-len(body):] == body
+
+    def test_packet_bytes_roundtrip(self):
+        cert = Cert.generate("Test <test@example.com>")
+        packets = list(PacketPile.from_bytes(bytes(cert)))
+        reassembled = b"".join(bytes(p) for p in packets)
+        reparsed = Cert.from_bytes(reassembled)
+        assert reparsed.fingerprint == cert.fingerprint
 
 
 class TestArmor:
