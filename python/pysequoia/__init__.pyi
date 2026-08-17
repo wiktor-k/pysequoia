@@ -208,7 +208,7 @@ class PyDecryptor:
     """
     A decryption helper that holds the key material needed to decrypt messages.
 
-    Obtain a `PyDecryptor` via `Cert.secrets.decryptor()`.
+    Obtain a `PyDecryptor` via `Tsk.decryptor()`.
     """
 
 @final
@@ -216,7 +216,7 @@ class PySigner:
     """
     A handle to a signing key, used for creating signatures, certifications, and revocations.
 
-    Obtain a `PySigner` via `Cert.secrets.signer()` or `Cert.secrets.certifier()`.
+    Obtain a `PySigner` via `Tsk.signer()` or `Tsk.certifier()`.
     """
 
 @final
@@ -365,6 +365,40 @@ class Tsk:
         Get a decryptor using this certificate's encryption component key.
 
         If the secret key is password-protected, provide the password to decrypt it.
+        """
+    def extract_certificate(self, /) -> Cert:
+        """
+        Extracts public parts of this TSK.
+        """
+    @staticmethod
+    def from_bytes(bytes: bytes) -> Tsk:
+        """
+        Parse a certificate from a byte string.
+
+        The bytes may be binary or ASCII-armored.
+        """
+    @staticmethod
+    def from_file(path: str) -> Tsk:
+        """
+        Parse a certificate from a file on disk.
+
+        The file may be binary or ASCII-armored.
+        """
+    @staticmethod
+    def from_packets(packets: Sequence[Packet]) -> Tsk:
+        """
+        Build a certificate from a sequence of OpenPGP packets.
+
+        The packets must form a valid certificate (a primary key followed by
+        its associated user IDs, user attributes, subkeys, and signatures).
+        """
+    @staticmethod
+    def generate(user_id: str |None = None, user_ids: Sequence[str] |None = None, profile: Profile |None = None, validity_seconds: int |None = ...) -> Tsk:
+        """
+        Generate a new TSK with a certification-capable primary key,
+        a signing subkey, and an encryption subkey.
+
+        The generated certificate has a validity period of 3 years.
         """
     def signer(self, /, password: str |None = None) -> PySigner:
         """
