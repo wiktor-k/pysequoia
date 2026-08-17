@@ -435,18 +435,19 @@ by this package).
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 
 ```python
-cert = Tsk.generate("Test <test@example.com>").extract_certificate()
+tsk = Tsk.generate("Test <test@example.com>")
+cert = tsk.extract_certificate()
 
 print(f"Armored cert: {cert}")
 print(f"Bytes of the cert: {bytes(cert)!r}")
 ```
 
-By default no secret parts are exported and they need to be manually accessed:
+The public `Cert` never contains secret key material. To export the secret
+parts, serialize the `Tsk` itself:
 
 ```python
-if cert.secrets is not None:
-    print(f"Armored TSK: {cert.secrets}")
-    print(f"Bytes of the TSK: {bytes(cert.secrets)!r}")
+print(f"Armored TSK: {tsk}")
+print(f"Bytes of the TSK: {bytes(tsk)!r}")
 ```
 
 ### Parsing

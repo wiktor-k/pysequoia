@@ -11,6 +11,7 @@ from pysequoia import (
     Profile,
     Sig,
     SignatureMode,
+    Tsk,
     armor,
     decrypt,
     decrypt_file,
@@ -35,6 +36,11 @@ def signing_key():
 
 
 @pytest.fixture
+def signing_tsk():
+    return Tsk.from_file(fixture_path("signing-key.asc"))
+
+
+@pytest.fixture
 def wiktor_key():
     return Cert.from_file(fixture_path("wiktor.asc"))
 
@@ -45,21 +51,21 @@ def wiktor_fresh_key():
 
 
 class TestSign:
-    def test_inline(self, signing_key):
-        signed = sign(signing_key.secrets.signer(), b"data to be signed")
+    def test_inline(self, signing_tsk):
+        signed = sign(signing_tsk.signer(), b"data to be signed")
         assert "PGP MESSAGE" in str(signed)
 
-    def test_detached(self, signing_key):
+    def test_detached(self, signing_tsk):
         detached = sign(
-            signing_key.secrets.signer(),
+            signing_tsk.signer(),
             b"data to be signed",
             mode=SignatureMode.DETACHED,
         )
         assert "PGP SIGNATURE" in str(detached)
 
-    def test_clear(self, signing_key):
+    def test_clear(self, signing_tsk):
         clear = sign(
-            signing_key.secrets.signer(),
+            signing_tsk.signer(),
             b"data to be signed",
             mode=SignatureMode.CLEAR,
         )
@@ -67,7 +73,7 @@ class TestSign:
 
 
 class TestSignFile:
-    def test_inline_file(self, signing_key):
+    def test_inline_file(self, signing_tsk):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
             inp.write(b"data to be signed")
             input_path = inp.name
@@ -76,13 +82,13 @@ class TestSignFile:
             output_path = out.name
 
         try:
-            sign_file(signing_key.secrets.signer(), input_path, output_path)
+            sign_file(signing_tsk.signer(), input_path, output_path)
             assert b"PGP MESSAGE" in open(output_path, "rb").read()
         finally:
             os.unlink(input_path)
             os.unlink(output_path)
 
-    def test_detached_file(self, signing_key):
+    def test_detached_file(self, signing_tsk):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
             inp.write(b"data to be signed")
             input_path = inp.name
@@ -92,7 +98,7 @@ class TestSignFile:
 
         try:
             sign_file(
-                signing_key.secrets.signer(),
+                signing_tsk.signer(),
                 input_path,
                 detached_path,
                 mode=SignatureMode.DETACHED,
@@ -113,24 +119,24 @@ class TestVerify:
 
         return get_certs
 
-    def test_inline_verify(self, signing_key):
-        signed = sign(signing_key.secrets.signer(), b"data to be signed")
+    def test_inline_verify(self, signing_key, signing_tsk):
+        signed = sign(signing_tsk.signer(), b"data to be signed")
         result = verify(signed, self._store(signing_key))
         assert result.bytes.decode("utf8") == "data to be signed"
         assert result.valid_sigs[0].certificate == SIGNING_KEY_FPR
         assert result.valid_sigs[0].signing_key == SIGNING_KEY_FPR
 
-    def test_detached_verify_bytes(self, signing_key):
+    def test_detached_verify_bytes(self, signing_key, signing_tsk):
         data = b"data to be signed"
-        detached = sign(signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED)
+        detached = sign(signing_tsk.signer(), data, mode=SignatureMode.DETACHED)
         signature = Sig.from_bytes(detached)
         result = verify(bytes=data, store=self._store(signing_key), signature=signature)
         assert result.valid_sigs[0].certificate == SIGNING_KEY_FPR
         assert result.valid_sigs[0].signing_key == SIGNING_KEY_FPR
 
-    def test_detached_verify_file(self, signing_key):
+    def test_detached_verify_file(self, signing_key, signing_tsk):
         data = b"data to be signed"
-        detached = sign(signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED)
+        detached = sign(signing_tsk.signer(), data, mode=SignatureMode.DETACHED)
         signature = Sig.from_bytes(detached)
 
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -180,38 +186,43 @@ class TestVerify:
 
 class TestEncryptDecrypt:
     def test_encrypt_decrypt_no_signature(self):
-        sender = Cert.generate("Sender <sender@example.com>")
-        receiver = Cert.generate("Receiver <receiver@example.com>")
+        sender = Tsk.generate("Sender <sender@example.com>")
+        receiver = Tsk.generate("Receiver <receiver@example.com>")
         content = "Red Green Blue"
 
-        encrypted = encrypt(recipients=[receiver], bytes=content.encode("utf8"))
-        decrypted = decrypt(decryptor=receiver.secrets.decryptor(), bytes=encrypted)
+        encrypted = encrypt(
+            recipients=[receiver.extract_certificate()], bytes=content.encode("utf8")
+        )
+        decrypted = decrypt(decryptor=receiver.decryptor(), bytes=encrypted)
 
         assert decrypted.bytes.decode("utf8") == content
         assert len(decrypted.valid_sigs) == 0
 
     def test_encrypt_decrypt_with_signature(self):
-        sender = Cert.generate("Sender <sender@example.com>")
-        receiver = Cert.generate("Receiver <receiver@example.com>")
+        sender = Tsk.generate("Sender <sender@example.com>")
+        receiver = Tsk.generate("Receiver <receiver@example.com>")
         content = "Red Green Blue"
 
         encrypted = encrypt(
-            signer=sender.secrets.signer(),
-            recipients=[receiver],
+            signer=sender.signer(),
+            recipients=[receiver.extract_certificate()],
             bytes=content.encode("utf8"),
         )
 
         def store(key_ids):
-            return [sender]
+            return [sender.extract_certificate()]
 
         decrypted = decrypt(
-            decryptor=receiver.secrets.decryptor(),
+            decryptor=receiver.decryptor(),
             bytes=encrypted,
             store=store,
         )
 
         assert decrypted.bytes.decode("utf8") == content
-        assert decrypted.valid_sigs[0].certificate == sender.fingerprint
+        assert (
+            decrypted.valid_sigs[0].certificate
+            == sender.extract_certificate().fingerprint
+        )
 
     def test_symmetric_encrypt_decrypt(self):
         content = "content to encrypt"
@@ -222,8 +233,8 @@ class TestEncryptDecrypt:
 
 class TestEncryptDecryptFile:
     def test_encrypt_file(self):
-        sender = Cert.generate("Sender <sender@example.com>")
-        receiver = Cert.generate("Receiver <receiver@example.com>")
+        sender = Tsk.generate("Sender <sender@example.com>")
+        receiver = Tsk.generate("Receiver <receiver@example.com>")
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as inp:
             inp.write(b"content to encrypt")
@@ -234,8 +245,8 @@ class TestEncryptDecryptFile:
 
         try:
             encrypt_file(
-                signer=sender.secrets.signer(),
-                recipients=[receiver],
+                signer=sender.signer(),
+                recipients=[receiver.extract_certificate()],
                 input=input_path,
                 output=output_path,
             )
@@ -245,10 +256,12 @@ class TestEncryptDecryptFile:
             os.unlink(output_path)
 
     def test_decrypt_file_no_signature(self):
-        receiver = Cert.generate("Receiver <receiver@example.com>")
+        receiver = Tsk.generate("Receiver <receiver@example.com>")
         content = "Red Green Blue"
 
-        encrypted = encrypt(recipients=[receiver], bytes=content.encode("utf8"))
+        encrypted = encrypt(
+            recipients=[receiver.extract_certificate()], bytes=content.encode("utf8")
+        )
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pgp") as inp:
             inp.write(encrypted)
@@ -259,7 +272,7 @@ class TestEncryptDecryptFile:
 
         try:
             decrypted = decrypt_file(
-                decryptor=receiver.secrets.decryptor(),
+                decryptor=receiver.decryptor(),
                 input=input_path,
                 output=output_path,
             )
@@ -271,13 +284,13 @@ class TestEncryptDecryptFile:
             os.unlink(output_path)
 
     def test_decrypt_file_with_signature(self):
-        sender = Cert.generate("Sender <sender@example.com>")
-        receiver = Cert.generate("Receiver <receiver@example.com>")
+        sender = Tsk.generate("Sender <sender@example.com>")
+        receiver = Tsk.generate("Receiver <receiver@example.com>")
         content = "Red Green Blue"
 
         encrypted = encrypt(
-            signer=sender.secrets.signer(),
-            recipients=[receiver],
+            signer=sender.signer(),
+            recipients=[receiver.extract_certificate()],
             bytes=content.encode("utf8"),
         )
 
@@ -289,64 +302,150 @@ class TestEncryptDecryptFile:
             output_path = out.name
 
         def store(key_ids):
-            return [sender]
+            return [sender.extract_certificate()]
 
         try:
             decrypted = decrypt_file(
-                decryptor=receiver.secrets.decryptor(),
+                decryptor=receiver.decryptor(),
                 input=input_path,
                 output=output_path,
                 store=store,
             )
             assert open(output_path, "rb").read().decode("utf8") == content
-            assert decrypted.valid_sigs[0].certificate == sender.fingerprint
+            assert (
+                decrypted.valid_sigs[0].certificate
+                == sender.extract_certificate().fingerprint
+            )
         finally:
             os.unlink(input_path)
             os.unlink(output_path)
 
 
-class TestCert:
+class TestTsk:
     def test_generate_and_export(self):
-        cert = Cert.generate("Test <test@example.com>")
-        assert len(str(cert)) > 0
-        assert len(bytes(cert)) > 0
-
-    def test_secrets_export(self):
-        cert = Cert.generate("Test <test@example.com>")
-        assert cert.secrets is not None
-        assert len(str(cert.secrets)) > 0
-        assert len(bytes(cert.secrets)) > 0
-
-    def test_parse_roundtrip(self):
-        cert = Cert.generate("Test <test@example.com>")
-        parsed = Cert.from_bytes(bytes(cert))
-        assert str(parsed.user_ids[0]) == "Test <test@example.com>"
-
-    def test_split_bytes(self):
-        certs = [Cert.generate(f"Test {i}") for i in range(3)]
-        combined = b"".join(bytes(c) for c in certs)
-        split = Cert.split_bytes(combined)
-        assert len(split) == 3
+        tsk = Tsk.generate("Test <test@example.com>")
+        assert len(str(tsk)) > 0
+        assert len(bytes(tsk)) > 0
 
     def test_generate_multiple_user_ids(self):
-        cert = Cert.generate(user_ids=["First", "Second", "Third"])
+        tsk = Tsk.generate(user_ids=["First", "Second", "Third"])
+        cert = tsk.extract_certificate()
         assert len(cert.user_ids) == 3
 
     def test_generate_rfc9580(self):
-        cert = Cert.generate("Modern <modern@example.com>", profile=Profile.RFC9580)
+        tsk = Tsk.generate("Modern <modern@example.com>", profile=Profile.RFC9580)
+        cert = tsk.extract_certificate()
         assert len(cert.fingerprint) > 0
 
     def test_expiration_with_validity(self):
-        cert = Cert.generate(user_id="test", validity_seconds=3600)
+        tsk = Tsk.generate(user_id="test", validity_seconds=3600)
+        cert = tsk.extract_certificate()
         assert cert.expiration is not None
 
+    def test_from_bytes_roundtrip(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        parsed = Tsk.from_bytes(bytes(tsk))
+        assert (
+            tsk.extract_certificate().fingerprint
+            == parsed.extract_certificate().fingerprint
+        )
+        assert (
+            str(parsed.extract_certificate().user_ids[0]) == "Test <test@example.com>"
+        )
+
+    def test_from_file(self, tmp_path):
+        tsk = Tsk.generate("Test <test@example.com>")
+        keyfile = tmp_path / "key.pgp"
+        keyfile.write_bytes(bytes(tsk))
+        loaded = Tsk.from_file(str(keyfile))
+        assert (
+            tsk.extract_certificate().fingerprint
+            == loaded.extract_certificate().fingerprint
+        )
+
+    def test_from_file_fixture(self):
+        tsk = Tsk.from_file(fixture_path("signing-key.asc"))
+        assert len(str(tsk)) > 0
+
+    def test_from_packets(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        packets = list(PacketPile.from_bytes(bytes(tsk)))
+        rebuilt = Tsk.from_packets(packets)
+        assert (
+            tsk.extract_certificate().fingerprint
+            == rebuilt.extract_certificate().fingerprint
+        )
+
+    def test_signer(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        signed = sign(tsk.signer(), b"hello")
+        assert "PGP MESSAGE" in str(signed)
+
+    def test_certifier(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
+        updated = cert.add_user_id(
+            value="Test <test@other.com>",
+            certifier=tsk.certifier(),
+        )
+        assert len(updated.user_ids) == 2
+
+    def test_decryptor(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        content = b"secret data"
+        encrypted = encrypt(recipients=[tsk.extract_certificate()], bytes=content)
+        decrypted = decrypt(decryptor=tsk.decryptor(), bytes=encrypted)
+        assert decrypted.bytes == content
+
+    def test_repr(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        assert repr(tsk).startswith("<Tsk fingerprint=")
+
+
+class TestCert:
+    def test_parse_roundtrip(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
+        parsed = Cert.from_bytes(bytes(cert))
+        assert str(parsed.user_ids[0]) == "Test <test@example.com>"
+
+    def test_fingerprint(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        assert len(tsk.extract_certificate().fingerprint) > 0
+
+    def test_user_ids(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
+        assert len(cert.user_ids) == 1
+        assert str(cert.user_ids[0]) == "Test <test@example.com>"
+
     def test_expiration_none(self):
-        cert = Cert.generate(user_id="test", validity_seconds=None)
+        tsk = Tsk.generate(user_id="test", validity_seconds=None)
+        cert = tsk.extract_certificate()
         assert cert.expiration is None
 
     def test_default_has_expiration(self):
-        cert = Cert.generate("test")
+        tsk = Tsk.generate("test")
+        cert = tsk.extract_certificate()
         assert cert.expiration is not None
+
+    def test_is_revoked(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
+        assert not cert.is_revoked
+
+    def test_split_file(self, tmp_path):
+        certs = [Tsk.generate(f"Test {i}").extract_certificate() for i in range(3)]
+        keyring = tmp_path / "keyring.pgp"
+        keyring.write_bytes(b"".join(bytes(c) for c in certs))
+        split = Cert.split_file(str(keyring))
+        assert len(split) == 3
+
+    def test_split_bytes(self):
+        certs = [Tsk.generate(f"Test {i}").extract_certificate() for i in range(3)]
+        combined = b"".join(bytes(c) for c in certs)
+        split = Cert.split_bytes(combined)
+        assert len(split) == 3
 
     def test_merge(self, wiktor_key, wiktor_fresh_key):
         merged = wiktor_key.merge(wiktor_fresh_key)
@@ -356,45 +455,51 @@ class TestCert:
         assert str(wiktor_key.user_ids[0]).startswith("Wiktor Kwapisiewicz")
 
     def test_add_user_id(self):
-        cert = Cert.generate("Alice <alice@example.com>")
+        tsk = Tsk.generate("Alice <alice@example.com>")
+        cert = tsk.extract_certificate()
         assert len(cert.user_ids) == 1
         cert = cert.add_user_id(
             value="Alice <alice@company.invalid>",
-            certifier=cert.secrets.certifier(),
+            certifier=tsk.certifier(),
         )
         assert len(cert.user_ids) == 2
 
     def test_revoke_user_id(self):
-        cert = Cert.generate("Bob <bob@example.com>")
+        tsk = Tsk.generate("Bob <bob@example.com>")
+        cert = tsk.extract_certificate()
         cert = cert.add_user_id(
             value="Bob <bob@company.invalid>",
-            certifier=cert.secrets.certifier(),
+            certifier=tsk.certifier(),
         )
         assert len(cert.user_ids) == 2
 
         revocation = cert.revoke_user_id(
-            user_id=cert.user_ids[1], certifier=cert.secrets.certifier()
+            user_id=cert.user_ids[1], certifier=tsk.certifier()
         )
         cert = Cert.from_bytes(bytes(cert) + bytes(revocation))
         assert len(cert.user_ids) == 1
 
-    def test_split_file(self, tmp_path):
-        certs = [Cert.generate(f"Test {i}") for i in range(3)]
-        keyring = tmp_path / "keyring.pgp"
-        keyring.write_bytes(b"".join(bytes(c) for c in certs))
-        split = Cert.split_file(str(keyring))
-        assert len(split) == 3
+    # NOTE: deprecated — tests kept intentionally to verify deprecated API still works
+    def test_deprecated_generate(self):
+        cert = Cert.generate("Test <test@example.com>")
+        assert len(str(cert)) > 0
 
-    def test_has_secret_keys(self):
-        c = Cert.generate("Testing key <test@example.com>")
-        assert c.has_secret_keys
+    def test_deprecated_has_secret_keys(self):
+        cert = Cert.generate("Testing key <test@example.com>")
+        assert cert.has_secret_keys
 
-        public_parts = Cert.from_bytes(f"{c}".encode("utf8"))
+        public_parts = Cert.from_bytes(f"{cert}".encode("utf8"))
         assert not public_parts.has_secret_keys
         assert public_parts.secrets is None
 
-        private_parts = Cert.from_bytes(f"{c.secrets}".encode("utf8"))
+        private_parts = Cert.from_bytes(f"{cert.secrets}".encode("utf8"))
         assert private_parts.has_secret_keys
+
+    def test_deprecated_secrets_export(self):
+        cert = Cert.generate("Test <test@example.com>")
+        assert cert.secrets is not None
+        assert len(str(cert.secrets)) > 0
+        assert len(bytes(cert.secrets)) > 0
 
 
 class TestNotations:
@@ -403,10 +508,10 @@ class TestNotations:
         assert notation.key == "proof@metacode.biz"
         assert notation.value == "dns:metacode.biz?type=TXT"
 
-    def test_add_notation(self, signing_key):
+    def test_add_notation(self, signing_key, signing_tsk):
         assert len(signing_key.user_ids[0].notations) == 0
         cert = signing_key.set_notations(
-            signing_key.secrets.certifier(),
+            signing_tsk.certifier(),
             [Notation("proof@metacode.biz", "dns:metacode.biz")],
         )
         assert len(cert.user_ids[0].notations) == 1
@@ -422,19 +527,20 @@ class TestKeyExpiration:
     def test_has_expiration(self, wiktor_key):
         assert str(wiktor_key.expiration) == "2022-12-31 12:00:02+00:00"
 
-    def test_set_expiration(self, signing_key):
+    def test_set_expiration(self, signing_key, signing_tsk):
         assert signing_key.expiration is None
         expiration = datetime.fromisoformat("2021-11-04T00:05:23+00:00")
         updated = signing_key.set_expiration(
-            expiration=expiration, certifier=signing_key.secrets.certifier()
+            expiration=expiration, certifier=signing_tsk.certifier()
         )
         assert str(updated.expiration) == "2021-11-04 00:05:23+00:00"
 
 
 class TestKeyRevocation:
     def test_revoke(self):
-        cert = Cert.generate("Test Revocation <revoke@example.com>")
-        revocation = cert.revoke(certifier=cert.secrets.certifier())
+        tsk = Tsk.generate("Test Revocation <revoke@example.com>")
+        cert = tsk.extract_certificate()
+        revocation = cert.revoke(certifier=tsk.certifier())
         assert not cert.is_revoked
 
         revoked = Cert.from_bytes(bytes(cert) + bytes(revocation))
@@ -454,47 +560,58 @@ class TestSig:
 
 class TestRFC9580:
     def test_sign_verify_roundtrip(self):
-        cert = Cert.generate("V6 <v6@example.com>", profile=Profile.RFC9580)
+        tsk = Tsk.generate("V6 <v6@example.com>", profile=Profile.RFC9580)
         data = b"v6 signed data"
-        signed = sign(cert.secrets.signer(), data)
+        signed = sign(tsk.signer(), data)
 
         def store(key_ids):
-            return [cert]
+            return [tsk.extract_certificate()]
 
         result = verify(signed, store)
         assert result.bytes == data
 
     def test_detached_signature(self):
-        cert = Cert.generate("V6 <v6@example.com>", profile=Profile.RFC9580)
-        detached = sign(cert.secrets.signer(), b"data", mode=SignatureMode.DETACHED)
+        tsk = Tsk.generate("V6 <v6@example.com>", profile=Profile.RFC9580)
+        detached = sign(tsk.signer(), b"data", mode=SignatureMode.DETACHED)
         sig = Sig.from_bytes(detached)
         assert sig.version == 6
 
     def test_encrypt_decrypt_roundtrip(self):
-        sender = Cert.generate("V6 Sender <s@example.com>", profile=Profile.RFC9580)
-        receiver = Cert.generate("V6 Receiver <r@example.com>", profile=Profile.RFC9580)
+        sender = Tsk.generate("V6 Sender <s@example.com>", profile=Profile.RFC9580)
+        receiver = Tsk.generate("V6 Receiver <r@example.com>", profile=Profile.RFC9580)
         content = b"v6 encrypted data"
 
         encrypted = encrypt(
-            signer=sender.secrets.signer(),
-            recipients=[receiver],
+            signer=sender.signer(),
+            recipients=[receiver.extract_certificate()],
             bytes=content,
         )
-        decrypted = decrypt(decryptor=receiver.secrets.decryptor(), bytes=encrypted)
+        decrypted = decrypt(decryptor=receiver.decryptor(), bytes=encrypted)
         assert decrypted.bytes == content
 
 
 class TestPacketPile:
-    def test_iterate_packets(self):
-        cert = Cert.generate("Test <test@example.com>")
+    def test_iterate_public_packets(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
         pile = PacketPile.from_bytes(bytes(cert))
         tags = [p.tag for p in pile]
         assert Tag.PublicKey in tags
         assert Tag.UserID in tags
         assert Tag.Signature in tags
 
+    def test_iterate_secret_packets(self):
+        tsk = Tsk.generate("Test <test@example.com>")
+        pile = PacketPile.from_bytes(bytes(tsk))
+        tags = [p.tag for p in pile]
+        assert Tag.SecretKey in tags
+        assert Tag.SecretSubkey in tags
+        assert Tag.UserID in tags
+        assert Tag.Signature in tags
+
     def test_packet_body(self):
-        cert = Cert.generate("Test <test@example.com>")
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
         packet = list(PacketPile.from_bytes(bytes(cert)))[0]
         assert packet.tag == Tag.PublicKey
         body = packet.body
@@ -502,15 +619,17 @@ class TestPacketPile:
         assert body[0] in (4, 6)
 
     def test_packet_body_excludes_header(self):
-        cert = Cert.generate("Test <test@example.com>")
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
         for packet in PacketPile.from_bytes(bytes(cert)):
             body = packet.body
             full = bytes(packet)
             assert len(full) > len(body)
-            assert full[-len(body):] == body
+            assert full[-len(body) :] == body
 
     def test_packet_bytes_roundtrip(self):
-        cert = Cert.generate("Test <test@example.com>")
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
         packets = list(PacketPile.from_bytes(bytes(cert)))
         reassembled = b"".join(bytes(p) for p in packets)
         reparsed = Cert.from_bytes(reassembled)
@@ -519,7 +638,8 @@ class TestPacketPile:
 
 class TestArmor:
     def test_armor_public_key(self):
-        cert = Cert.generate("Test <test@example.com>")
+        tsk = Tsk.generate("Test <test@example.com>")
+        cert = tsk.extract_certificate()
         armored = armor(bytes(cert), ArmorKind.PublicKey)
         assert "-----BEGIN PGP PUBLIC KEY BLOCK-----" in armored
         assert "-----END PGP PUBLIC KEY BLOCK-----" in armored
@@ -534,52 +654,47 @@ class TestArmor:
 
 
 class TestPasswordProtectedKeys:
-    @pytest.fixture
-    def protected_key(self):
-        cert = Cert.generate("Protected <protected@example.com>")
-        tsk_bytes = f"{cert.secrets}".encode("utf8")
-        return Cert.from_bytes(tsk_bytes)
-
     def test_sign_with_password(self):
-        cert = Cert.generate("PW <pw@example.com>")
-        signed = sign(cert.secrets.signer(), b"hello")
+        tsk = Tsk.generate("PW <pw@example.com>")
+        signed = sign(tsk.signer(), b"hello")
         assert "PGP MESSAGE" in str(signed)
 
     def test_encrypt_decrypt_with_password(self):
-        sender = Cert.generate("Sender <s@example.com>")
-        receiver = Cert.generate("Receiver <r@example.com>")
+        sender = Tsk.generate("Sender <s@example.com>")
+        receiver = Tsk.generate("Receiver <r@example.com>")
         content = b"secret message"
 
         encrypted = encrypt(
-            signer=sender.secrets.signer(),
-            recipients=[receiver],
+            signer=sender.signer(),
+            recipients=[receiver.extract_certificate()],
             bytes=content,
         )
-        decrypted = decrypt(decryptor=receiver.secrets.decryptor(), bytes=encrypted)
+        decrypted = decrypt(decryptor=receiver.decryptor(), bytes=encrypted)
         assert decrypted.bytes == content
 
     def test_decrypt_wrong_password_fails(self):
-        receiver = Cert.generate("Receiver <r@example.com>")
         content = b"secret"
         encrypted = encrypt(passwords=["correct"], bytes=content)
         with pytest.raises(Exception):
             decrypt(passwords=["wrong"], bytes=encrypted)
 
     def test_decrypt_wrong_key_fails(self):
-        alice = Cert.generate("Alice <alice@example.com>")
-        bob = Cert.generate("Bob <bob@example.com>")
-        encrypted = encrypt(recipients=[alice], bytes=b"for alice only")
+        alice = Tsk.generate("Alice <alice@example.com>")
+        bob = Tsk.generate("Bob <bob@example.com>")
+        encrypted = encrypt(
+            recipients=[alice.extract_certificate()], bytes=b"for alice only"
+        )
         with pytest.raises(Exception):
-            decrypt(decryptor=bob.secrets.decryptor(), bytes=encrypted)
+            decrypt(decryptor=bob.decryptor(), bytes=encrypted)
 
 
 class TestErrorCases:
-    def test_verify_with_wrong_key(self, signing_key):
-        wrong_key = Cert.generate("Wrong <wrong@example.com>")
-        signed = sign(signing_key.secrets.signer(), b"data")
+    def test_verify_with_wrong_key(self, signing_tsk):
+        wrong_key = Tsk.generate("Wrong <wrong@example.com>")
+        signed = sign(signing_tsk.signer(), b"data")
 
         def store(key_ids):
-            return [wrong_key]
+            return [wrong_key.extract_certificate()]
 
         with pytest.raises(Exception):
             verify(signed, store)
@@ -588,15 +703,15 @@ class TestErrorCases:
         with pytest.raises(Exception):
             verify(bytes=b"not a real message")
 
-    def test_verify_bytes_and_file_mutually_exclusive(self, signing_key, tmp_path):
+    def test_verify_bytes_and_file_mutually_exclusive(self, signing_tsk, tmp_path):
         data = b"data"
-        signed = sign(signing_key.secrets.signer(), data, mode=SignatureMode.DETACHED)
+        signed = sign(signing_tsk.signer(), data, mode=SignatureMode.DETACHED)
         signature = Sig.from_bytes(signed)
         f = tmp_path / "data.bin"
         f.write_bytes(data)
 
         def store(key_ids):
-            return [signing_key]
+            return [signing_tsk.extract_certificate()]
 
         with pytest.raises(Exception):
             verify(bytes=data, file=str(f), store=store, signature=signature)
