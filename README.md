@@ -526,6 +526,89 @@ print(f"Generated cert with fingerprint {mary.fingerprint}:\n{mary}")
 Note that legacy PGP implementations may not be able to consume these
 certificates yet.
 
+#### Cipher suites
+
+The cryptographic algorithms used for the generated key can be selected
+with the `cipher_suite` parameter. The default is `Cv25519`; RSA, NIST,
+and Curve448 suites are also available:
+
+```python
+from pysequoia import CipherSuite
+
+tsk = Tsk.generate("RSA <rsa@example.com>", cipher_suite=CipherSuite.RSA4k)
+cert = tsk.extract_certificate()
+print(f"Generated RSA cert with fingerprint {cert.fingerprint}")
+```
+
+The full list of suites is `Cv25519`, `Cv448`, `RSA2k`, `RSA3k`,
+`RSA4k`, `P256`, `P384`, `P521`, `MLDSA65_Ed25519`, and `MLDSA87_Ed448`.
+
+#### Post-quantum cryptography
+
+The two `MLDSA*` cipher suites generate [post-quantum][PQC] keys that
+combine ML-DSA/ML-KEM with a classical algorithm. These suites require
+`Profile.RFC9580` (v6 keys):
+
+[PQC]: https://en.wikipedia.org/wiki/Post-quantum_cryptography
+
+```python
+from pysequoia import CipherSuite, Profile
+
+pqc = Tsk.generate(
+    "Post-Quantum <pqc@example.com>",
+    profile=Profile.RFC9580,
+    cipher_suite=CipherSuite.MLDSA65_Ed25519,
+)
+
+# these keys sign, verify, encrypt, and decrypt like any other
+data = "post-quantum signed data".encode("utf8")
+signed = sign(pqc.signer(), data)
+result = verify(signed, lambda key_ids: [pqc.extract_certificate()])
+assert result.bytes == data
+```
+
+Using `MLDSA65_Ed25519` produces an ML-DSA-65 + Ed25519 signing key and
+an ML-KEM-768 + X25519 encryption subkey; `MLDSA87_Ed448` selects the
+higher-security ML-DSA-87 + Ed448 / ML-KEM-1024 + X448 variant.
+
+#### Fine-grained algorithm selection
+
+For combinations beyond the paired presets, the signing and encryption
+algorithms can be chosen independently with the keyword-only
+`signing_algorithm` and `encryption_algorithm` parameters. This enables
+mixes such as stateless SLH-DSA signing with classical encryption, or a
+classical signing key with a post-quantum ML-KEM encryption subkey:
+
+```python
+from pysequoia import Profile, SigningAlgorithm, EncryptionAlgorithm
+
+# SLH-DSA signing key with the default encryption subkey
+slh = Tsk.generate(
+    "SLH-DSA <slh@example.com>",
+    profile=Profile.RFC9580,
+    signing_algorithm=SigningAlgorithm.SLHDSA128f,
+)
+signed = sign(slh.signer(), b"slh-dsa signed data")
+result = verify(signed, lambda key_ids: [slh.extract_certificate()])
+assert result.bytes == b"slh-dsa signed data"
+
+# classical signing paired with a post-quantum encryption subkey
+mixed = Tsk.generate(
+    "Mixed <mixed@example.com>",
+    profile=Profile.RFC9580,
+    encryption_algorithm=EncryptionAlgorithm.MLKEM768_X25519,
+)
+encrypted = encrypt(recipients=[mixed.extract_certificate()], bytes=b"secret")
+decrypted = decrypt(decryptor=mixed.decryptor(), bytes=encrypted)
+assert decrypted.bytes == b"secret"
+```
+
+Signing algorithms are `Ed25519`, `Ed448`, `MLDSA65_Ed25519`,
+`MLDSA87_Ed448`, `SLHDSA128s`, `SLHDSA128f`, and `SLHDSA256s`.
+Encryption algorithms are `X25519`, `X448`, `MLKEM768_X25519`, and
+`MLKEM1024_X448`. As with the PQC cipher suites, post-quantum
+algorithms require `Profile.RFC9580`.
+
 #### Expiration
 
 The expiration is controlled via `validity_seconds` keyword argument:
