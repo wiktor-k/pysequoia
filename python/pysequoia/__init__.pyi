@@ -150,6 +150,59 @@ class Cert:
         """
 
 @final
+class CipherSuite:
+    """
+    The cipher suite to use when generating keys.
+
+    Controls which cryptographic algorithms are used for the primary key and subkeys.
+    The PQC (post-quantum cryptography) suites require `Profile.RFC9580`.
+    """
+    Cv25519: Final[CipherSuite]
+    """
+    EdDSA and ECDH over Curve25519 (default)
+    """
+    Cv448: Final[CipherSuite]
+    """
+    EdDSA and ECDH over Curve448
+    """
+    MLDSA65_Ed25519: Final[CipherSuite]
+    """
+    Post-quantum: ML-DSA-65 + Ed25519 signing, ML-KEM-768 + X25519 encryption (v6 only)
+    """
+    MLDSA87_Ed448: Final[CipherSuite]
+    """
+    Post-quantum: ML-DSA-87 + Ed448 signing, ML-KEM-1024 + X448 encryption (v6 only)
+    """
+    P256: Final[CipherSuite]
+    """
+    ECDSA and ECDH over NIST P-256
+    """
+    P384: Final[CipherSuite]
+    """
+    ECDSA and ECDH over NIST P-384
+    """
+    P521: Final[CipherSuite]
+    """
+    ECDSA and ECDH over NIST P-521
+    """
+    RSA2k: Final[CipherSuite]
+    """
+    2048-bit RSA
+    """
+    RSA3k: Final[CipherSuite]
+    """
+    3072-bit RSA
+    """
+    RSA4k: Final[CipherSuite]
+    """
+    4096-bit RSA
+    """
+    def __eq__(self, value: object, /) -> bool: ...
+    def __int__(self, /) -> int: ...
+    def __ne__(self, value: object, /) -> bool: ...
+    def __repr__(self, /) -> str: ...
+
+@final
 class Decrypted:
     """
     The result of a decryption or verification operation.
@@ -166,6 +219,36 @@ class Decrypted:
         """
         The list of valid signatures found during verification.
         """
+
+@final
+class EncryptionAlgorithm:
+    """
+    The encryption algorithm to use when generating keys.
+
+    Used with `Cert.generate(encryption_algorithm=...)` to override the
+    encryption algorithm independently of the cipher suite. Requires
+    `Profile.RFC9580` for PQC algorithms (except `MLKEM768_X25519`).
+    """
+    MLKEM1024_X448: Final[EncryptionAlgorithm]
+    """
+    Composite ML-KEM-1024 + X448 (post-quantum)
+    """
+    MLKEM768_X25519: Final[EncryptionAlgorithm]
+    """
+    Composite ML-KEM-768 + X25519 (post-quantum)
+    """
+    X25519: Final[EncryptionAlgorithm]
+    """
+    X25519
+    """
+    X448: Final[EncryptionAlgorithm]
+    """
+    X448
+    """
+    def __eq__(self, value: object, /) -> bool: ...
+    def __int__(self, /) -> int: ...
+    def __ne__(self, value: object, /) -> bool: ...
+    def __repr__(self, /) -> str: ...
 
 @final
 class Notation:
@@ -338,6 +421,48 @@ class SignatureMode:
     def __repr__(self, /) -> str: ...
 
 @final
+class SigningAlgorithm:
+    """
+    The signing algorithm to use when generating keys.
+
+    Used with `Cert.generate(signing_algorithm=...)` to override the signing
+    algorithm independently of the cipher suite. Requires `Profile.RFC9580`
+    for PQC algorithms.
+    """
+    Ed25519: Final[SigningAlgorithm]
+    """
+    Ed25519
+    """
+    Ed448: Final[SigningAlgorithm]
+    """
+    Ed448
+    """
+    MLDSA65_Ed25519: Final[SigningAlgorithm]
+    """
+    Composite ML-DSA-65 + Ed25519 (post-quantum)
+    """
+    MLDSA87_Ed448: Final[SigningAlgorithm]
+    """
+    Composite ML-DSA-87 + Ed448 (post-quantum)
+    """
+    SLHDSA128f: Final[SigningAlgorithm]
+    """
+    SLH-DSA 128-bit fast signatures (post-quantum, stateless)
+    """
+    SLHDSA128s: Final[SigningAlgorithm]
+    """
+    SLH-DSA 128-bit small signatures (post-quantum, stateless)
+    """
+    SLHDSA256s: Final[SigningAlgorithm]
+    """
+    SLH-DSA 256-bit small signatures (post-quantum, stateless)
+    """
+    def __eq__(self, value: object, /) -> bool: ...
+    def __int__(self, /) -> int: ...
+    def __ne__(self, value: object, /) -> bool: ...
+    def __repr__(self, /) -> str: ...
+
+@final
 class Tsk:
     """
     A certificate that contains secret key material.
@@ -393,7 +518,7 @@ class Tsk:
         its associated user IDs, user attributes, subkeys, and signatures).
         """
     @staticmethod
-    def generate(user_id: str |None = None, user_ids: Sequence[str] |None = None, profile: Profile |None = None, validity_seconds: int |None = ...) -> Tsk:
+    def generate(user_id: str |None = None, user_ids: Sequence[str] |None = None, profile: Profile |None = None, cipher_suite: CipherSuite |None = None, validity_seconds: int |None = ..., *, signing_algorithm: SigningAlgorithm |None = None, encryption_algorithm: EncryptionAlgorithm |None = None) -> Tsk:
         """
         Generate a new TSK with a certification-capable primary key,
         a signing subkey, and an encryption subkey.

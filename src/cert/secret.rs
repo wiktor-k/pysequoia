@@ -2,7 +2,6 @@ use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use pyo3::prelude::*;
-use sequoia_openpgp::cert::{CertBuilder, CipherSuite};
 use sequoia_openpgp::parse::Parse as _;
 use sequoia_openpgp::types::KeyFlags;
 use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
@@ -10,6 +9,54 @@ use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
 use crate::cert::{DEFAULT_POLICY, Profile};
 use crate::decrypt;
 use crate::signer::PySigner;
+
+/// The cipher suite to use when generating keys.
+///
+/// Controls which cryptographic algorithms are used for the primary key and subkeys.
+/// The PQC (post-quantum cryptography) suites require `Profile.RFC9580`.
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[pyclass(from_py_object, eq)]
+#[allow(non_camel_case_types)]
+pub enum CipherSuite {
+    /// EdDSA and ECDH over Curve25519 (default)
+    #[default]
+    Cv25519,
+    /// EdDSA and ECDH over Curve448
+    Cv448,
+    /// 2048-bit RSA
+    RSA2k,
+    /// 3072-bit RSA
+    RSA3k,
+    /// 4096-bit RSA
+    RSA4k,
+    /// ECDSA and ECDH over NIST P-256
+    P256,
+    /// ECDSA and ECDH over NIST P-384
+    P384,
+    /// ECDSA and ECDH over NIST P-521
+    P521,
+    /// Post-quantum: ML-DSA-65 + Ed25519 signing, ML-KEM-768 + X25519 encryption (v6 only)
+    MLDSA65_Ed25519,
+    /// Post-quantum: ML-DSA-87 + Ed448 signing, ML-KEM-1024 + X448 encryption (v6 only)
+    MLDSA87_Ed448,
+}
+
+impl From<CipherSuite> for cert::CipherSuite {
+    fn from(cs: CipherSuite) -> Self {
+        match cs {
+            CipherSuite::Cv25519 => Self::Cv25519,
+            CipherSuite::Cv448 => Self::Cv448,
+            CipherSuite::RSA2k => Self::RSA2k,
+            CipherSuite::RSA3k => Self::RSA3k,
+            CipherSuite::RSA4k => Self::RSA4k,
+            CipherSuite::P256 => Self::P256,
+            CipherSuite::P384 => Self::P384,
+            CipherSuite::P521 => Self::P521,
+            CipherSuite::MLDSA65_Ed25519 => Self::MLDSA65_Ed25519,
+            CipherSuite::MLDSA87_Ed448 => Self::MLDSA87_Ed448,
+        }
+    }
+}
 
 /// A certificate that contains secret key material.
 ///
@@ -49,16 +96,19 @@ impl Tsk {
     ///
     /// The generated certificate has a validity period of 3 years.
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60))]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60, *, signing_algorithm=None, encryption_algorithm=None))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,
         profile: Option<Profile>,
+        cipher_suite: Option<CipherSuite>,
         validity_seconds: Option<u64>,
+        signing_algorithm: Option<crate::types::SigningAlgorithm>,
+        encryption_algorithm: Option<crate::types::EncryptionAlgorithm>,
     ) -> PyResult<Self> {
-        let mut builder = CertBuilder::new()
+        let mut builder = cert::CertBuilder::new()
             .set_profile(profile.unwrap_or_default().into())?
-            .set_cipher_suite(CipherSuite::default())
+            .set_cipher_suite(cipher_suite.unwrap_or_default().into())
             .set_primary_key_flags(KeyFlags::empty().set_certification())
             .add_signing_subkey()
             .add_subkey(
@@ -68,6 +118,12 @@ impl Tsk {
                 None,
                 None,
             );
+        if let Some(signing_algo) = signing_algorithm {
+            builder = builder.set_signing_algorithm(signing_algo.into());
+        }
+        if let Some(encryption_algo) = encryption_algorithm {
+            builder = builder.set_encryption_algorithm(encryption_algo.into());
+        }
         if let Some(validity_seconds) = validity_seconds {
             builder = builder.set_validity_period(std::time::Duration::new(validity_seconds, 0))
         }

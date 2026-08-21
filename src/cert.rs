@@ -142,7 +142,15 @@ impl Cert {
         profile: Option<Profile>,
         validity_seconds: Option<u64>,
     ) -> PyResult<Self> {
-        let tsk = Tsk::generate(user_id, user_ids, profile, validity_seconds)?;
+        let tsk = Tsk::generate(
+            user_id,
+            user_ids,
+            profile,
+            None,
+            validity_seconds,
+            None,
+            None,
+        )?;
         tsk.extract_certificate()
     }
 

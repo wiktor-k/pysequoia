@@ -394,6 +394,22 @@ class PublicKeyAlgorithm:
     """
     ElGamal Encrypt or Sign, deprecated
     """
+    MLDSA65_Ed25519: Final[PublicKeyAlgorithm]
+    """
+    Composite ML-DSA-65 + Ed25519 signing algorithm
+    """
+    MLDSA87_Ed448: Final[PublicKeyAlgorithm]
+    """
+    Composite ML-DSA-87 + Ed448 signing algorithm
+    """
+    MLKEM1024_X448: Final[PublicKeyAlgorithm]
+    """
+    Composite ML-KEM-1024 + X448 encryption algorithm
+    """
+    MLKEM768_X25519: Final[PublicKeyAlgorithm]
+    """
+    Composite ML-KEM-768 + X25519 encryption algorithm
+    """
     RSAEncrypt: Final[PublicKeyAlgorithm]
     """
     RSA Encrypt-Only, deprecated
@@ -405,6 +421,18 @@ class PublicKeyAlgorithm:
     RSASign: Final[PublicKeyAlgorithm]
     """
     RSA Sign-Only, deprecated
+    """
+    SLHDSA128f: Final[PublicKeyAlgorithm]
+    """
+    SLH-DSA 128-bit fast signatures
+    """
+    SLHDSA128s: Final[PublicKeyAlgorithm]
+    """
+    SLH-DSA 128-bit small signatures
+    """
+    SLHDSA256s: Final[PublicKeyAlgorithm]
+    """
+    SLH-DSA 256-bit small signatures
     """
     X25519: Final[PublicKeyAlgorithm]
     """

@@ -8,7 +8,9 @@ use pyo3::prelude::*;
 use sequoia_openpgp::packet::Tag as SqTag;
 use sequoia_openpgp::types::{
     DataFormat as SqDataFormat, HashAlgorithm as SqHashAlgorithm, KeyFlags as SqKeyFlags,
-    PublicKeyAlgorithm as SqPublicKeyAlgorithm, SignatureType as SqSignatureType,
+    PublicKeyAlgorithm as SqPublicKeyAlgorithm,
+    PublicKeyAlgorithmSpecification as SqPublicKeyAlgorithmSpecification,
+    SignatureType as SqSignatureType,
 };
 
 /// The type of an OpenPGP signature, as defined in RFC 4880 / 9580.
@@ -79,6 +81,10 @@ impl TryFrom<SqSignatureType> for SignatureType {
 /// The public key algorithm used by an OpenPGP key.
 #[pyclass(eq, skip_from_py_object)]
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[expect(
+    non_camel_case_types,
+    reason = "type names aligned with the specification"
+)]
 pub enum PublicKeyAlgorithm {
     /// RSA (Encrypt or Sign)
     RSAEncryptSign,
@@ -110,6 +116,20 @@ pub enum PublicKeyAlgorithm {
     Ed25519,
     /// Ed448
     Ed448,
+    /// Composite ML-DSA-65 + Ed25519 signing algorithm
+    MLDSA65_Ed25519,
+    /// Composite ML-DSA-87 + Ed448 signing algorithm
+    MLDSA87_Ed448,
+    /// SLH-DSA 128-bit small signatures
+    SLHDSA128s,
+    /// SLH-DSA 128-bit fast signatures
+    SLHDSA128f,
+    /// SLH-DSA 256-bit small signatures
+    SLHDSA256s,
+    /// Composite ML-KEM-768 + X25519 encryption algorithm
+    MLKEM768_X25519,
+    /// Composite ML-KEM-1024 + X448 encryption algorithm
+    MLKEM1024_X448,
 }
 
 impl TryFrom<SqPublicKeyAlgorithm> for PublicKeyAlgorithm {
@@ -130,6 +150,13 @@ impl TryFrom<SqPublicKeyAlgorithm> for PublicKeyAlgorithm {
             SqPublicKeyAlgorithm::X448 => Ok(Self::X448),
             SqPublicKeyAlgorithm::Ed25519 => Ok(Self::Ed25519),
             SqPublicKeyAlgorithm::Ed448 => Ok(Self::Ed448),
+            SqPublicKeyAlgorithm::MLDSA65_Ed25519 => Ok(Self::MLDSA65_Ed25519),
+            SqPublicKeyAlgorithm::MLDSA87_Ed448 => Ok(Self::MLDSA87_Ed448),
+            SqPublicKeyAlgorithm::SLHDSA128s => Ok(Self::SLHDSA128s),
+            SqPublicKeyAlgorithm::SLHDSA128f => Ok(Self::SLHDSA128f),
+            SqPublicKeyAlgorithm::SLHDSA256s => Ok(Self::SLHDSA256s),
+            SqPublicKeyAlgorithm::MLKEM768_X25519 => Ok(Self::MLKEM768_X25519),
+            SqPublicKeyAlgorithm::MLKEM1024_X448 => Ok(Self::MLKEM1024_X448),
             SqPublicKeyAlgorithm::Private(u) => Err(anyhow!("Private public key algorithm: {u}")),
             SqPublicKeyAlgorithm::Unknown(u) => Err(anyhow!("Unknown public key algorithm: {u}")),
             _ => Err(anyhow!(
@@ -311,6 +338,78 @@ impl From<ArmorKind> for sequoia_openpgp::armor::Kind {
             ArmorKind::SecretKey => Self::SecretKey,
             ArmorKind::Message => Self::Message,
             ArmorKind::Signature => Self::Signature,
+        }
+    }
+}
+
+/// The signing algorithm to use when generating keys.
+///
+/// Used with `Cert.generate(signing_algorithm=...)` to override the signing
+/// algorithm independently of the cipher suite. Requires `Profile.RFC9580`
+/// for PQC algorithms.
+#[pyclass(from_py_object, eq)]
+#[derive(Clone, PartialEq, Eq)]
+#[expect(
+    non_camel_case_types,
+    reason = "type names aligned with the specification"
+)]
+pub enum SigningAlgorithm {
+    /// Composite ML-DSA-65 + Ed25519 (post-quantum)
+    MLDSA65_Ed25519,
+    /// Composite ML-DSA-87 + Ed448 (post-quantum)
+    MLDSA87_Ed448,
+    /// SLH-DSA 128-bit small signatures (post-quantum, stateless)
+    SLHDSA128s,
+    /// SLH-DSA 128-bit fast signatures (post-quantum, stateless)
+    SLHDSA128f,
+    /// SLH-DSA 256-bit small signatures (post-quantum, stateless)
+    SLHDSA256s,
+    /// Ed25519
+    Ed25519,
+    /// Ed448
+    Ed448,
+}
+
+impl From<SigningAlgorithm> for SqPublicKeyAlgorithmSpecification {
+    fn from(algo: SigningAlgorithm) -> Self {
+        match algo {
+            SigningAlgorithm::MLDSA65_Ed25519 => Self::mldsa65_ed25519(),
+            SigningAlgorithm::MLDSA87_Ed448 => Self::mldsa87_ed448(),
+            SigningAlgorithm::SLHDSA128s => Self::slhdsa128s(),
+            SigningAlgorithm::SLHDSA128f => Self::slhdsa128f(),
+            SigningAlgorithm::SLHDSA256s => Self::slhdsa256s(),
+            SigningAlgorithm::Ed25519 => Self::ed25519(),
+            SigningAlgorithm::Ed448 => Self::ed448(),
+        }
+    }
+}
+
+/// The encryption algorithm to use when generating keys.
+///
+/// Used with `Tsk.generate(encryption_algorithm=...)` to override the
+/// encryption algorithm independently of the cipher suite. Requires
+/// `Profile.RFC9580` for PQC algorithms (except `MLKEM768_X25519`).
+#[pyclass(from_py_object, eq)]
+#[derive(Clone, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+pub enum EncryptionAlgorithm {
+    /// Composite ML-KEM-768 + X25519 (post-quantum)
+    MLKEM768_X25519,
+    /// Composite ML-KEM-1024 + X448 (post-quantum)
+    MLKEM1024_X448,
+    /// X25519
+    X25519,
+    /// X448
+    X448,
+}
+
+impl From<EncryptionAlgorithm> for SqPublicKeyAlgorithmSpecification {
+    fn from(algo: EncryptionAlgorithm) -> Self {
+        match algo {
+            EncryptionAlgorithm::MLKEM768_X25519 => Self::mlkem768_x25519(),
+            EncryptionAlgorithm::MLKEM1024_X448 => Self::mlkem1024_x448(),
+            EncryptionAlgorithm::X25519 => Self::x25519(),
+            EncryptionAlgorithm::X448 => Self::x448(),
         }
     }
 }
