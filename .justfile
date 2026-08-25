@@ -97,7 +97,7 @@ unused-deps:
 test:
     #!/usr/bin/bash
     set -euxo pipefail
-    uv venv .venv
+    uv venv --clear .venv
     # shellcheck disable=SC1091
     source .venv/bin/activate
     maturin develop
