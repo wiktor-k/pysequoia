@@ -14,9 +14,12 @@ use crate::signer::PySigner;
 ///
 /// Controls which cryptographic algorithms are used for the primary key and subkeys.
 /// The PQC (post-quantum cryptography) suites require `Profile.RFC9580`.
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
 #[pyclass(from_py_object, eq)]
-#[allow(non_camel_case_types)]
+#[expect(
+    non_camel_case_types,
+    reason = "variant names matching specification and upstream"
+)]
 pub enum CipherSuite {
     /// EdDSA and ECDH over Curve25519 (default)
     #[default]
@@ -94,9 +97,9 @@ impl Tsk {
     /// Generate a new TSK with a certification-capable primary key,
     /// a signing subkey, and an encryption subkey.
     ///
-    /// The generated certificate has a validity period of 3 years.
+    /// The generated certificate does not expire unless explicitly instructed.
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60, *, signing_algorithm=None, encryption_algorithm=None))]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,

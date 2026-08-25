@@ -74,6 +74,7 @@ docs/_build/
 
 # Pyenv
 .python-version
+uv.lock
 
 # Build artifacts
 no-passwd.pgp

@@ -427,10 +427,10 @@ class TestCert:
         cert = tsk.extract_certificate()
         assert cert.expiration is None
 
-    def test_default_has_expiration(self):
+    def test_default_does_not_have_expiration(self):
         tsk = Tsk.generate("test")
         cert = tsk.extract_certificate()
-        assert cert.expiration is not None
+        assert cert.expiration is None
 
     def test_is_revoked(self):
         tsk = Tsk.generate("Test <test@example.com>")
