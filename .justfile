@@ -248,7 +248,7 @@ readme-python:
     tangler python < README.md | python -
 
 # Update stubs (python/pysequoia/__init__.pyi, python/pysequoia/packet.pyi, ...)
-[metadata('pacman', 'rust')]
+[metadata('pacman', 'rust', 'python')]
 update-stubs:
     #!/usr/bin/bash
     set -euo pipefail
@@ -266,3 +266,26 @@ check-types: update-stubs
 # Generate stubs and check types
 [group('ci')]
 update-and-check-types: update-stubs check-types
+
+# Check if stubs need regeneration
+[group('ci')]
+[metadata('pacman', 'diffutils')]
+check-stubs-staleness:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    before=$(mktemp --directory)
+    after=$(mktemp --directory)
+    trap 'rm --recursive --force "$before" "$after"' EXIT
+
+    cp -a python/. "$before/"
+
+    just update-stubs
+
+    cp -a python/. "$after/"
+
+    if ! diff --brief --recursive "$before" "$after"; then
+        echo "Files under python/ changed: probably stub files are stale."
+        echo "Run \`just update-stubs\` and commit!"
+        exit 1
+    fi
