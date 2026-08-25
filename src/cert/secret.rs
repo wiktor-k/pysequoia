@@ -97,9 +97,9 @@ impl Tsk {
     /// Generate a new TSK with a certification-capable primary key,
     /// a signing subkey, and an encryption subkey.
     ///
-    /// The generated certificate has a validity period of 3 years.
+    /// The generated certificate does not expire unless explicitly instructed.
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60, *, signing_algorithm=None, encryption_algorithm=None))]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,

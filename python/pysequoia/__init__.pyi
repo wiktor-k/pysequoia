@@ -225,7 +225,7 @@ class EncryptionAlgorithm:
     """
     The encryption algorithm to use when generating keys.
 
-    Used with `Cert.generate(encryption_algorithm=...)` to override the
+    Used with `Tsk.generate(encryption_algorithm=...)` to override the
     encryption algorithm independently of the cipher suite. Requires
     `Profile.RFC9580` for PQC algorithms (except `MLKEM768_X25519`).
     """
@@ -518,12 +518,12 @@ class Tsk:
         its associated user IDs, user attributes, subkeys, and signatures).
         """
     @staticmethod
-    def generate(user_id: str |None = None, user_ids: Sequence[str] |None = None, profile: Profile |None = None, cipher_suite: CipherSuite |None = None, validity_seconds: int |None = ..., *, signing_algorithm: SigningAlgorithm |None = None, encryption_algorithm: EncryptionAlgorithm |None = None) -> Tsk:
+    def generate(user_id: str |None = None, user_ids: Sequence[str] |None = None, profile: Profile |None = None, cipher_suite: CipherSuite |None = None, validity_seconds: int |None = None, *, signing_algorithm: SigningAlgorithm |None = None, encryption_algorithm: EncryptionAlgorithm |None = None) -> Tsk:
         """
         Generate a new TSK with a certification-capable primary key,
         a signing subkey, and an encryption subkey.
 
-        The generated certificate has a validity period of 3 years.
+        The generated certificate does not expire unless explicitly instructed.
         """
     def signer(self, /, password: str |None = None) -> PySigner:
         """

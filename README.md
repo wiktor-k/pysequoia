@@ -629,15 +629,14 @@ assert (
 )
 ```
 
-By default certificates are generated *with* expiration time:
+By default certificates are generated *without* expiration time:
 
 ```python
-assert Tsk.generate("test").extract_certificate().expiration is not None
+assert Tsk.generate("test").extract_certificate().expiration is None
 ```
 
 > [!WARNING]
-> If you rely on a particular value of expiration, set the argument explicitly.
-> The current default (3 * 52 * 7 * 24 * 60 * 60) will change to `None`.
+> This behavior differs from the (now deprecated) `Cert.generate` which had a default expiration of 3 years.
 
 ### merge
 
