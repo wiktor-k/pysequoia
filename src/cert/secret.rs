@@ -16,7 +16,10 @@ use crate::signer::PySigner;
 /// The PQC (post-quantum cryptography) suites require `Profile.RFC9580`.
 #[derive(Clone, Default, PartialEq, Eq)]
 #[pyclass(from_py_object, eq)]
-#[allow(non_camel_case_types)]
+#[expect(
+    non_camel_case_types,
+    reason = "variant names matching specification and upstream"
+)]
 pub enum CipherSuite {
     /// EdDSA and ECDH over Curve25519 (default)
     #[default]
