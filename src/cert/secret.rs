@@ -14,7 +14,7 @@ use crate::signer::PySigner;
 ///
 /// Controls which cryptographic algorithms are used for the primary key and subkeys.
 /// The PQC (post-quantum cryptography) suites require `Profile.RFC9580`.
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
 #[pyclass(from_py_object, eq)]
 #[allow(non_camel_case_types)]
 pub enum CipherSuite {
