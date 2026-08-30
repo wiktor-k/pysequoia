@@ -48,8 +48,8 @@ Removed:
 [#89]: https://github.com/wiktor-k/pysequoia/pull/89
 
 ### Release checklist:
-###  [ ] Change version in `Cargo.toml` and `pyproject.toml` and `NEXT.md`
-###  [ ] Update dependencies via `cargo update`
+###  [ ] Update dependencies via `cargo upgrade --incompatible && cargo update`
 ###  [ ] Regenerate stubs with `just update-stubs`
+###  [ ] Change version in `Cargo.toml` and `pyproject.toml` and `NEXT.md`
 ###  [ ] Commit and push, wait for CI, merge
 ###  [ ] `git pull`, tag locally with `git tag --edit -s -F NEXT.md v...` and `git push`
