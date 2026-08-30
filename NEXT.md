@@ -1,6 +1,6 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v0.1.33
+v0.1.35
 
 The biggest change in this release is the `Cert`/`Tsk` split.
 Previously, the `Cert` class was used for both certificates (containing only public parts) and TSKs (secret keys).
