@@ -168,7 +168,7 @@ impl TryFrom<SqPublicKeyAlgorithm> for PublicKeyAlgorithm {
 }
 
 /// The hash algorithm used by an OpenPGP signature.
-#[pyclass(eq, skip_from_py_object)]
+#[pyclass(eq, from_py_object)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum HashAlgorithm {
     /// MD5
@@ -208,6 +208,22 @@ impl TryFrom<SqHashAlgorithm> for HashAlgorithm {
             SqHashAlgorithm::Private(u) => Err(anyhow!("Private hash algorithm: {u}")),
             SqHashAlgorithm::Unknown(u) => Err(anyhow!("Unknown hash algorithm: {u}")),
             _ => Err(anyhow!("Unrecognized hash algorithm: {}", u8::from(algo))),
+        }
+    }
+}
+
+impl From<HashAlgorithm> for SqHashAlgorithm {
+    fn from(algo: HashAlgorithm) -> Self {
+        match algo {
+            HashAlgorithm::MD5 => Self::MD5,
+            HashAlgorithm::SHA1 => Self::SHA1,
+            HashAlgorithm::RipeMD => Self::RipeMD,
+            HashAlgorithm::SHA256 => Self::SHA256,
+            HashAlgorithm::SHA384 => Self::SHA384,
+            HashAlgorithm::SHA512 => Self::SHA512,
+            HashAlgorithm::SHA224 => Self::SHA224,
+            HashAlgorithm::SHA3_256 => Self::SHA3_256,
+            HashAlgorithm::SHA3_512 => Self::SHA3_512,
         }
     }
 }

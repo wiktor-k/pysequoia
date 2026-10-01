@@ -432,6 +432,42 @@ by this package).
 
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
 
+### Adjusting the cryptographic policy
+
+Signature verification uses Sequoia's secure default policy. To verify a
+legacy SHA-1 signature, explicitly opt in with a custom policy. SHA-1 is not
+collision-resistant, so only do this when it is appropriate for your threat
+model.
+
+```python
+from pysequoia import HashSecurity, StandardPolicy, verify
+from pysequoia.packet import HashAlgorithm
+
+policy = StandardPolicy()
+policy.accept_hash(HashAlgorithm.SHA1)
+result = verify(signed, get_certs_verify, policy=policy)
+```
+
+When SHA-1 is only needed for a certificate signature, prefer the narrower
+`accept_hash_property` override. It does not allow SHA-1 for data signatures,
+which require collision resistance:
+
+```python
+policy = StandardPolicy()
+policy.accept_hash_property(
+    HashAlgorithm.SHA1,
+    HashSecurity.SecondPreImageResistance,
+)
+```
+
+The same `policy` argument is available on `decrypt` and `decrypt_file` for
+verification of signed encrypted messages.
+
+For the security properties and other advanced policy controls, see Sequoia's
+[policy documentation][policy-docs].
+
+[policy-docs]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/index.html
+
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 
 ```python

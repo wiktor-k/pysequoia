@@ -251,6 +251,24 @@ class EncryptionAlgorithm:
     def __repr__(self, /) -> str: ...
 
 @final
+class HashSecurity:
+    """
+    A cryptographic security property required by a signature.
+    """
+    CollisionResistance: Final[HashSecurity]
+    """
+    Resistance to finding two messages with the same hash.
+    """
+    SecondPreImageResistance: Final[HashSecurity]
+    """
+    Resistance to finding another message with a matching hash.
+    """
+    def __eq__(self, value: object, /) -> bool: ...
+    def __int__(self, /) -> int: ...
+    def __ne__(self, value: object, /) -> bool: ...
+    def __repr__(self, /) -> str: ...
+
+@final
 class Notation:
     """
     A key-value notation attached to an OpenPGP signature.
@@ -463,6 +481,31 @@ class SigningAlgorithm:
     def __repr__(self, /) -> str: ...
 
 @final
+class StandardPolicy:
+    """
+    The standard OpenPGP cryptographic policy.
+
+    A new policy uses Sequoia's secure defaults. Pass it to `verify`, `decrypt`,
+    or `decrypt_file` after making any required compatibility adjustments.
+    """
+    def __new__(cls, /) -> StandardPolicy: ...
+    def accept_hash(self, /, algorithm: HashAlgorithm) -> None:
+        """
+        Accept a hash algorithm for all signature security contexts.
+
+        This weakens the policy for algorithms that are no longer considered
+        cryptographically secure. In particular, SHA-1 lacks collision resistance.
+        """
+    def accept_hash_property(self, /, algorithm: HashAlgorithm, security: HashSecurity) -> None:
+        """
+        Accept a hash algorithm only where the specified security property is required.
+
+        This is less permissive than `accept_hash`. For example, accepting SHA-1 for
+        second-preimage resistance does not allow it for data signatures, which also
+        require collision resistance.
+        """
+
+@final
 class Tsk:
     """
     A certificate that contains secret key material.
@@ -556,7 +599,7 @@ def armor(data: bytes, kind: ArmorKind) -> str:
     header type, and returns the ASCII-armored string.
     """
 
-def decrypt(bytes: bytes, decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ...) -> Decrypted:
+def decrypt(bytes: bytes, decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ..., policy: StandardPolicy |None = None) -> Decrypted:
     """
     Decrypt an OpenPGP message from bytes.
 
@@ -564,7 +607,7 @@ def decrypt(bytes: bytes, decryptor: PyDecryptor |None = None, store: Any |None 
     Optionally provide a `store` callback for signature verification during decryption.
     """
 
-def decrypt_file(input: str |PathLike[str], output: str |PathLike[str], decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ...) -> Decrypted:
+def decrypt_file(input: str |PathLike[str], output: str |PathLike[str], decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ..., policy: StandardPolicy |None = None) -> Decrypted:
     """
     Decrypt an OpenPGP message from a file, writing the plaintext to another file.
 
@@ -604,7 +647,7 @@ def sign_file(signer: PySigner, input: str |PathLike[str], output: str |PathLike
     Set `armor=False` to produce binary output instead of ASCII-armored.
     """
 
-def verify(bytes: bytes |None = None, store: Any |None = None, file: str |PathLike[str] |None = None, signature: Sig |None = None) -> Decrypted:
+def verify(bytes: bytes |None = None, store: Any |None = None, file: str |PathLike[str] |None = None, signature: Sig |None = None, policy: StandardPolicy |None = None) -> Decrypted:
     """
     Verify an OpenPGP signature.
 

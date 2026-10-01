@@ -10,6 +10,7 @@ use sequoia_openpgp::policy::StandardPolicy as P;
 use sequoia_openpgp::types::SymmetricAlgorithm;
 use sequoia_openpgp::{KeyHandle, cert};
 
+use crate::policy::StandardPolicy;
 use crate::verify::PyVerifier;
 use crate::{Decrypted, ValidSig};
 
@@ -55,12 +56,13 @@ impl PyDecryptor {
 /// Provide either a `decryptor` (from a secret key) or `passwords` for password-based decryption.
 /// Optionally provide a `store` callback for signature verification during decryption.
 #[pyfunction]
-#[pyo3(signature = (bytes, decryptor=None, store=None, passwords=vec![]))]
+#[pyo3(signature = (bytes, decryptor=None, store=None, passwords=vec![], policy=None))]
 pub fn decrypt(
     bytes: &[u8],
     decryptor: Option<PyDecryptor>,
     store: Option<Py<PyAny>>,
     passwords: Vec<String>,
+    policy: Option<&StandardPolicy>,
 ) -> PyResult<Decrypted> {
     if decryptor.is_none() && passwords.is_empty() {
         return Err(anyhow::anyhow!(
@@ -74,7 +76,14 @@ pub fn decrypt(
         decryptor.set_verifier(PyVerifier::from_callback(store));
     }
 
-    let policy = &P::new();
+    let default_policy;
+    let policy = match policy {
+        Some(policy) => policy.inner(),
+        None => {
+            default_policy = P::new();
+            &default_policy
+        }
+    };
 
     let mut decryptor =
         DecryptorBuilder::from_bytes(bytes)?.with_policy(policy, None, decryptor)?;
@@ -93,13 +102,14 @@ pub fn decrypt(
 /// Provide either a `decryptor` (from a secret key) or `passwords` for password-based decryption.
 /// Optionally provide a `store` callback for signature verification during decryption.
 #[pyfunction]
-#[pyo3(signature = (input, output, decryptor=None, store=None, passwords=vec![]))]
+#[pyo3(signature = (input, output, decryptor=None, store=None, passwords=vec![], policy=None))]
 pub fn decrypt_file(
     input: PathBuf,
     output: PathBuf,
     decryptor: Option<PyDecryptor>,
     store: Option<Py<PyAny>>,
     passwords: Vec<String>,
+    policy: Option<&StandardPolicy>,
 ) -> PyResult<Decrypted> {
     if decryptor.is_none() && passwords.is_empty() {
         return Err(anyhow::anyhow!(
@@ -112,7 +122,14 @@ pub fn decrypt_file(
     if let Some(store) = store {
         decryptor.set_verifier(PyVerifier::from_callback(store));
     }
-    let policy = &P::new();
+    let default_policy;
+    let policy = match policy {
+        Some(policy) => policy.inner(),
+        None => {
+            default_policy = P::new();
+            &default_policy
+        }
+    };
 
     let mut decryptor = DecryptorBuilder::from_file(&input)
         .context("Failed to open input file")?
