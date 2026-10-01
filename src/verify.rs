@@ -6,6 +6,7 @@ use sequoia_openpgp::KeyHandle;
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
 
+use crate::policy::Policy as PyPolicy;
 use crate::signature::Sig;
 use crate::{Decrypted, ValidSig};
 
@@ -29,12 +30,13 @@ impl From<SignedData<'_>> for Option<Vec<u8>> {
 /// is called with a list of key ID strings and must return a list of `Cert` objects.
 /// For detached signature verification, pass a `Sig` object as `signature`.
 #[pyfunction]
-#[pyo3(signature = (bytes=None, store=None, file=None, signature=None))]
+#[pyo3(signature = (bytes=None, store=None, file=None, signature=None, policy=None))]
 pub fn verify(
     bytes: Option<&[u8]>,
     store: Option<Py<PyAny>>,
     file: Option<PathBuf>,
     signature: Option<&Sig>,
+    policy: Option<&PyPolicy>,
 ) -> PyResult<Decrypted> {
     let Some(store) = store else {
         return Err(anyhow!("Store parameter is required").into());
@@ -52,7 +54,14 @@ pub fn verify(
 
     let helper = PyVerifier::from_callback(store);
 
-    let policy = &StandardPolicy::new();
+    let default_policy;
+    let policy = match policy {
+        Some(policy) => policy.inner(),
+        None => {
+            default_policy = StandardPolicy::new();
+            &default_policy
+        }
+    };
 
     if let Some(signature) = signature {
         // detached signature verification

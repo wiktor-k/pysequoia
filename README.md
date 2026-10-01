@@ -432,6 +432,49 @@ by this package).
 
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
 
+### Adjusting the cryptographic policy
+
+Signature verification uses the build's default policy. To use a different
+policy, pass one loaded from a Sequoia configuration file. For example, a
+configuration file can permit legacy SHA-1 certificate signatures without
+permitting SHA-1 data signatures:
+
+```toml
+[hash_algorithms]
+sha1.second_preimage_resistance = "always"
+```
+
+Pass the configured policy to `verify`, `decrypt`, or `decrypt_file`:
+
+```python no-test
+from pysequoia import Policy, verify
+
+policy = Policy.from_sequoia_config_file("/path/to/policy.toml")
+result = verify(signed, get_certs_verify, policy=policy)
+```
+
+### Using a system policy configuration
+
+To use a Sequoia policy managed by the operating system, omit the path:
+
+```python no-test
+policy = Policy.from_sequoia_config_file()
+result = verify(signed, get_certs_verify, policy=policy)
+```
+
+With no path, `from_sequoia_config_file` reads the absolute path in
+`SEQUOIA_CRYPTO_POLICY` when that variable is set. Otherwise, it reads
+`/etc/crypto-policies/back-ends/sequoia.config`. A missing file raises an
+exception; a missing path named by the environment variable does not trigger a
+fallback to the system path.
+
+For the security properties and other advanced policy controls, see Sequoia's
+[policy documentation][policy-docs] and its
+[policy configuration format][policy-config].
+
+[policy-docs]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/index.html
+[policy-config]: https://docs.rs/sequoia-policy-config/latest/sequoia_policy_config/
+
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 
 ```python
@@ -454,6 +497,10 @@ print(f"Bytes of the TSK: {bytes(tsk)!r}")
 
 Certificates can be parsed from files (`Cert.from_file`) or bytes in
 memory (`Cert.from_bytes`).
+
+Pass `policy=policy` when reading a certificate or secret key to use a custom
+policy for later operations on that object. The policy is also retained by
+certificates extracted from a secret key.
 
 ```python
 cert1 = Tsk.generate("Test <test@example.com>").extract_certificate()

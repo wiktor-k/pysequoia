@@ -6,8 +6,9 @@ use sequoia_openpgp::parse::Parse as _;
 use sequoia_openpgp::types::KeyFlags;
 use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
 
-use crate::cert::{DEFAULT_POLICY, Profile};
+use crate::cert::{DEFAULT_POLICY, Profile, policy_arc};
 use crate::decrypt;
+use crate::policy::Policy as PyPolicy;
 use crate::signer::PySigner;
 
 /// The cipher suite to use when generating keys.
@@ -99,7 +100,8 @@ impl Tsk {
     ///
     /// The generated certificate does not expire unless explicitly instructed.
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None))]
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None, policy=None))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,
@@ -108,6 +110,7 @@ impl Tsk {
         validity_seconds: Option<u64>,
         signing_algorithm: Option<crate::types::SigningAlgorithm>,
         encryption_algorithm: Option<crate::types::EncryptionAlgorithm>,
+        policy: Option<&PyPolicy>,
     ) -> PyResult<Self> {
         let mut builder = cert::CertBuilder::new()
             .set_profile(profile.unwrap_or_default().into())?
@@ -139,23 +142,28 @@ impl Tsk {
             }
         }
 
-        Ok(builder.generate()?.0.into())
+        Ok(Self::new(builder.generate()?.0, &policy_arc(policy)))
     }
 
     /// Parse a certificate from a file on disk.
     ///
     /// The file may be binary or ASCII-armored.
     #[staticmethod]
-    pub fn from_file(path: String) -> PyResult<Self> {
-        Ok(cert::Cert::from_file(path)?.into())
+    #[pyo3(signature = (path, policy=None))]
+    pub fn from_file(path: String, policy: Option<&PyPolicy>) -> PyResult<Self> {
+        Ok(Self::new(cert::Cert::from_file(path)?, &policy_arc(policy)))
     }
 
     /// Parse a certificate from a byte string.
     ///
     /// The bytes may be binary or ASCII-armored.
     #[staticmethod]
-    pub fn from_bytes(bytes: &[u8]) -> PyResult<Self> {
-        Ok(cert::Cert::from_bytes(bytes)?.into())
+    #[pyo3(signature = (bytes, policy=None))]
+    pub fn from_bytes(bytes: &[u8], policy: Option<&PyPolicy>) -> PyResult<Self> {
+        Ok(Self::new(
+            cert::Cert::from_bytes(bytes)?,
+            &policy_arc(policy),
+        ))
     }
 
     /// Build a certificate from a sequence of OpenPGP packets.
@@ -163,9 +171,16 @@ impl Tsk {
     /// The packets must form a valid certificate (a primary key followed by
     /// its associated user IDs, user attributes, subkeys, and signatures).
     #[staticmethod]
-    pub fn from_packets(packets: Vec<crate::packet::PyPacket>) -> PyResult<Self> {
+    #[pyo3(signature = (packets, policy=None))]
+    pub fn from_packets(
+        packets: Vec<crate::packet::PyPacket>,
+        policy: Option<&PyPolicy>,
+    ) -> PyResult<Self> {
         let sq_packets = packets.into_iter().map(|p| p.into_inner());
-        Ok(cert::Cert::from_packets(sq_packets)?.into())
+        Ok(Self::new(
+            cert::Cert::from_packets(sq_packets)?,
+            &policy_arc(policy),
+        ))
     }
 
     /// Return the ASCII-armored secret key representation (Transferable Secret Key).
@@ -185,7 +200,7 @@ impl Tsk {
 
     /// Extracts public parts of this TSK.
     pub fn extract_certificate(&self) -> PyResult<crate::cert::Cert> {
-        Ok(self.cert.clone().into())
+        Ok(crate::cert::Cert::new(self.cert.clone(), &self.policy))
     }
 
     /// Get a signer using this certificate's signing component key.

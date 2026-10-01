@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from os import PathLike
 from typing import Any, Final, SupportsIndex, final
 
-__all__ = ["ArmorKind", "Cert", "CipherSuite", "Decrypted", "EncryptionAlgorithm", "Notation", "Profile", "PyDecryptor", "PySigner", "Sig", "SignatureMode", "SigningAlgorithm", "Tsk", "UserId", "armor", "decrypt", "decrypt_file", "encrypt", "encrypt_file", "sign", "sign_file", "verify", "packet"]
+__all__ = ["ArmorKind", "Cert", "CipherSuite", "Decrypted", "EncryptionAlgorithm", "Notation", "Policy", "Profile", "PyDecryptor", "PySigner", "Sig", "SignatureMode", "SigningAlgorithm", "Tsk", "UserId", "armor", "decrypt", "decrypt_file", "encrypt", "encrypt_file", "sign", "sign_file", "verify", "packet"]
 
 @final
 class ArmorKind:
@@ -62,21 +62,21 @@ class Cert:
         The fingerprint of this certificate's primary key, as a lowercase hex string.
         """
     @staticmethod
-    def from_bytes(bytes: bytes) -> Cert:
+    def from_bytes(bytes: bytes, policy: Policy | None = None) -> Cert:
         """
         Parse a certificate from a byte string.
 
         The bytes may be binary or ASCII-armored.
         """
     @staticmethod
-    def from_file(path: str) -> Cert:
+    def from_file(path: str, policy: Policy | None = None) -> Cert:
         """
         Parse a certificate from a file on disk.
 
         The file may be binary or ASCII-armored.
         """
     @staticmethod
-    def from_packets(packets: SupportsGetItem[int, Packet]) -> Cert:
+    def from_packets(packets: SupportsGetItem[int, Packet], policy: Policy | None = None) -> Cert:
         """
         Build a certificate from a sequence of OpenPGP packets.
 
@@ -131,7 +131,7 @@ class Cert:
         Set notation data on the first User ID's binding signature.
         """
     @staticmethod
-    def split_bytes(bytes: bytes) -> list[Cert]:
+    def split_bytes(bytes: bytes, policy: Policy | None = None) -> list[Cert]:
         """
         Parse multiple certificates from a byte string.
 
@@ -139,7 +139,7 @@ class Cert:
         The bytes may be binary or ASCII-armored.
         """
     @staticmethod
-    def split_file(path: str) -> list[Cert]:
+    def split_file(path: str, policy: Policy | None = None) -> list[Cert]:
         """
         Parse multiple certificates from a file on disk.
 
@@ -273,6 +273,28 @@ class Notation:
     def value(self, /) -> str:
         """
         The notation value.
+        """
+
+@final
+class Policy:
+    """
+    An OpenPGP cryptographic policy.
+
+    Pass a policy to `verify`, `decrypt`, or `decrypt_file`.
+    """
+    @staticmethod
+    def default() -> Policy:
+        """
+        Create the build's default cryptographic policy.
+        """
+    @staticmethod
+    def from_sequoia_config_file(path: str | PathLike[str] | None = None) -> Policy:
+        """
+        Load a Sequoia policy configuration file.
+
+        If no path is provided, check the `SEQUOIA_CRYPTO_POLICY` environment variable
+        and then the system's Sequoia policy file. Missing or invalid configuration raises
+        an exception.
         """
 
 @final
@@ -499,21 +521,21 @@ class Tsk:
         Extracts public parts of this TSK.
         """
     @staticmethod
-    def from_bytes(bytes: bytes) -> Tsk:
+    def from_bytes(bytes: bytes, policy: Policy | None = None) -> Tsk:
         """
         Parse a certificate from a byte string.
 
         The bytes may be binary or ASCII-armored.
         """
     @staticmethod
-    def from_file(path: str) -> Tsk:
+    def from_file(path: str, policy: Policy | None = None) -> Tsk:
         """
         Parse a certificate from a file on disk.
 
         The file may be binary or ASCII-armored.
         """
     @staticmethod
-    def from_packets(packets: SupportsGetItem[int, Packet]) -> Tsk:
+    def from_packets(packets: SupportsGetItem[int, Packet], policy: Policy | None = None) -> Tsk:
         """
         Build a certificate from a sequence of OpenPGP packets.
 
@@ -521,7 +543,7 @@ class Tsk:
         its associated user IDs, user attributes, subkeys, and signatures).
         """
     @staticmethod
-    def generate(user_id: str | None = None, user_ids: SupportsGetItem[int, str] | None = None, profile: Profile | None = None, cipher_suite: CipherSuite | None = None, validity_seconds: SupportsIndex | None = None, *, signing_algorithm: SigningAlgorithm | None = None, encryption_algorithm: EncryptionAlgorithm | None = None) -> Tsk:
+    def generate(user_id: str | None = None, user_ids: SupportsGetItem[int, str] | None = None, profile: Profile | None = None, cipher_suite: CipherSuite | None = None, validity_seconds: SupportsIndex | None = None, *, signing_algorithm: SigningAlgorithm | None = None, encryption_algorithm: EncryptionAlgorithm | None = None, policy: Policy | None = None) -> Tsk:
         """
         Generate a new TSK with a certification-capable primary key,
         a signing subkey, and an encryption subkey.
@@ -559,7 +581,7 @@ def armor(data: bytes, kind: ArmorKind) -> str:
     header type, and returns the ASCII-armored string.
     """
 
-def decrypt(bytes: bytes, decryptor: PyDecryptor | None = None, store: Any | None = None, passwords: SupportsGetItem[int, str] = ...) -> Decrypted:
+def decrypt(bytes: bytes, decryptor: PyDecryptor | None = None, store: Any | None = None, passwords: SupportsGetItem[int, str] = ..., policy: Policy | None = None) -> Decrypted:
     """
     Decrypt an OpenPGP message from bytes.
 
@@ -567,7 +589,7 @@ def decrypt(bytes: bytes, decryptor: PyDecryptor | None = None, store: Any | Non
     Optionally provide a `store` callback for signature verification during decryption.
     """
 
-def decrypt_file(input: str | PathLike[str], output: str | PathLike[str], decryptor: PyDecryptor | None = None, store: Any | None = None, passwords: SupportsGetItem[int, str] = ...) -> Decrypted:
+def decrypt_file(input: str | PathLike[str], output: str | PathLike[str], decryptor: PyDecryptor | None = None, store: Any | None = None, passwords: SupportsGetItem[int, str] = ..., policy: Policy | None = None) -> Decrypted:
     """
     Decrypt an OpenPGP message from a file, writing the plaintext to another file.
 
@@ -607,7 +629,7 @@ def sign_file(signer: PySigner, input: str | PathLike[str], output: str | PathLi
     Set `armor=False` to produce binary output instead of ASCII-armored.
     """
 
-def verify(bytes: bytes | None = None, store: Any | None = None, file: str | PathLike[str] | None = None, signature: Sig | None = None) -> Decrypted:
+def verify(bytes: bytes | None = None, store: Any | None = None, file: str | PathLike[str] | None = None, signature: Sig | None = None, policy: Policy | None = None) -> Decrypted:
     """
     Verify an OpenPGP signature.
 
