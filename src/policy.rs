@@ -1,7 +1,11 @@
+use std::path::PathBuf;
+
+use anyhow::anyhow;
 use pyo3::prelude::*;
 use sequoia_openpgp::policy::{
     HashAlgoSecurity as SqHashSecurity, StandardPolicy as SqStandardPolicy,
 };
+use sequoia_policy_config::ConfiguredStandardPolicy;
 
 use crate::types::HashAlgorithm;
 
@@ -43,6 +47,12 @@ impl StandardPolicy {
     pub fn inner(&self) -> &SqStandardPolicy<'static> {
         &self.inner
     }
+
+    fn from_configured_policy(policy: ConfiguredStandardPolicy<'static>) -> Self {
+        Self {
+            inner: policy.build(),
+        }
+    }
 }
 
 #[pymethods]
@@ -52,6 +62,33 @@ impl StandardPolicy {
         Self {
             inner: SqStandardPolicy::new(),
         }
+    }
+
+    /// Load a policy from a Sequoia policy configuration file.
+    ///
+    /// The file uses Sequoia's TOML policy format. Missing or invalid files
+    /// raise an exception.
+    #[staticmethod]
+    pub fn from_config_file(path: PathBuf) -> PyResult<Self> {
+        let mut policy = ConfiguredStandardPolicy::new();
+        if !policy.parse_config_file(&path)? {
+            return Err(anyhow!("Policy configuration file not found: {}", path.display()).into());
+        }
+        Ok(Self::from_configured_policy(policy))
+    }
+
+    /// Load the system's Sequoia policy configuration.
+    ///
+    /// This explicitly checks `SEQUOIA_CRYPTO_POLICY` first, then
+    /// `/etc/crypto-policies/back-ends/sequoia.config`. Missing or invalid
+    /// configuration raises an exception; policies are never loaded automatically.
+    #[staticmethod]
+    pub fn from_system_config() -> PyResult<Self> {
+        let mut policy = ConfiguredStandardPolicy::new();
+        if !policy.parse_default_config()? {
+            return Err(anyhow!("System Sequoia policy configuration not found").into());
+        }
+        Ok(Self::from_configured_policy(policy))
     }
 
     /// Accept a hash algorithm for all signature security contexts.

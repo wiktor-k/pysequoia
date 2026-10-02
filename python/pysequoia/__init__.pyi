@@ -504,6 +504,23 @@ class StandardPolicy:
         second-preimage resistance does not allow it for data signatures, which also
         require collision resistance.
         """
+    @staticmethod
+    def from_config_file(path: str |PathLike[str]) -> StandardPolicy:
+        """
+        Load a policy from a Sequoia policy configuration file.
+
+        The file uses Sequoia's TOML policy format. Missing or invalid files
+        raise an exception.
+        """
+    @staticmethod
+    def from_system_config() -> StandardPolicy:
+        """
+        Load the system's Sequoia policy configuration.
+
+        This explicitly checks `SEQUOIA_CRYPTO_POLICY` first, then
+        `/etc/crypto-policies/back-ends/sequoia.config`. Missing or invalid
+        configuration raises an exception; policies are never loaded automatically.
+        """
 
 @final
 class Tsk:

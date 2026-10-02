@@ -122,6 +122,19 @@ class TestVerify:
 
         return get_certs
 
+    @staticmethod
+    def _sha1_signed_data():
+        return (
+            b"-----BEGIN PGP MESSAGE-----\n\n"
+            b"xA0DAAIWhjdbhUuGrPkByxdiAAAAAABkYXRhIHRvIGJlIHNpZ25lZMK9BAAWAgBv\n"
+            b"BYJqvsrPCRCGN1uFS4as+UcUAAAAAAAeACBzYWx0QG5vdGF0aW9ucy5zZXF1b2lh\n"
+            b"LXBncC5vcmcoyfuuVlRK0JvJ6aFwUo4IW6jTEtTHEHmGufmi94FnYhYhBK/PVAXo\n"
+            b"9J281dxUioY3W4VLhqz5AAA79gEAwyCjhP+HEHaVIVxYVAP1w/JAcK2lvPzaeYmh\n"
+            b"CTaRULYBAK7jhU5GWrWLZZ6wQ02XcmOAQM4kaptVSN3kfSV4p7cI\n"
+            b"=YkAx\n"
+            b"-----END PGP MESSAGE-----\n"
+        )
+
     def test_inline_verify(self, signing_key, signing_tsk):
         signed = sign(signing_tsk.signer(), b"data to be signed")
         result = verify(signed, self._store(signing_key))
@@ -160,16 +173,7 @@ class TestVerify:
     def test_sha1_signature_requires_policy_override(self, signing_key):
         from pysequoia import HashSecurity, StandardPolicy
 
-        signed = (
-            b"-----BEGIN PGP MESSAGE-----\n\n"
-            b"xA0DAAIWhjdbhUuGrPkByxdiAAAAAABkYXRhIHRvIGJlIHNpZ25lZMK9BAAWAgBv\n"
-            b"BYJqvsrPCRCGN1uFS4as+UcUAAAAAAAeACBzYWx0QG5vdGF0aW9ucy5zZXF1b2lh\n"
-            b"LXBncC5vcmcoyfuuVlRK0JvJ6aFwUo4IW6jTEtTHEHmGufmi94FnYhYhBK/PVAXo\n"
-            b"9J281dxUioY3W4VLhqz5AAA79gEAwyCjhP+HEHaVIVxYVAP1w/JAcK2lvPzaeYmh\n"
-            b"CTaRULYBAK7jhU5GWrWLZZ6wQ02XcmOAQM4kaptVSN3kfSV4p7cI\n"
-            b"=YkAx\n"
-            b"-----END PGP MESSAGE-----\n"
-        )
+        signed = self._sha1_signed_data()
 
         with pytest.raises(Exception):
             verify(signed, self._store(signing_key))
@@ -185,6 +189,23 @@ class TestVerify:
         policy.accept_hash(HashAlgorithm.SHA1)
         result = verify(signed, self._store(signing_key), policy=policy)
         assert result.bytes == b"data to be signed"
+
+    def test_policy_config(self, signing_key, tmp_path, monkeypatch):
+        from pysequoia import StandardPolicy
+
+        config = tmp_path / "policy.toml"
+        config.write_text('[hash_algorithms]\nsha1 = "always"\n')
+        policy = StandardPolicy.from_config_file(config)
+        result = verify(self._sha1_signed_data(), self._store(signing_key), policy=policy)
+        assert result.bytes == b"data to be signed"
+
+        monkeypatch.setenv("SEQUOIA_CRYPTO_POLICY", str(config))
+        policy = StandardPolicy.from_system_config()
+        result = verify(self._sha1_signed_data(), self._store(signing_key), policy=policy)
+        assert result.bytes == b"data to be signed"
+
+        with pytest.raises(Exception):
+            StandardPolicy.from_config_file(tmp_path / "missing.toml")
 
     def test_verify_compressed_signature(self):
         pubkey = Cert.from_file(fixture_path("compressed-pubkey.pgp"))

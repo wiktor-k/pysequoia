@@ -3,7 +3,7 @@
 v0.1.36
 
 New:
-  - Add configurable cryptographic policies for verifying legacy SHA-1 signatures.
+  - Add configurable cryptographic policies, including system Sequoia policy profiles and legacy SHA-1 signature verification.
 
 Fixed:
   -
