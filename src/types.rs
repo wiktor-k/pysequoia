@@ -169,7 +169,7 @@ impl TryFrom<SqPublicKeyAlgorithm> for PublicKeyAlgorithm {
 
 /// The hash algorithm used by an OpenPGP signature.
 #[pyclass(eq, from_py_object)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum HashAlgorithm {
     /// MD5
     MD5,

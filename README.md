@@ -73,6 +73,7 @@ Signs data and returns armored output:
 
 ```python
 from pysequoia import sign, SignatureMode
+from pysequoia.packet import HashAlgorithm
 
 s = Tsk.from_file("tests/fixtures/signing-key.asc")
 signed = sign(s.signer(), "data to be signed".encode("utf8"))
@@ -80,7 +81,10 @@ print(f"Signed data: {signed!r}")
 assert "PGP MESSAGE" in str(signed)
 
 detached = sign(
-    s.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED
+    s.signer(),
+    "data to be signed".encode("utf8"),
+    mode=SignatureMode.DETACHED,
+    hash_algorithm=HashAlgorithm.SHA256,
 )
 print(f"Detached signature: {detached!r}")
 assert "PGP SIGNATURE" in str(detached)
@@ -96,6 +100,7 @@ Signs data from a file and writes the signed output to another file:
 
 ```python
 from pysequoia import sign_file, SignatureMode
+from pysequoia.packet import HashAlgorithm
 import tempfile, os
 
 s = Tsk.from_file("tests/fixtures/signing-key.asc")
@@ -116,7 +121,13 @@ assert b"PGP MESSAGE" in signed
 with tempfile.NamedTemporaryFile(delete=False, suffix=".sig") as out:
     detached_path = out.name
 
-sign_file(s.signer(), input_path, detached_path, mode=SignatureMode.DETACHED)
+sign_file(
+    s.signer(),
+    input_path,
+    detached_path,
+    mode=SignatureMode.DETACHED,
+    hash_algorithm=HashAlgorithm.SHA256,
+)
 detached = open(detached_path, "rb").read()
 assert b"PGP SIGNATURE" in detached
 

@@ -66,6 +66,15 @@ class TestSign:
         )
         assert "PGP SIGNATURE" in str(detached)
 
+    def test_hash_algorithm(self, signing_tsk):
+        detached = sign(
+            signing_tsk.signer(),
+            b"data to be signed",
+            mode=SignatureMode.DETACHED,
+            hash_algorithm=HashAlgorithm.SHA256,
+        )
+        assert Sig.from_bytes(detached).hash_algorithm == HashAlgorithm.SHA256
+
     def test_clear(self, signing_tsk):
         clear = sign(
             signing_tsk.signer(),
@@ -105,8 +114,10 @@ class TestSignFile:
                 input_path,
                 detached_path,
                 mode=SignatureMode.DETACHED,
+                hash_algorithm=HashAlgorithm.SHA256,
             )
             assert b"PGP SIGNATURE" in open(detached_path, "rb").read()
+            assert Sig.from_file(detached_path).hash_algorithm == HashAlgorithm.SHA256
         finally:
             os.unlink(input_path)
             os.unlink(detached_path)

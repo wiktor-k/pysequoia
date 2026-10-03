@@ -11,7 +11,7 @@ use crate::types::HashAlgorithm;
 
 /// A cryptographic security property required by a signature.
 #[pyclass(eq, from_py_object)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum HashSecurity {
     /// Resistance to finding two messages with the same hash.
     CollisionResistance,

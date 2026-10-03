@@ -648,20 +648,22 @@ def encrypt_file(input: str |PathLike[str], output: str |PathLike[str], recipien
     Set `armor=False` to produce binary output instead of ASCII-armored.
     """
 
-def sign(signer: PySigner, bytes: bytes, *, mode: SignatureMode = ..., armor: bool = True) -> bytes:
+def sign(signer: PySigner, bytes: bytes, *, mode: SignatureMode = ..., armor: bool = True, hash_algorithm: HashAlgorithm |None = None) -> bytes:
     """
     Sign data with the given signer.
 
     The `mode` controls whether the signature is inline (the default), detached, or cleartext.
     Set `armor=False` to produce binary output instead of ASCII-armored.
+    Set `hash_algorithm` to explicitly select the signature hash algorithm.
     """
 
-def sign_file(signer: PySigner, input: str |PathLike[str], output: str |PathLike[str], *, mode: SignatureMode = ..., armor: bool = True) -> None:
+def sign_file(signer: PySigner, input: str |PathLike[str], output: str |PathLike[str], *, mode: SignatureMode = ..., armor: bool = True, hash_algorithm: HashAlgorithm |None = None) -> None:
     """
     Sign a file with the given signer, writing the result to an output file.
 
     The `mode` controls whether the signature is inline (the default), detached, or cleartext.
     Set `armor=False` to produce binary output instead of ASCII-armored.
+    Set `hash_algorithm` to explicitly select the signature hash algorithm.
     """
 
 def verify(bytes: bytes |None = None, store: Any |None = None, file: str |PathLike[str] |None = None, signature: Sig |None = None, policy: StandardPolicy |None = None) -> Decrypted:

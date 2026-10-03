@@ -4,6 +4,7 @@ v0.1.36
 
 New:
   - Add configurable cryptographic policies, including system Sequoia policy profiles and legacy SHA-1 signature verification.
+  - Allow selecting the hash algorithm when signing data or files.
 
 Fixed:
   -
