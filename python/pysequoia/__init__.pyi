@@ -251,6 +251,24 @@ class EncryptionAlgorithm:
     def __repr__(self, /) -> str: ...
 
 @final
+class HashSecurity:
+    """
+    A cryptographic security property required by a signature.
+    """
+    CollisionResistance: Final[HashSecurity]
+    """
+    Resistance to finding two messages with the same hash.
+    """
+    SecondPreImageResistance: Final[HashSecurity]
+    """
+    Resistance to finding another message with a matching hash.
+    """
+    def __eq__(self, value: object, /) -> bool: ...
+    def __int__(self, /) -> int: ...
+    def __ne__(self, value: object, /) -> bool: ...
+    def __repr__(self, /) -> str: ...
+
+@final
 class Notation:
     """
     A key-value notation attached to an OpenPGP signature.
@@ -270,6 +288,52 @@ class Notation:
     def value(self, /) -> str:
         """
         The notation value.
+        """
+
+@final
+class Policy:
+    """
+    An OpenPGP cryptographic policy.
+
+    Create a policy using `Policy.standard()`, then pass it to `verify`, `decrypt`,
+    or `decrypt_file` after making any required compatibility adjustments.
+    """
+    def accept_hash(self, /, algorithm: HashAlgorithm) -> None:
+        """
+        Accept a hash algorithm for all signature security contexts.
+
+        This weakens the policy for algorithms that are no longer considered
+        cryptographically secure. In particular, SHA-1 lacks collision resistance.
+        """
+    def accept_hash_property(self, /, algorithm: HashAlgorithm, security: HashSecurity) -> None:
+        """
+        Accept a hash algorithm only where the specified security property is required.
+
+        This is less permissive than `accept_hash`. For example, accepting SHA-1 for
+        second-preimage resistance does not allow it for data signatures, which also
+        require collision resistance.
+        """
+    @staticmethod
+    def from_config_file(path: str |PathLike[str]) -> Policy:
+        """
+        Load a policy from a Sequoia policy configuration file.
+
+        The file uses Sequoia's TOML policy format. Missing or invalid files
+        raise an exception.
+        """
+    @staticmethod
+    def from_system_config() -> Policy:
+        """
+        Load the system's Sequoia policy configuration.
+
+        This explicitly checks `SEQUOIA_CRYPTO_POLICY` first, then
+        `/etc/crypto-policies/back-ends/sequoia.config`. Missing or invalid
+        configuration raises an exception; policies are never loaded automatically.
+        """
+    @staticmethod
+    def standard() -> Policy:
+        """
+        Create a policy with Sequoia's secure standard defaults.
         """
 
 @final
@@ -556,7 +620,7 @@ def armor(data: bytes, kind: ArmorKind) -> str:
     header type, and returns the ASCII-armored string.
     """
 
-def decrypt(bytes: bytes, decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ...) -> Decrypted:
+def decrypt(bytes: bytes, decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ..., policy: Policy |None = None) -> Decrypted:
     """
     Decrypt an OpenPGP message from bytes.
 
@@ -564,7 +628,7 @@ def decrypt(bytes: bytes, decryptor: PyDecryptor |None = None, store: Any |None 
     Optionally provide a `store` callback for signature verification during decryption.
     """
 
-def decrypt_file(input: str |PathLike[str], output: str |PathLike[str], decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ...) -> Decrypted:
+def decrypt_file(input: str |PathLike[str], output: str |PathLike[str], decryptor: PyDecryptor |None = None, store: Any |None = None, passwords: Sequence[str] = ..., policy: Policy |None = None) -> Decrypted:
     """
     Decrypt an OpenPGP message from a file, writing the plaintext to another file.
 
@@ -588,23 +652,25 @@ def encrypt_file(input: str |PathLike[str], output: str |PathLike[str], recipien
     Set `armor=False` to produce binary output instead of ASCII-armored.
     """
 
-def sign(signer: PySigner, bytes: bytes, *, mode: SignatureMode = ..., armor: bool = True) -> bytes:
+def sign(signer: PySigner, bytes: bytes, *, mode: SignatureMode = ..., armor: bool = True, hash_algorithm: HashAlgorithm |None = None) -> bytes:
     """
     Sign data with the given signer.
 
     The `mode` controls whether the signature is inline (the default), detached, or cleartext.
     Set `armor=False` to produce binary output instead of ASCII-armored.
+    Set `hash_algorithm` to explicitly select the signature hash algorithm.
     """
 
-def sign_file(signer: PySigner, input: str |PathLike[str], output: str |PathLike[str], *, mode: SignatureMode = ..., armor: bool = True) -> None:
+def sign_file(signer: PySigner, input: str |PathLike[str], output: str |PathLike[str], *, mode: SignatureMode = ..., armor: bool = True, hash_algorithm: HashAlgorithm |None = None) -> None:
     """
     Sign a file with the given signer, writing the result to an output file.
 
     The `mode` controls whether the signature is inline (the default), detached, or cleartext.
     Set `armor=False` to produce binary output instead of ASCII-armored.
+    Set `hash_algorithm` to explicitly select the signature hash algorithm.
     """
 
-def verify(bytes: bytes |None = None, store: Any |None = None, file: str |PathLike[str] |None = None, signature: Sig |None = None) -> Decrypted:
+def verify(bytes: bytes |None = None, store: Any |None = None, file: str |PathLike[str] |None = None, signature: Sig |None = None, policy: Policy |None = None) -> Decrypted:
     """
     Verify an OpenPGP signature.
 

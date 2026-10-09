@@ -5,6 +5,7 @@ mod decrypt;
 mod encrypt;
 mod notation;
 mod packet;
+mod policy;
 mod sign;
 mod signature;
 mod signer;
@@ -150,6 +151,10 @@ pub mod pysequoia {
     pub use super::encrypt::encrypt_file;
     #[pymodule_export]
     pub use super::notation::Notation;
+    #[pymodule_export]
+    pub use super::policy::HashSecurity;
+    #[pymodule_export]
+    pub use super::policy::Policy;
     #[pymodule_export]
     pub use super::sign::SignatureMode;
     #[pymodule_export]

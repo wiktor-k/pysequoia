@@ -24,7 +24,7 @@ from pysequoia import (
     sign_file,
     verify,
 )
-from pysequoia.packet import PacketPile, PublicKeyAlgorithm, Tag
+from pysequoia.packet import HashAlgorithm, PacketPile, PublicKeyAlgorithm, Tag
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 
@@ -66,6 +66,15 @@ class TestSign:
         )
         assert "PGP SIGNATURE" in str(detached)
 
+    def test_hash_algorithm(self, signing_tsk):
+        detached = sign(
+            signing_tsk.signer(),
+            b"data to be signed",
+            mode=SignatureMode.DETACHED,
+            hash_algorithm=HashAlgorithm.SHA256,
+        )
+        assert Sig.from_bytes(detached).hash_algorithm == HashAlgorithm.SHA256
+
     def test_clear(self, signing_tsk):
         clear = sign(
             signing_tsk.signer(),
@@ -105,8 +114,10 @@ class TestSignFile:
                 input_path,
                 detached_path,
                 mode=SignatureMode.DETACHED,
+                hash_algorithm=HashAlgorithm.SHA256,
             )
             assert b"PGP SIGNATURE" in open(detached_path, "rb").read()
+            assert Sig.from_file(detached_path).hash_algorithm == HashAlgorithm.SHA256
         finally:
             os.unlink(input_path)
             os.unlink(detached_path)
@@ -121,6 +132,19 @@ class TestVerify:
             return [signing_key]
 
         return get_certs
+
+    @staticmethod
+    def _sha1_signed_data():
+        return (
+            b"-----BEGIN PGP MESSAGE-----\n\n"
+            b"xA0DAAIWhjdbhUuGrPkByxdiAAAAAABkYXRhIHRvIGJlIHNpZ25lZMK9BAAWAgBv\n"
+            b"BYJqvsrPCRCGN1uFS4as+UcUAAAAAAAeACBzYWx0QG5vdGF0aW9ucy5zZXF1b2lh\n"
+            b"LXBncC5vcmcoyfuuVlRK0JvJ6aFwUo4IW6jTEtTHEHmGufmi94FnYhYhBK/PVAXo\n"
+            b"9J281dxUioY3W4VLhqz5AAA79gEAwyCjhP+HEHaVIVxYVAP1w/JAcK2lvPzaeYmh\n"
+            b"CTaRULYBAK7jhU5GWrWLZZ6wQ02XcmOAQM4kaptVSN3kfSV4p7cI\n"
+            b"=YkAx\n"
+            b"-----END PGP MESSAGE-----\n"
+        )
 
     def test_inline_verify(self, signing_key, signing_tsk):
         signed = sign(signing_tsk.signer(), b"data to be signed")
@@ -156,6 +180,43 @@ class TestVerify:
                 assert result.valid_sigs[0].signing_key == SIGNING_KEY_FPR
             finally:
                 os.unlink(tmp.name)
+
+    def test_sha1_signature_requires_policy_override(self, signing_key):
+        from pysequoia import HashSecurity, Policy
+
+        signed = self._sha1_signed_data()
+
+        with pytest.raises(Exception):
+            verify(signed, self._store(signing_key))
+
+        policy = Policy.standard()
+        policy.accept_hash_property(
+            HashAlgorithm.SHA1, HashSecurity.SecondPreImageResistance
+        )
+        with pytest.raises(Exception):
+            verify(signed, self._store(signing_key), policy=policy)
+
+        policy = Policy.standard()
+        policy.accept_hash(HashAlgorithm.SHA1)
+        result = verify(signed, self._store(signing_key), policy=policy)
+        assert result.bytes == b"data to be signed"
+
+    def test_policy_config(self, signing_key, tmp_path, monkeypatch):
+        from pysequoia import Policy
+
+        config = tmp_path / "policy.toml"
+        config.write_text('[hash_algorithms]\nsha1 = "always"\n')
+        policy = Policy.from_config_file(config)
+        result = verify(self._sha1_signed_data(), self._store(signing_key), policy=policy)
+        assert result.bytes == b"data to be signed"
+
+        monkeypatch.setenv("SEQUOIA_CRYPTO_POLICY", str(config))
+        policy = Policy.from_system_config()
+        result = verify(self._sha1_signed_data(), self._store(signing_key), policy=policy)
+        assert result.bytes == b"data to be signed"
+
+        with pytest.raises(Exception):
+            Policy.from_config_file(tmp_path / "missing.toml")
 
     def test_verify_compressed_signature(self):
         pubkey = Cert.from_file(fixture_path("compressed-pubkey.pgp"))

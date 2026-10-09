@@ -9,6 +9,7 @@ use sequoia_openpgp::serialize::stream::Armorer;
 use sequoia_openpgp::serialize::stream::{LiteralWriter, Message};
 
 use crate::signer::PySigner;
+use crate::types::HashAlgorithm;
 
 /// The mode of signature to produce.
 #[pyclass(eq, eq_int)]
@@ -26,13 +27,15 @@ pub enum SignatureMode {
 ///
 /// The `mode` controls whether the signature is inline (the default), detached, or cleartext.
 /// Set `armor=False` to produce binary output instead of ASCII-armored.
+/// Set `hash_algorithm` to explicitly select the signature hash algorithm.
 #[pyfunction]
-#[pyo3(signature = (signer, bytes, *, mode=&SignatureMode::Inline, armor=true))]
+#[pyo3(signature = (signer, bytes, *, mode=&SignatureMode::Inline, armor=true, hash_algorithm=None))]
 pub fn sign(
     signer: PySigner,
     bytes: &[u8],
     mode: &SignatureMode,
     armor: bool,
+    hash_algorithm: Option<HashAlgorithm>,
 ) -> PyResult<Cow<'static, [u8]>> {
     use sequoia_openpgp::serialize::stream::Signer;
 
@@ -47,6 +50,10 @@ pub fn sign(
             message
         };
         let message = Signer::new(message, signer)?;
+        let message = match hash_algorithm {
+            Some(hash_algorithm) => message.hash_algo(hash_algorithm.into())?,
+            None => message,
+        };
         let mut message = if mode == &SignatureMode::Inline {
             LiteralWriter::new(message.build()?).build()?
         } else if mode == &SignatureMode::Detached {
@@ -65,14 +72,16 @@ pub fn sign(
 ///
 /// The `mode` controls whether the signature is inline (the default), detached, or cleartext.
 /// Set `armor=False` to produce binary output instead of ASCII-armored.
+/// Set `hash_algorithm` to explicitly select the signature hash algorithm.
 #[pyfunction]
-#[pyo3(signature = (signer, input, output, *, mode=&SignatureMode::Inline, armor=true))]
+#[pyo3(signature = (signer, input, output, *, mode=&SignatureMode::Inline, armor=true, hash_algorithm=None))]
 pub fn sign_file(
     signer: PySigner,
     input: PathBuf,
     output: PathBuf,
     mode: &SignatureMode,
     armor: bool,
+    hash_algorithm: Option<HashAlgorithm>,
 ) -> PyResult<()> {
     use sequoia_openpgp::serialize::stream::Signer;
 
@@ -87,6 +96,10 @@ pub fn sign_file(
             message
         };
         let message = Signer::new(message, signer)?;
+        let message = match hash_algorithm {
+            Some(hash_algorithm) => message.hash_algo(hash_algorithm.into())?,
+            None => message,
+        };
         let mut message = if mode == &SignatureMode::Inline {
             LiteralWriter::new(message.build()?).build()?
         } else if mode == &SignatureMode::Detached {

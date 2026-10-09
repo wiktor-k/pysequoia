@@ -73,6 +73,7 @@ Signs data and returns armored output:
 
 ```python
 from pysequoia import sign, SignatureMode
+from pysequoia.packet import HashAlgorithm
 
 s = Tsk.from_file("tests/fixtures/signing-key.asc")
 signed = sign(s.signer(), "data to be signed".encode("utf8"))
@@ -80,7 +81,10 @@ print(f"Signed data: {signed!r}")
 assert "PGP MESSAGE" in str(signed)
 
 detached = sign(
-    s.signer(), "data to be signed".encode("utf8"), mode=SignatureMode.DETACHED
+    s.signer(),
+    "data to be signed".encode("utf8"),
+    mode=SignatureMode.DETACHED,
+    hash_algorithm=HashAlgorithm.SHA256,
 )
 print(f"Detached signature: {detached!r}")
 assert "PGP SIGNATURE" in str(detached)
@@ -96,6 +100,7 @@ Signs data from a file and writes the signed output to another file:
 
 ```python
 from pysequoia import sign_file, SignatureMode
+from pysequoia.packet import HashAlgorithm
 import tempfile, os
 
 s = Tsk.from_file("tests/fixtures/signing-key.asc")
@@ -116,7 +121,13 @@ assert b"PGP MESSAGE" in signed
 with tempfile.NamedTemporaryFile(delete=False, suffix=".sig") as out:
     detached_path = out.name
 
-sign_file(s.signer(), input_path, detached_path, mode=SignatureMode.DETACHED)
+sign_file(
+    s.signer(),
+    input_path,
+    detached_path,
+    mode=SignatureMode.DETACHED,
+    hash_algorithm=HashAlgorithm.SHA256,
+)
 detached = open(detached_path, "rb").read()
 assert b"PGP SIGNATURE" in detached
 
@@ -431,6 +442,60 @@ back-signature, it may be missing from the list of User IDs returned
 by this package).
 
 [SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
+
+### Adjusting the cryptographic policy
+
+Signature verification uses Sequoia's secure default policy. To verify a
+legacy SHA-1 signature, explicitly opt in with a custom policy. SHA-1 is not
+collision-resistant, so only do this when it is appropriate for your threat
+model.
+
+```python
+from pysequoia import HashSecurity, Policy, verify
+from pysequoia.packet import HashAlgorithm
+
+policy = Policy.standard()
+policy.accept_hash(HashAlgorithm.SHA1)
+result = verify(signed, get_certs_verify, policy=policy)
+```
+
+When SHA-1 is only needed for a certificate signature, prefer the narrower
+`accept_hash_property` override. It does not allow SHA-1 for data signatures,
+which require collision resistance:
+
+```python
+policy = Policy.standard()
+policy.accept_hash_property(
+    HashAlgorithm.SHA1,
+    HashSecurity.SecondPreImageResistance,
+)
+```
+
+The same `policy` argument is available on `decrypt` and `decrypt_file` for
+verification of signed encrypted messages.
+
+### Using a system policy configuration
+
+To explicitly use a Sequoia policy managed by the operating system, load and
+pass it to the operation. This does not happen automatically.
+
+```python no-test
+policy = Policy.from_system_config()
+result = verify(signed, get_certs_verify, policy=policy)
+```
+
+`from_system_config` first reads the absolute path in
+`SEQUOIA_CRYPTO_POLICY`, then `/etc/crypto-policies/back-ends/sequoia.config`.
+It raises an exception if neither configuration is available. To use a specific
+TOML policy file without environment lookup, use
+`Policy.from_config_file("/path/to/policy.toml")`.
+
+For the security properties and other advanced policy controls, see Sequoia's
+[policy documentation][policy-docs] and its
+[policy configuration format][policy-config].
+
+[policy-docs]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/index.html
+[policy-config]: https://docs.rs/sequoia-policy-config/latest/sequoia_policy_config/
 
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 
