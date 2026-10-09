@@ -6,7 +6,7 @@ use sequoia_openpgp::KeyHandle;
 use sequoia_openpgp::parse::Parse;
 use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
 
-use crate::policy::StandardPolicy as PyStandardPolicy;
+use crate::policy::Policy as PyPolicy;
 use crate::signature::Sig;
 use crate::{Decrypted, ValidSig};
 
@@ -36,7 +36,7 @@ pub fn verify(
     store: Option<Py<PyAny>>,
     file: Option<PathBuf>,
     signature: Option<&Sig>,
-    policy: Option<&PyStandardPolicy>,
+    policy: Option<&PyPolicy>,
 ) -> PyResult<Decrypted> {
     let Some(store) = store else {
         return Err(anyhow!("Store parameter is required").into());

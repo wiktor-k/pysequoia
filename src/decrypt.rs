@@ -10,7 +10,7 @@ use sequoia_openpgp::policy::StandardPolicy as P;
 use sequoia_openpgp::types::SymmetricAlgorithm;
 use sequoia_openpgp::{KeyHandle, cert};
 
-use crate::policy::StandardPolicy;
+use crate::policy::Policy;
 use crate::verify::PyVerifier;
 use crate::{Decrypted, ValidSig};
 
@@ -62,7 +62,7 @@ pub fn decrypt(
     decryptor: Option<PyDecryptor>,
     store: Option<Py<PyAny>>,
     passwords: Vec<String>,
-    policy: Option<&StandardPolicy>,
+    policy: Option<&Policy>,
 ) -> PyResult<Decrypted> {
     if decryptor.is_none() && passwords.is_empty() {
         return Err(anyhow::anyhow!(
@@ -109,7 +109,7 @@ pub fn decrypt_file(
     decryptor: Option<PyDecryptor>,
     store: Option<Py<PyAny>>,
     passwords: Vec<String>,
-    policy: Option<&StandardPolicy>,
+    policy: Option<&Policy>,
 ) -> PyResult<Decrypted> {
     if decryptor.is_none() && passwords.is_empty() {
         return Err(anyhow::anyhow!(

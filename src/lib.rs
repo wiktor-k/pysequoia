@@ -154,7 +154,7 @@ pub mod pysequoia {
     #[pymodule_export]
     pub use super::policy::HashSecurity;
     #[pymodule_export]
-    pub use super::policy::StandardPolicy;
+    pub use super::policy::Policy;
     #[pymodule_export]
     pub use super::sign::SignatureMode;
     #[pymodule_export]

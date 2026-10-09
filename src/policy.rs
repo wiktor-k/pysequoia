@@ -28,22 +28,22 @@ impl From<HashSecurity> for SqHashSecurity {
     }
 }
 
-/// The standard OpenPGP cryptographic policy.
+/// An OpenPGP cryptographic policy.
 ///
-/// A new policy uses Sequoia's secure defaults. Pass it to `verify`, `decrypt`,
+/// Create a policy using `Policy.standard()`, then pass it to `verify`, `decrypt`,
 /// or `decrypt_file` after making any required compatibility adjustments.
 #[pyclass]
-pub struct StandardPolicy {
+pub struct Policy {
     inner: SqStandardPolicy<'static>,
 }
 
-impl Default for StandardPolicy {
+impl Default for Policy {
     fn default() -> Self {
-        Self::new()
+        Self::standard()
     }
 }
 
-impl StandardPolicy {
+impl Policy {
     pub fn inner(&self) -> &SqStandardPolicy<'static> {
         &self.inner
     }
@@ -56,9 +56,10 @@ impl StandardPolicy {
 }
 
 #[pymethods]
-impl StandardPolicy {
-    #[new]
-    pub fn new() -> Self {
+impl Policy {
+    /// Create a policy with Sequoia's secure standard defaults.
+    #[staticmethod]
+    pub fn standard() -> Self {
         Self {
             inner: SqStandardPolicy::new(),
         }

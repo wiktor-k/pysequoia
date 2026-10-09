@@ -451,10 +451,10 @@ collision-resistant, so only do this when it is appropriate for your threat
 model.
 
 ```python
-from pysequoia import HashSecurity, StandardPolicy, verify
+from pysequoia import HashSecurity, Policy, verify
 from pysequoia.packet import HashAlgorithm
 
-policy = StandardPolicy()
+policy = Policy.standard()
 policy.accept_hash(HashAlgorithm.SHA1)
 result = verify(signed, get_certs_verify, policy=policy)
 ```
@@ -464,7 +464,7 @@ When SHA-1 is only needed for a certificate signature, prefer the narrower
 which require collision resistance:
 
 ```python
-policy = StandardPolicy()
+policy = Policy.standard()
 policy.accept_hash_property(
     HashAlgorithm.SHA1,
     HashSecurity.SecondPreImageResistance,
@@ -480,7 +480,7 @@ To explicitly use a Sequoia policy managed by the operating system, load and
 pass it to the operation. This does not happen automatically.
 
 ```python no-test
-policy = StandardPolicy.from_system_config()
+policy = Policy.from_system_config()
 result = verify(signed, get_certs_verify, policy=policy)
 ```
 
@@ -488,7 +488,7 @@ result = verify(signed, get_certs_verify, policy=policy)
 `SEQUOIA_CRYPTO_POLICY`, then `/etc/crypto-policies/back-ends/sequoia.config`.
 It raises an exception if neither configuration is available. To use a specific
 TOML policy file without environment lookup, use
-`StandardPolicy.from_config_file("/path/to/policy.toml")`.
+`Policy.from_config_file("/path/to/policy.toml")`.
 
 For the security properties and other advanced policy controls, see Sequoia's
 [policy documentation][policy-docs] and its
