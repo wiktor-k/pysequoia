@@ -150,6 +150,7 @@ impl Cert {
             validity_seconds,
             None,
             None,
+            None,
         )?;
         tsk.extract_certificate()
     }

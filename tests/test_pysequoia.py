@@ -1,6 +1,6 @@
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -322,6 +322,78 @@ class TestEncryptDecryptFile:
         finally:
             os.unlink(input_path)
             os.unlink(output_path)
+
+
+class TestCreationTime:
+    @pytest.mark.parametrize(
+        "creation_time, error",
+        [
+            pytest.param("2020-01-01", TypeError, id="string"),
+            pytest.param(datetime(2020, 1, 1), TypeError, id="naive-datetime"),
+            pytest.param(
+                datetime(1969, 12, 31, tzinfo=timezone.utc),
+                ValueError,
+                id="before-unix-epoch",
+            ),
+            pytest.param(
+                datetime(2106, 2, 7, 6, 28, 16, tzinfo=timezone.utc),
+                ValueError,
+                id="after-openpgp-timestamp-limit",
+            ),
+        ],
+    )
+    def test_invalid_creation_time(self, creation_time, error):
+        """Invalid, naive and out-of-range timestamps should raise Python errors."""
+
+        with pytest.raises(error):
+            Tsk.generate(creation_time=creation_time)
+
+    def test_creation_time_keyword_only(self):
+        """Passing a creation time positionally should fail because it is keyword-only."""
+        with pytest.raises(TypeError):
+            Tsk.generate(None, None, None, None, None, datetime.now(timezone.utc))
+
+    @pytest.mark.parametrize("profile", [Profile.RFC4880, Profile.RFC9580])
+    @pytest.mark.parametrize("offset", [0, 5])
+    def test_consistent_packet_times(self, profile, offset):
+        """UTC and offset datetimes should timestamp every key and binding consistently."""
+
+        created = datetime(2020, 1, 1, tzinfo=timezone(timedelta(hours=offset)))
+        tsk = Tsk.generate(
+            user_ids=["First", "Second"], profile=profile, creation_time=created
+        )
+        packets = list(PacketPile.from_bytes(bytes(tsk)))
+        keys = [p.key_created for p in packets if p.key_created is not None]
+        signatures = [
+            p.signature_created for p in packets if p.signature_created is not None
+        ]
+        assert len(keys) == 3
+        assert signatures
+        assert all(t == created for t in keys + signatures)
+        assert len(tsk.extract_certificate().user_ids) == 2
+        assert tsk.extract_certificate().expiration is None
+
+    def test_expired_public_roundtrip(self):
+        """Backdated expired keys should retain expiration, UID and fingerprint in public exports."""
+
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        created = now - timedelta(days=365)
+        validity = timedelta(days=335)
+        tsk = Tsk.generate(
+            "Expired <expired@example.com>",
+            validity_seconds=int(validity.total_seconds()),
+            creation_time=created,
+        )
+        cert = tsk.extract_certificate()
+        assert cert.expiration == created + validity < now
+        public = str(cert)
+        assert "PGP PUBLIC KEY BLOCK" in public
+        packets = list(PacketPile.from_bytes(public.encode()))
+        assert not any(p.tag in (Tag.SecretKey, Tag.SecretSubkey) for p in packets)
+        parsed = Cert.from_bytes(public.encode())
+        assert parsed.fingerprint == cert.fingerprint
+        assert parsed.expiration == cert.expiration
+        assert str(parsed.user_ids[0]) == "Expired <expired@example.com>"
 
 
 class TestTsk:

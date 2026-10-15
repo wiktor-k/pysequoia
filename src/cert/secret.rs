@@ -2,8 +2,9 @@ use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use pyo3::prelude::*;
+use pyo3::types::{PyDateTime, PyTzInfo};
 use sequoia_openpgp::parse::Parse as _;
-use sequoia_openpgp::types::KeyFlags;
+use sequoia_openpgp::types::{KeyFlags, Timestamp};
 use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
 
 use crate::cert::{DEFAULT_POLICY, Profile};
@@ -98,8 +99,16 @@ impl Tsk {
     /// a signing subkey, and an encryption subkey.
     ///
     /// The generated certificate does not expire unless explicitly instructed.
+    /// creation_time requires a timezone-aware datetime in OpenPGP's timestamp
+    /// range (1970 through 2106). Offsets are normalized to UTC and fractional
+    /// seconds discarded. Validity is measured from this time, not from now.
+    /// Omitting creation_time uses Sequoia's default (60 seconds before now).
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None))]
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "preserve explicit keyword arguments in the Python API"
+    )]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None, creation_time=None))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,
@@ -108,6 +117,7 @@ impl Tsk {
         validity_seconds: Option<u64>,
         signing_algorithm: Option<crate::types::SigningAlgorithm>,
         encryption_algorithm: Option<crate::types::EncryptionAlgorithm>,
+        creation_time: Option<&Bound<'_, PyDateTime>>,
     ) -> PyResult<Self> {
         let mut builder = cert::CertBuilder::new()
             .set_profile(profile.unwrap_or_default().into())?
@@ -138,7 +148,21 @@ impl Tsk {
                 builder = builder.add_userid(user_id);
             }
         }
-
+        if let Some(creation_time) = creation_time {
+            if creation_time.call_method0("utcoffset")?.is_none() {
+                return Err(pyo3::exceptions::PyTypeError::new_err(
+                    "creation_time must be timezone-aware",
+                ));
+            }
+            let creation_time = creation_time
+                .call_method1("astimezone", (PyTzInfo::utc(creation_time.py())?,))?
+                .extract::<chrono::DateTime<chrono::Utc>>()?;
+            let creation_time: std::time::SystemTime =
+                Timestamp::try_from(std::time::SystemTime::from(creation_time))
+                    .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?
+                    .into();
+            builder = builder.set_creation_time(creation_time);
+        }
         Ok(builder.generate()?.0.into())
     }
 
