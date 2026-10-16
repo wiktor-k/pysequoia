@@ -36,7 +36,7 @@ where
 }
 
 /// A verified valid signature, containing the certificate and signing key fingerprints.
-#[pyclass(skip_from_py_object)]
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct ValidSig {
     certificate: String,
@@ -78,7 +78,7 @@ impl ValidSig {
 /// The result of a decryption or verification operation.
 ///
 /// Contains the decrypted/verified content (if available) and any valid signatures found.
-#[pyclass(skip_from_py_object)]
+#[pyclass]
 #[derive(Clone)]
 pub struct Decrypted {
     valid_sigs: Vec<ValidSig>,
