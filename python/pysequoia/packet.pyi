@@ -2,6 +2,8 @@ from . import Notation
 from datetime import datetime, timedelta
 from typing import Any, Final, final
 
+__all__ = ["DataFormat", "HashAlgorithm", "KeyFlags", "Packet", "PacketPile", "PublicKeyAlgorithm", "SignatureType", "Tag"]
+
 @final
 class DataFormat:
     """
@@ -124,7 +126,7 @@ class Packet:
         The raw body bytes of this packet (without the tag and length header).
         """
     @property
-    def exportable(self, /) -> bool |None:
+    def exportable(self, /) -> bool | None:
         """
         Whether the signature is exportable.
 
@@ -132,49 +134,49 @@ class Packet:
         Most signatures are exportable by default.
         """
     @property
-    def fingerprint(self, /) -> str |None:
+    def fingerprint(self, /) -> str | None:
         """
         The fingerprint of a key packet, as a lowercase hex string.
 
         Returns `None` for non-key packets.
         """
     @property
-    def hash_algorithm(self, /) -> HashAlgorithm |None:
+    def hash_algorithm(self, /) -> HashAlgorithm | None:
         """
         The hash algorithm used by a signature.
 
         Returns `None` for non-Signature packets.
         """
     @property
-    def issuer_fingerprint(self, /) -> str |None:
+    def issuer_fingerprint(self, /) -> str | None:
         """
         The issuer fingerprint from a signature, as a lowercase hex string.
 
         Returns `None` for non-Signature packets or if not present.
         """
     @property
-    def issuer_key_id(self, /) -> str |None:
+    def issuer_key_id(self, /) -> str | None:
         """
         The issuer key ID from a signature, as a lowercase hex string.
 
         Returns `None` for non-Signature packets or if not present.
         """
     @property
-    def key_algorithm(self, /) -> PublicKeyAlgorithm |None:
+    def key_algorithm(self, /) -> PublicKeyAlgorithm | None:
         """
         The public key algorithm of a key packet.
 
         Returns `None` for non-key packets.
         """
     @property
-    def key_created(self, /) -> datetime |None:
+    def key_created(self, /) -> datetime | None:
         """
         The creation time of a key packet.
 
         Returns `None` for non-key packets.
         """
     @property
-    def key_flags(self, /) -> KeyFlags |None:
+    def key_flags(self, /) -> KeyFlags | None:
         """
         The key usage flags from a signature.
 
@@ -183,112 +185,112 @@ class Packet:
         Returns `None` for non-Signature packets or if not present.
         """
     @property
-    def key_id(self, /) -> str |None:
+    def key_id(self, /) -> str | None:
         """
         The short key ID of a key packet, as a lowercase hex string.
 
         Returns `None` for non-key packets.
         """
     @property
-    def key_validity_period(self, /) -> timedelta |None:
+    def key_validity_period(self, /) -> timedelta | None:
         """
         The key validity period as a timedelta from key creation.
 
         Returns `None` for non-Signature packets or if not present.
         """
     @property
-    def literal_data(self, /) -> bytes |None:
+    def literal_data(self, /) -> bytes | None:
         """
         The payload content of a Literal Data packet (without format/filename/date header).
 
         Returns `None` for non-Literal Data packets.
         """
     @property
-    def literal_date(self, /) -> datetime |None:
+    def literal_date(self, /) -> datetime | None:
         """
         The date embedded in a Literal Data packet.
 
         Returns `None` for non-Literal Data packets or if no date is set.
         """
     @property
-    def literal_filename(self, /) -> str |None:
+    def literal_filename(self, /) -> str | None:
         """
         The filename hint from a Literal Data packet.
 
         Returns `None` for non-Literal Data packets or if no filename is set.
         """
     @property
-    def literal_format(self, /) -> DataFormat |None:
+    def literal_format(self, /) -> DataFormat | None:
         """
         The data format of a Literal Data packet (Binary, Unicode, or Text).
 
         Returns `None` for non-Literal Data packets.
         """
     @property
-    def notations(self, /) -> list[Notation] |None:
+    def notations(self, /) -> list[Notation] | None:
         """
         The notation data from a signature, as a list of `Notation` objects.
 
         Returns `None` for non-Signature packets.
         """
     @property
-    def ops_issuer(self, /) -> str |None:
+    def ops_issuer(self, /) -> str | None:
         """
         The issuer key ID from a One-Pass Signature packet, as a lowercase hex string.
 
         Returns `None` for non-One-Pass Signature packets.
         """
     @property
-    def ops_signature_type(self, /) -> SignatureType |None:
+    def ops_signature_type(self, /) -> SignatureType | None:
         """
         The signature type from a One-Pass Signature packet.
 
         Returns `None` for non-One-Pass Signature packets.
         """
     @property
-    def primary_userid(self, /) -> bool |None:
+    def primary_userid(self, /) -> bool | None:
         """
         Whether the signature marks its User ID as the primary one.
 
         Returns `None` for non-Signature packets or if the subpacket is absent.
         """
     @property
-    def signature_created(self, /) -> datetime |None:
+    def signature_created(self, /) -> datetime | None:
         """
         The signature creation time.
 
         Returns `None` for non-Signature packets or if absent.
         """
     @property
-    def signature_expiration_time(self, /) -> datetime |None:
+    def signature_expiration_time(self, /) -> datetime | None:
         """
         The signature expiration time.
 
         Returns `None` for non-Signature packets or if the signature does not expire.
         """
     @property
-    def signature_type(self, /) -> SignatureType |None:
+    def signature_type(self, /) -> SignatureType | None:
         """
         The signature type (e.g. `SignatureType.SubkeyBinding`).
 
         Returns `None` for non-Signature packets.
         """
     @property
-    def signature_validity_period(self, /) -> timedelta |None:
+    def signature_validity_period(self, /) -> timedelta | None:
         """
         The signature validity period as a timedelta from creation time.
 
         Returns `None` for non-Signature packets or if the signature does not expire.
         """
     @property
-    def signature_version(self, /) -> int |None:
+    def signature_version(self, /) -> int | None:
         """
         The version of a signature packet (e.g. 4 or 6).
 
         Returns `None` for non-Signature packets.
         """
     @property
-    def signers_user_id(self, /) -> str |None:
+    def signers_user_id(self, /) -> str | None:
         """
         The signer's User ID from a signature.
 
@@ -300,14 +302,14 @@ class Packet:
         The packet tag identifying the type of this packet (e.g. `Tag.Signature`).
         """
     @property
-    def user_id(self, /) -> str |None:
+    def user_id(self, /) -> str | None:
         """
         The User ID string.
 
         Returns `None` for non-User ID packets.
         """
     @property
-    def user_id_comment(self, /) -> str |None:
+    def user_id_comment(self, /) -> str | None:
         """
         The comment component of a User ID.
 
@@ -315,7 +317,7 @@ class Packet:
         Returns `None` for non-User ID packets, or if parsing fails or no comment is present.
         """
     @property
-    def user_id_email(self, /) -> str |None:
+    def user_id_email(self, /) -> str | None:
         """
         The email component of a User ID.
 
@@ -323,7 +325,7 @@ class Packet:
         Returns `None` for non-User ID packets, or if parsing fails or no email is present.
         """
     @property
-    def user_id_name(self, /) -> str |None:
+    def user_id_name(self, /) -> str | None:
         """
         The name component of a User ID.
 
