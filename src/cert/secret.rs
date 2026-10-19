@@ -100,7 +100,10 @@ impl Tsk {
     ///
     /// The generated certificate does not expire unless explicitly instructed.
     #[staticmethod]
-    #[allow(clippy::too_many_arguments)]
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "API mainly for Python consumption"
+    )]
     #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None, policy=None))]
     pub fn generate(
         user_id: Option<&str>,

@@ -179,6 +179,7 @@ class TestVerify:
             verify(signed, self._store(signing_key))
 
         policy = Policy.default()
+        assert repr(policy) == "<Policy default>"
         with pytest.raises(Exception):
             verify(signed, self._store(signing_key), policy=policy)
 
@@ -190,6 +191,7 @@ class TestVerify:
             '[hash_algorithms]\nsha1.second_preimage_resistance = "always"\n'
         )
         policy = Policy.from_sequoia_config_file(config)
+        assert repr(policy) == f'<Policy config="{config}">'
         with pytest.raises(Exception):
             verify(self._sha1_signed_data(), self._store(signing_key), policy=policy)
 
@@ -202,6 +204,7 @@ class TestVerify:
 
         monkeypatch.setenv("SEQUOIA_CRYPTO_POLICY", str(config))
         policy = Policy.from_sequoia_config_file()
+        assert repr(policy) == f'<Policy config="{config}">'
         result = verify(
             self._sha1_signed_data(), self._store(signing_key), policy=policy
         )

@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use pyo3::prelude::*;
 use sequoia_openpgp::KeyHandle;
 use sequoia_openpgp::parse::Parse;
-use sequoia_openpgp::{cert, parse::stream::*, policy::StandardPolicy};
+use sequoia_openpgp::{cert, parse::stream::*};
 
 use crate::policy::Policy as PyPolicy;
 use crate::signature::Sig;
@@ -58,7 +58,7 @@ pub fn verify(
     let policy = match policy {
         Some(policy) => policy.inner(),
         None => {
-            default_policy = StandardPolicy::new();
+            default_policy = crate::policy::default_policy();
             &default_policy
         }
     };

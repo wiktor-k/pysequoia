@@ -1,11 +1,9 @@
 from . import packet as packet
 from .packet import HashAlgorithm, Packet, PublicKeyAlgorithm, SignatureType
-from _typeshed import SupportsGetItem
+from _typeshed import Incomplete, SupportsGetItem
 from datetime import datetime, timedelta
 from os import PathLike
 from typing import Any, Final, SupportsIndex, final
-
-__all__ = ["ArmorKind", "Cert", "CipherSuite", "Decrypted", "EncryptionAlgorithm", "Notation", "Policy", "Profile", "PyDecryptor", "PySigner", "Sig", "SignatureMode", "SigningAlgorithm", "Tsk", "UserId", "armor", "decrypt", "decrypt_file", "encrypt", "encrypt_file", "sign", "sign_file", "verify", "packet"]
 
 @final
 class ArmorKind:
@@ -280,8 +278,10 @@ class Policy:
     """
     An OpenPGP cryptographic policy.
 
-    Pass a policy to `verify`, `decrypt`, or `decrypt_file`.
+    Pass a policy when reading or using certificates, or to `verify`,
+    `decrypt`, and `decrypt_file`.
     """
+    def __repr__(self, /) -> str: ...
     @staticmethod
     def default() -> Policy:
         """
@@ -637,3 +637,5 @@ def verify(bytes: bytes | None = None, store: Any | None = None, file: str | Pat
     is called with a list of key ID strings and must return a list of `Cert` objects.
     For detached signature verification, pass a `Sig` object as `signature`.
     """
+
+def __getattr__(name: str) -> Incomplete: ...

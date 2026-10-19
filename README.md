@@ -423,57 +423,14 @@ os.unlink(output_path)
 The `Cert` class represents one OpenPGP certificate (commonly called a
 "public key").
 
-This package additionally verifies the certificate using Sequoia PGP's
-[`StandardPolicy`][SP]. This means that certificates using weak
+This package additionally verifies the certificate using its default
+[cryptographic policy](docs/policy.md). This means that certificates using weak
 cryptography can fail to load, or present a different view than in
 other OpenPGP software (e.g. if a User ID uses SHA-1 in its
 back-signature, it may be missing from the list of User IDs returned
 by this package).
 
-[SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
-
-### Adjusting the cryptographic policy
-
-Signature verification uses the build's default policy. To use a different
-policy, pass one loaded from a Sequoia configuration file. For example, a
-configuration file can permit legacy SHA-1 certificate signatures without
-permitting SHA-1 data signatures:
-
-```toml
-[hash_algorithms]
-sha1.second_preimage_resistance = "always"
-```
-
-Pass the configured policy to `verify`, `decrypt`, or `decrypt_file`:
-
-```python no-test
-from pysequoia import Policy, verify
-
-policy = Policy.from_sequoia_config_file("/path/to/policy.toml")
-result = verify(signed, get_certs_verify, policy=policy)
-```
-
-### Using a system policy configuration
-
-To use a Sequoia policy managed by the operating system, omit the path:
-
-```python no-test
-policy = Policy.from_sequoia_config_file()
-result = verify(signed, get_certs_verify, policy=policy)
-```
-
-With no path, `from_sequoia_config_file` reads the absolute path in
-`SEQUOIA_CRYPTO_POLICY` when that variable is set. Otherwise, it reads
-`/etc/crypto-policies/back-ends/sequoia.config`. A missing file raises an
-exception; a missing path named by the environment variable does not trigger a
-fallback to the system path.
-
-For the security properties and other advanced policy controls, see Sequoia's
-[policy documentation][policy-docs] and its
-[policy configuration format][policy-config].
-
-[policy-docs]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/index.html
-[policy-config]: https://docs.rs/sequoia-policy-config/latest/sequoia_policy_config/
+To choose a different policy, see [Cryptographic policies](docs/policy.md).
 
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 

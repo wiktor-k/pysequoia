@@ -9,7 +9,7 @@ use sequoia_openpgp::packet::signature::SignatureBuilder;
 use sequoia_openpgp::packet::signature::subpacket::NotationDataFlags;
 use sequoia_openpgp::packet::{UserID, signature};
 use sequoia_openpgp::parse::Parse;
-use sequoia_openpgp::policy::{Policy, StandardPolicy};
+use sequoia_openpgp::policy::Policy;
 use sequoia_openpgp::serialize::SerializeInto;
 use sequoia_openpgp::types::{ReasonForRevocation, RevocationStatus, SignatureType};
 
@@ -20,7 +20,7 @@ use crate::signer::PySigner;
 use crate::user_id::UserId;
 
 pub static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
-    Lazy::new(|| Arc::new(Mutex::new(Box::new(StandardPolicy::new()))));
+    Lazy::new(|| Arc::new(Mutex::new(Box::new(crate::policy::default_policy()))));
 
 pub fn policy_arc(policy: Option<&PyPolicy>) -> Arc<Mutex<Box<dyn Policy>>> {
     match policy {

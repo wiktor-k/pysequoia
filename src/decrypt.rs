@@ -6,7 +6,6 @@ use pyo3::prelude::*;
 use sequoia_openpgp::crypto::{Decryptor, Password, SessionKey};
 use sequoia_openpgp::packet::{PKESK, SKESK};
 use sequoia_openpgp::parse::{Parse, stream::*};
-use sequoia_openpgp::policy::StandardPolicy as P;
 use sequoia_openpgp::types::SymmetricAlgorithm;
 use sequoia_openpgp::{KeyHandle, cert};
 
@@ -80,7 +79,7 @@ pub fn decrypt(
     let policy = match policy {
         Some(policy) => policy.inner(),
         None => {
-            default_policy = P::new();
+            default_policy = crate::policy::default_policy();
             &default_policy
         }
     };
@@ -126,7 +125,7 @@ pub fn decrypt_file(
     let policy = match policy {
         Some(policy) => policy.inner(),
         None => {
-            default_policy = P::new();
+            default_policy = crate::policy::default_policy();
             &default_policy
         }
     };

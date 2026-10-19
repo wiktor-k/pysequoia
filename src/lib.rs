@@ -127,6 +127,13 @@ pub fn armor(data: &[u8], kind: ArmorKind) -> PyResult<String> {
 pub mod pysequoia {
     use pyo3::prelude::*;
 
+    #[pymodule_init]
+    fn initialize(_module: &Bound<'_, PyModule>) -> PyResult<()> {
+        #[cfg(feature = "system-policy-default")]
+        super::policy::initialize_system_default()?;
+        Ok(())
+    }
+
     #[pymodule_export]
     pub use super::Decrypted;
     #[pymodule_export]

@@ -27,6 +27,7 @@ cert = Cert.from_file(sys.argv[2])
 signed = open(sys.argv[1], "rb").read()
 assert verify(signed, lambda _: [cert]).bytes == b"data to be signed"
 assert verify(signed, lambda _: [cert], policy=Policy.default()).bytes == b"data to be signed"
+assert repr(Policy.default()) == f'<Policy config="{sys.argv[4]}">'
 try:
     verify(signed, lambda _: [cert], policy=Policy.from_sequoia_config_file(sys.argv[3]))
 except Exception:
@@ -44,6 +45,7 @@ else:
             str(signed),
             cases.fixture_path("signing-key.asc"),
             str(restricted_config),
+            str(config),
         ],
         env=env,
         check=True,
