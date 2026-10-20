@@ -521,12 +521,16 @@ class Tsk:
         its associated user IDs, user attributes, subkeys, and signatures).
         """
     @staticmethod
-    def generate(user_id: str | None = None, user_ids: SupportsGetItem[int, str] | None = None, profile: Profile | None = None, cipher_suite: CipherSuite | None = None, validity_seconds: SupportsIndex | None = None, *, signing_algorithm: SigningAlgorithm | None = None, encryption_algorithm: EncryptionAlgorithm | None = None) -> Tsk:
+    def generate(user_id: str | None = None, user_ids: SupportsGetItem[int, str] | None = None, profile: Profile | None = None, cipher_suite: CipherSuite | None = None, validity_seconds: SupportsIndex | None = None, *, signing_algorithm: SigningAlgorithm | None = None, encryption_algorithm: EncryptionAlgorithm | None = None, creation_time: datetime | None = None) -> Tsk:
         """
         Generate a new TSK with a certification-capable primary key,
         a signing subkey, and an encryption subkey.
 
         The generated certificate does not expire unless explicitly instructed.
+        creation_time requires a timezone-aware datetime in OpenPGP's timestamp
+        range (1970 through 2106). Offsets are normalized to UTC and fractional
+        seconds discarded. Validity is measured from this time, not from now.
+        Omitting creation_time uses Sequoia's default (60 seconds before now).
         """
     def signer(self, /, password: str | None = None) -> PySigner:
         """

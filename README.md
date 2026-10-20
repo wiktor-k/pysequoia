@@ -526,6 +526,41 @@ print(f"Generated cert with fingerprint {mary.fingerprint}:\n{mary}")
 Note that legacy PGP implementations may not be able to consume these
 certificates yet.
 
+#### Explicit creation times
+
+Pass a timezone-aware datetime as the keyword-only `creation_time` argument
+to `Tsk.generate()`:
+
+```python
+from datetime import datetime, timedelta, timezone
+
+created = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(days=365)
+expired_tsk = Tsk.generate(
+    "Expired <expired@example.com>",
+    validity_seconds=335 * 24 * 60 * 60,
+    creation_time=created,
+)
+expired_cert = expired_tsk.extract_certificate()
+assert expired_cert.expiration == created + timedelta(days=335)
+expired_public_key = str(expired_cert)
+```
+
+`creation_time` requires a timezone-aware datetime that is between the
+lower and upper limit from the OpenPGP standard: between Unix
+timestamps 0 and 4294967295 (inclusive); fractional seconds are
+discarded.  It timestamps the primary key, subkeys and their binding
+signatures consistently.
+
+Omitting `creation_time` or passing `None` uses Sequoia's default of 60
+seconds before now.
+
+Explicit creation times can produce certificates that are not yet valid or
+have already expired. Such certificates can be generated, exported and parsed,
+but current-time key selection rejects them for signing, certification and
+decryption. For future-dated certificates, accessors such as `user_ids` and
+`expiration` may also raise errors because their binding signatures are not
+yet valid.
+
 #### Cipher suites
 
 The cryptographic algorithms used for the generated key can be selected
