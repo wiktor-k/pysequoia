@@ -423,14 +423,14 @@ os.unlink(output_path)
 The `Cert` class represents one OpenPGP certificate (commonly called a
 "public key").
 
-This package additionally verifies the certificate using Sequoia PGP's
-[`StandardPolicy`][SP]. This means that certificates using weak
+This package additionally verifies the certificate using its default
+[cryptographic policy](docs/policy.md). This means that certificates using weak
 cryptography can fail to load, or present a different view than in
 other OpenPGP software (e.g. if a User ID uses SHA-1 in its
 back-signature, it may be missing from the list of User IDs returned
 by this package).
 
-[SP]: https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/policy/struct.StandardPolicy.html
+To choose a different policy, see [Cryptographic policies](docs/policy.md).
 
 Certificates have two forms, one is ASCII armored and one is raw bytes:
 
@@ -454,6 +454,10 @@ print(f"Bytes of the TSK: {bytes(tsk)!r}")
 
 Certificates can be parsed from files (`Cert.from_file`) or bytes in
 memory (`Cert.from_bytes`).
+
+Pass `policy=policy` when reading a certificate or secret key to use a custom
+policy for later operations on that object. The policy is also retained by
+certificates extracted from a secret key.
 
 ```python
 cert1 = Tsk.generate("Test <test@example.com>").extract_certificate()

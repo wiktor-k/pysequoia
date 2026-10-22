@@ -122,6 +122,19 @@ class TestVerify:
 
         return get_certs
 
+    @staticmethod
+    def _sha1_signed_data():
+        return (
+            b"-----BEGIN PGP MESSAGE-----\n\n"
+            b"xA0DAAIWhjdbhUuGrPkByxdiAAAAAABkYXRhIHRvIGJlIHNpZ25lZMK9BAAWAgBv\n"
+            b"BYJqvsrPCRCGN1uFS4as+UcUAAAAAAAeACBzYWx0QG5vdGF0aW9ucy5zZXF1b2lh\n"
+            b"LXBncC5vcmcoyfuuVlRK0JvJ6aFwUo4IW6jTEtTHEHmGufmi94FnYhYhBK/PVAXo\n"
+            b"9J281dxUioY3W4VLhqz5AAA79gEAwyCjhP+HEHaVIVxYVAP1w/JAcK2lvPzaeYmh\n"
+            b"CTaRULYBAK7jhU5GWrWLZZ6wQ02XcmOAQM4kaptVSN3kfSV4p7cI\n"
+            b"=YkAx\n"
+            b"-----END PGP MESSAGE-----\n"
+        )
+
     def test_inline_verify(self, signing_key, signing_tsk):
         signed = sign(signing_tsk.signer(), b"data to be signed")
         result = verify(signed, self._store(signing_key))
@@ -156,6 +169,49 @@ class TestVerify:
                 assert result.valid_sigs[0].signing_key == SIGNING_KEY_FPR
             finally:
                 os.unlink(tmp.name)
+
+    def test_sha1_signature_requires_policy_override(self, signing_key):
+        from pysequoia import Policy
+
+        signed = self._sha1_signed_data()
+
+        with pytest.raises(Exception):
+            verify(signed, self._store(signing_key))
+
+        policy = Policy.default()
+        assert repr(policy) == "<Policy default>"
+        with pytest.raises(Exception):
+            verify(signed, self._store(signing_key), policy=policy)
+
+    def test_policy_config(self, signing_key, tmp_path, monkeypatch):
+        from pysequoia import Policy
+
+        config = tmp_path / "policy.toml"
+        config.write_text(
+            '[hash_algorithms]\nsha1.second_preimage_resistance = "always"\n'
+        )
+        policy = Policy.from_sequoia_config_file(config)
+        assert repr(policy) == f'<Policy config="{config}">'
+        with pytest.raises(Exception):
+            verify(self._sha1_signed_data(), self._store(signing_key), policy=policy)
+
+        config.write_text('[hash_algorithms]\nsha1 = "always"\n')
+        policy = Policy.from_sequoia_config_file(config)
+        result = verify(
+            self._sha1_signed_data(), self._store(signing_key), policy=policy
+        )
+        assert result.bytes == b"data to be signed"
+
+        monkeypatch.setenv("SEQUOIA_CRYPTO_POLICY", str(config))
+        policy = Policy.from_sequoia_config_file()
+        assert repr(policy) == f'<Policy config="{config}">'
+        result = verify(
+            self._sha1_signed_data(), self._store(signing_key), policy=policy
+        )
+        assert result.bytes == b"data to be signed"
+
+        with pytest.raises(Exception):
+            Policy.from_sequoia_config_file(tmp_path / "missing.toml")
 
     def test_verify_compressed_signature(self):
         pubkey = Cert.from_file(fixture_path("compressed-pubkey.pgp"))
@@ -406,6 +462,31 @@ class TestTsk:
 
 
 class TestCert:
+    def test_reader_policy_applies_to_certificates(self, tmp_path):
+        from pysequoia import Policy
+
+        config = tmp_path / "policy.toml"
+        config.write_text('[hash_algorithms]\nsha256 = "never"\n')
+        policy = Policy.from_sequoia_config_file(config)
+        key = open(fixture_path("signing-key.asc"), "rb").read()
+
+        assert len(Cert.from_file(fixture_path("signing-key.asc")).user_ids) == 1
+        certs = [
+            Cert.from_file(fixture_path("signing-key.asc"), policy=policy),
+            Cert.from_bytes(key, policy=policy),
+            Cert.from_packets(list(PacketPile.from_bytes(key)), policy=policy),
+            Cert.split_bytes(key, policy=policy)[0],
+            Cert.split_file(fixture_path("signing-key.asc"), policy=policy)[0],
+            Tsk.from_file(fixture_path("signing-key.asc"), policy=policy)
+            .extract_certificate(),
+            Tsk.from_bytes(key, policy=policy).extract_certificate(),
+            Tsk.from_packets(list(PacketPile.from_bytes(key)), policy=policy)
+            .extract_certificate(),
+        ]
+        for cert in certs:
+            with pytest.raises(Exception, match="No binding signature"):
+                cert.user_ids
+
     def test_parse_roundtrip(self):
         tsk = Tsk.generate("Test <test@example.com>")
         cert = tsk.extract_certificate()

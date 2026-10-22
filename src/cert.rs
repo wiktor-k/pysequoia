@@ -9,17 +9,25 @@ use sequoia_openpgp::packet::signature::SignatureBuilder;
 use sequoia_openpgp::packet::signature::subpacket::NotationDataFlags;
 use sequoia_openpgp::packet::{UserID, signature};
 use sequoia_openpgp::parse::Parse;
-use sequoia_openpgp::policy::{Policy, StandardPolicy};
+use sequoia_openpgp::policy::Policy;
 use sequoia_openpgp::serialize::SerializeInto;
 use sequoia_openpgp::types::{ReasonForRevocation, RevocationStatus, SignatureType};
 
 use crate::notation::Notation;
+use crate::policy::Policy as PyPolicy;
 use crate::pysequoia::Tsk;
 use crate::signer::PySigner;
 use crate::user_id::UserId;
 
 pub static DEFAULT_POLICY: Lazy<Arc<Mutex<Box<dyn Policy>>>> =
-    Lazy::new(|| Arc::new(Mutex::new(Box::new(StandardPolicy::new()))));
+    Lazy::new(|| Arc::new(Mutex::new(Box::new(crate::policy::default_policy()))));
+
+pub fn policy_arc(policy: Option<&PyPolicy>) -> Arc<Mutex<Box<dyn Policy>>> {
+    match policy {
+        Some(policy) => Arc::new(Mutex::new(Box::new(policy.inner().clone()))),
+        None => Arc::clone(&DEFAULT_POLICY),
+    }
+}
 
 /// An OpenPGP certificate (public key with associated user IDs, subkeys, and signatures).
 #[derive(Clone)]
@@ -39,6 +47,13 @@ impl From<cert::Cert> for Cert {
 }
 
 impl Cert {
+    pub fn new(cert: cert::Cert, policy: &Arc<Mutex<Box<dyn Policy>>>) -> Self {
+        Self {
+            cert,
+            policy: Arc::clone(policy),
+        }
+    }
+
     pub fn cert(&self) -> &cert::Cert {
         &self.cert
     }
@@ -76,16 +91,21 @@ impl Cert {
     ///
     /// The file may be binary or ASCII-armored.
     #[staticmethod]
-    pub fn from_file(path: String) -> PyResult<Self> {
-        Ok(cert::Cert::from_file(path)?.into())
+    #[pyo3(signature = (path, policy=None))]
+    pub fn from_file(path: String, policy: Option<&PyPolicy>) -> PyResult<Self> {
+        Ok(Self::new(cert::Cert::from_file(path)?, &policy_arc(policy)))
     }
 
     /// Parse a certificate from a byte string.
     ///
     /// The bytes may be binary or ASCII-armored.
     #[staticmethod]
-    pub fn from_bytes(bytes: &[u8]) -> PyResult<Self> {
-        Ok(cert::Cert::from_bytes(bytes)?.into())
+    #[pyo3(signature = (bytes, policy=None))]
+    pub fn from_bytes(bytes: &[u8], policy: Option<&PyPolicy>) -> PyResult<Self> {
+        Ok(Self::new(
+            cert::Cert::from_bytes(bytes)?,
+            &policy_arc(policy),
+        ))
     }
 
     /// Build a certificate from a sequence of OpenPGP packets.
@@ -93,9 +113,16 @@ impl Cert {
     /// The packets must form a valid certificate (a primary key followed by
     /// its associated user IDs, user attributes, subkeys, and signatures).
     #[staticmethod]
-    pub fn from_packets(packets: Vec<crate::packet::PyPacket>) -> PyResult<Self> {
+    #[pyo3(signature = (packets, policy=None))]
+    pub fn from_packets(
+        packets: Vec<crate::packet::PyPacket>,
+        policy: Option<&PyPolicy>,
+    ) -> PyResult<Self> {
         let sq_packets = packets.into_iter().map(|p| p.into_inner());
-        Ok(cert::Cert::from_packets(sq_packets)?.into())
+        Ok(Self::new(
+            cert::Cert::from_packets(sq_packets)?,
+            &policy_arc(policy),
+        ))
     }
 
     /// Parse multiple certificates from a file on disk.
@@ -103,11 +130,13 @@ impl Cert {
     /// Returns a list of all certificates found in the file.
     /// The file may be binary or ASCII-armored.
     #[staticmethod]
-    pub fn split_file(path: String) -> PyResult<Vec<Self>> {
+    #[pyo3(signature = (path, policy=None))]
+    pub fn split_file(path: String, policy: Option<&PyPolicy>) -> PyResult<Vec<Self>> {
         let parser = CertParser::from_file(path)?;
+        let policy = policy_arc(policy);
         let mut results = vec![];
         for item in parser {
-            results.push(item?.into());
+            results.push(Self::new(item?, &policy));
         }
         Ok(results)
     }
@@ -117,11 +146,13 @@ impl Cert {
     /// Returns a list of all certificates found in the data.
     /// The bytes may be binary or ASCII-armored.
     #[staticmethod]
-    pub fn split_bytes(bytes: &[u8]) -> PyResult<Vec<Self>> {
+    #[pyo3(signature = (bytes, policy=None))]
+    pub fn split_bytes(bytes: &[u8], policy: Option<&PyPolicy>) -> PyResult<Vec<Self>> {
         let parser = CertParser::from_bytes(&bytes)?;
+        let policy = policy_arc(policy);
         let mut results = vec![];
         for item in parser {
-            results.push(item?.into());
+            results.push(Self::new(item?, &policy));
         }
         Ok(results)
     }
@@ -131,7 +162,7 @@ impl Cert {
     ///
     /// The generated certificate has a validity period of 3 years.
     #[staticmethod]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60))]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, validity_seconds=3 * 52 * 7 * 24 * 60 * 60, *))]
     #[pyo3(warn(
         message = "Use Tsk::generate",
         category = pyo3::exceptions::PyDeprecationWarning
@@ -148,6 +179,7 @@ impl Cert {
             profile,
             None,
             validity_seconds,
+            None,
             None,
             None,
         )?;
@@ -185,7 +217,7 @@ impl Cert {
     /// Both certificates must have the same primary key fingerprint.
     pub fn merge(&self, new_cert: &Cert) -> PyResult<Cert> {
         let merged_cert = self.cert().clone().merge_public(new_cert.cert().clone())?;
-        Ok(merged_cert.into())
+        Ok(Self::new(merged_cert, &self.policy))
     }
 
     /// Add a User ID to this certificate, certified by the given signer.
@@ -307,7 +339,7 @@ impl Cert {
             self.cert.clone()
         };
 
-        Ok(cert.into())
+        Ok(Self::new(cert, &self.policy))
     }
 
     /// Return the raw binary encoding of this certificate.

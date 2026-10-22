@@ -5,6 +5,7 @@ mod decrypt;
 mod encrypt;
 mod notation;
 mod packet;
+mod policy;
 mod sign;
 mod signature;
 mod signer;
@@ -126,6 +127,13 @@ pub fn armor(data: &[u8], kind: ArmorKind) -> PyResult<String> {
 pub mod pysequoia {
     use pyo3::prelude::*;
 
+    #[pymodule_init]
+    fn initialize(_module: &Bound<'_, PyModule>) -> PyResult<()> {
+        #[cfg(feature = "system-policy-default")]
+        super::policy::initialize_system_default()?;
+        Ok(())
+    }
+
     #[pymodule_export]
     pub use super::Decrypted;
     #[pymodule_export]
@@ -150,6 +158,8 @@ pub mod pysequoia {
     pub use super::encrypt::encrypt_file;
     #[pymodule_export]
     pub use super::notation::Notation;
+    #[pymodule_export]
+    pub use super::policy::Policy;
     #[pymodule_export]
     pub use super::sign::SignatureMode;
     #[pymodule_export]
