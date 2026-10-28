@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use pyo3::prelude::*;
+use sequoia_openpgp::cert::prelude::CertParser;
 use sequoia_openpgp::parse::Parse as _;
 use sequoia_openpgp::types::KeyFlags;
 use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
@@ -167,6 +168,22 @@ impl Tsk {
             cert::Cert::from_bytes(bytes)?,
             &policy_arc(policy),
         ))
+    }
+
+    /// Parse multiple certificates with secret key material from a byte string.
+    ///
+    /// Returns all certificates found in the data, retaining their secret key
+    /// material. The bytes may be binary or ASCII-armored.
+    #[staticmethod]
+    #[pyo3(signature = (bytes, policy=None))]
+    pub fn split_bytes(bytes: &[u8], policy: Option<&PyPolicy>) -> PyResult<Vec<Self>> {
+        let parser = CertParser::from_bytes(bytes)?;
+        let policy = policy_arc(policy);
+        let mut results = vec![];
+        for item in parser {
+            results.push(Self::new(item?, &policy));
+        }
+        Ok(results)
     }
 
     /// Build a certificate from a sequence of OpenPGP packets.

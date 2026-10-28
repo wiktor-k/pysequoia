@@ -3,6 +3,7 @@
 v0.1.36
 
 New:
+  - Split keyrings of transferable secret keys with `Tsk.split_bytes`.
   - Load custom cryptographic policies from Sequoia configuration files.
   - Apply custom policies when reading certificates and secret keys and performing cryptographic operations (example: working with keys/signatures which use SHA-1 in binding signatures)
   - Provide `system-policy-default` feature, which adopts the system Sequoia policy by default at import time. Intended for distribution package builds.

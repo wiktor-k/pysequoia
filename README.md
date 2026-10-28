@@ -481,6 +481,17 @@ certs = Cert.split_bytes(buffer)
 assert len(certs) == 3
 ```
 
+To split a keyring containing transferable secret keys while retaining each
+certificate's secret key material, use `Tsk.split_bytes`:
+
+```python
+tsk1 = Tsk.generate("Test 1 <test-1@example.com>")
+tsk2 = Tsk.generate("Test 2 <test-2@example.com>")
+buffer = bytes(tsk1) + bytes(tsk2)
+tsks = Tsk.split_bytes(buffer)
+assert len(tsks) == 2
+```
+
 ### generate
 
 Creates a new general purpose key with a given User ID:

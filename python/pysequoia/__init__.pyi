@@ -556,6 +556,14 @@ class Tsk:
 
         If the secret key is password-protected, provide the password to decrypt it.
         """
+    @staticmethod
+    def split_bytes(bytes: bytes, policy: Policy | None = None) -> list[Tsk]:
+        """
+        Parse multiple certificates with secret key material from a byte string.
+
+        Returns all certificates found in the data, retaining their secret key
+        material. The bytes may be binary or ASCII-armored.
+        """
 
 @final
 class UserId:
