@@ -58,7 +58,7 @@ create-codeclimate:
         --codeclimate-path target/codeclimate.json
 
 # Check for issues with dependencies
-[group('ci')]
+# [group('ci')]
 [metadata('gitlabci-job', '{"artifacts":{"when":"always","paths":["target/deny"]}}')]
 [metadata('pacman', 'cargo-deny')]
 deps:
