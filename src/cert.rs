@@ -225,7 +225,16 @@ impl Cert {
     pub fn add_user_id(&mut self, value: String, mut certifier: PySigner) -> PyResult<Cert> {
         let cert = self.cert.clone();
         let userid = UserID::from(value);
-        let builder = signature::SignatureBuilder::new(SignatureType::PositiveCertification);
+        let mut builder = signature::SignatureBuilder::new(SignatureType::PositiveCertification);
+
+        let policy = &**self.policy();
+        let valid_cert = self.cert.with_policy(policy, None)?;
+        if let Ok(primary_user_id) = valid_cert.primary_userid()
+            && let Some(key_flags) = primary_user_id.binding_signature().key_flags()
+        {
+            builder = builder.set_key_flags(key_flags)?;
+        }
+
         let binding = userid.bind(&mut certifier, &cert, builder)?;
 
         let cert = cert

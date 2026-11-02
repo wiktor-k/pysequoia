@@ -6,7 +6,7 @@ New:
   - `Tsk.generate(creation_time)` introduced for generating TSKs with arbitrary creation time [#94]
 
 Fixed:
-  -
+  - Adding User IDs breaking key flags [#98]
 
 Changed:
   -
@@ -14,13 +14,8 @@ Changed:
 Removed:
   -
 
-[#73]: https://github.com/wiktor-k/pysequoia/pull/73
-[#75]: https://github.com/wiktor-k/pysequoia/pull/75
-[#77]: https://github.com/wiktor-k/pysequoia/pull/77
-[#84]: https://github.com/wiktor-k/pysequoia/pull/84
-[#85]: https://github.com/wiktor-k/pysequoia/pull/85
-[#89]: https://github.com/wiktor-k/pysequoia/pull/89
 [#94]: https://github.com/wiktor-k/pysequoia/pull/94
+[#98]: https://github.com/wiktor-k/pysequoia/pull/98
 
 ### Release checklist:
 ###  [ ] Update dependencies via `cargo upgrade --incompatible && cargo update`
