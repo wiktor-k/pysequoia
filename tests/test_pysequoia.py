@@ -473,7 +473,7 @@ class TestCreationTime:
         assert all(t == expected_utc.replace(tzinfo=timezone.utc) for t in keys)
 
     def test_zoneinfo_now(self):
-        """Regression test for the example from the PR review: now() in an IANA zone."""
+        """Regression test for creating key with a time that has timezone."""
         zoneinfo = pytest.importorskip("zoneinfo")
 
         created = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Amsterdam"))
