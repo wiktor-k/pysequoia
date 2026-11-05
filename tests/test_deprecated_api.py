@@ -364,6 +364,13 @@ class TestCert:
         )
         assert len(cert.user_ids) == 2
 
+    def test_add_user_id_preserves_signing_key(self, signing_key):
+        updated = signing_key.add_user_id(
+            value="Another User ID", certifier=signing_key.secrets.certifier()
+        )
+        signed = sign(updated.secrets.signer(), b"data to be signed")
+        assert verify(signed, lambda _: [updated]).bytes == b"data to be signed"
+
     def test_revoke_user_id(self):
         cert = Cert.generate("Bob <bob@example.com>")
         cert = cert.add_user_id(
