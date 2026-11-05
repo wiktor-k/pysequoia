@@ -48,6 +48,8 @@ class Cert:
     def add_user_id(self, /, value: str, certifier: PySigner) -> Cert:
         """
         Add a User ID to this certificate, certified by the given signer.
+
+        The certificate must be valid under its policy.
         """
     @property
     def expiration(self, /) -> datetime | None:

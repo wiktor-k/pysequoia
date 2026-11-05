@@ -674,6 +674,28 @@ class TestCert:
         )
         assert len(cert.user_ids) == 2
 
+    def test_add_user_id_keeps_direct_key_metadata(self):
+        tsk = Tsk.generate(validity_seconds=365 * 24 * 60 * 60)
+        cert = tsk.extract_certificate()
+        updated = cert.add_user_id(value="Added", certifier=tsk.certifier())
+
+        assert updated.expiration == cert.expiration
+        packets = list(PacketPile.from_bytes(bytes(updated)))
+        added_index = next(
+            i for i, packet in enumerate(packets) if packet.user_id == "Added"
+        )
+        assert packets[added_index + 1].key_flags is None
+        assert packets[added_index + 1].key_validity_period is None
+
+    def test_add_user_id_keeps_user_id_key_expiration(self):
+        # This GnuPG key stores its expiration on the User ID binding.
+        tsk = Tsk.from_file(fixture_path("signing-key-expiring.asc"))
+        cert = tsk.extract_certificate()
+        updated = cert.add_user_id(value="Added", certifier=tsk.certifier())
+
+        assert cert.expiration is not None
+        assert updated.expiration == cert.expiration
+
     def test_revoke_user_id(self):
         tsk = Tsk.generate("Bob <bob@example.com>")
         cert = tsk.extract_certificate()
