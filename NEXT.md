@@ -3,11 +3,7 @@
 v0.1.36
 
 New:
-  - Split keyrings of transferable secret keys with `Tsk.split_bytes`.
-  - Load custom cryptographic policies from Sequoia configuration files.
-  - Apply custom policies when reading certificates and secret keys and performing cryptographic operations (example: working with keys/signatures which use SHA-1 in binding signatures)
-  - Provide `system-policy-default` feature, which adopts the system Sequoia policy by default at import time. Intended for distribution package builds.
-  - Show the configuration file used by a policy in its representation.
+  - `Tsk.generate(creation_time)` introduced for generating TSKs with arbitrary creation time [#94]
 
 Fixed:
   -
@@ -24,6 +20,7 @@ Removed:
 [#84]: https://github.com/wiktor-k/pysequoia/pull/84
 [#85]: https://github.com/wiktor-k/pysequoia/pull/85
 [#89]: https://github.com/wiktor-k/pysequoia/pull/89
+[#94]: https://github.com/wiktor-k/pysequoia/pull/94
 
 ### Release checklist:
 ###  [ ] Update dependencies via `cargo upgrade --incompatible && cargo update`
