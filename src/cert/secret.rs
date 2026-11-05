@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::SystemTime;
 
 use pyo3::prelude::*;
-use pyo3::types::{PyDateTime, PyTzInfo};
 use sequoia_openpgp::cert::prelude::CertParser;
 use sequoia_openpgp::parse::Parse as _;
 use sequoia_openpgp::types::{KeyFlags, Timestamp};
@@ -119,7 +119,7 @@ impl Tsk {
         validity_seconds: Option<u64>,
         signing_algorithm: Option<crate::types::SigningAlgorithm>,
         encryption_algorithm: Option<crate::types::EncryptionAlgorithm>,
-        creation_time: Option<&Bound<'_, PyDateTime>>,
+        creation_time: Option<SystemTime>,
         policy: Option<&PyPolicy>,
     ) -> PyResult<Self> {
         let mut builder = cert::CertBuilder::new()
@@ -152,19 +152,9 @@ impl Tsk {
             }
         }
         if let Some(creation_time) = creation_time {
-            if creation_time.call_method0("utcoffset")?.is_none() {
-                return Err(pyo3::exceptions::PyTypeError::new_err(
-                    "creation_time must be timezone-aware",
-                ));
-            }
-            let creation_time = creation_time
-                .call_method1("astimezone", (PyTzInfo::utc(creation_time.py())?,))?
-                .extract::<chrono::DateTime<chrono::Utc>>()?;
-            let creation_time: std::time::SystemTime =
-                Timestamp::try_from(std::time::SystemTime::from(creation_time))
-                    .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?
-                    .into();
-            builder = builder.set_creation_time(creation_time);
+            let creation_time = Timestamp::try_from(creation_time)
+                .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
+            builder = builder.set_creation_time(SystemTime::from(creation_time));
         }
         Ok(Self::new(builder.generate()?.0, &policy_arc(policy)))
     }

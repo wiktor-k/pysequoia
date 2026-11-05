@@ -429,6 +429,60 @@ class TestCreationTime:
         assert len(tsk.extract_certificate().user_ids) == 2
         assert tsk.extract_certificate().expiration is None
 
+    @pytest.mark.parametrize(
+        "local, fold, expected_utc",
+        [
+            pytest.param(
+                datetime(2024, 1, 15, 12, 0),
+                0,
+                datetime(2024, 1, 15, 11, 0),
+                id="winter-cet",
+            ),
+            pytest.param(
+                datetime(2024, 7, 15, 12, 0),
+                0,
+                datetime(2024, 7, 15, 10, 0),
+                id="summer-cest",
+            ),
+            # 2024-10-27 02:30 happens twice in Amsterdam; fold picks which one.
+            pytest.param(
+                datetime(2024, 10, 27, 2, 30),
+                0,
+                datetime(2024, 10, 27, 0, 30),
+                id="dst-fold-0",
+            ),
+            pytest.param(
+                datetime(2024, 10, 27, 2, 30),
+                1,
+                datetime(2024, 10, 27, 1, 30),
+                id="dst-fold-1",
+            ),
+        ],
+    )
+    def test_zoneinfo_creation_time(self, local, fold, expected_utc):
+        """IANA zones (not just fixed offsets) should be accepted, honouring DST and fold."""
+        zoneinfo = pytest.importorskip("zoneinfo")
+
+        created = local.replace(
+            tzinfo=zoneinfo.ZoneInfo("Europe/Amsterdam"), fold=fold
+        )
+        tsk = Tsk.generate("Zoned <zoned@example.com>", creation_time=created)
+        packets = list(PacketPile.from_bytes(bytes(tsk)))
+        keys = [p.key_created for p in packets if p.key_created is not None]
+        assert len(keys) == 3
+        assert all(t == expected_utc.replace(tzinfo=timezone.utc) for t in keys)
+
+    def test_zoneinfo_now(self):
+        """Regression test for the example from the PR review: now() in an IANA zone."""
+        zoneinfo = pytest.importorskip("zoneinfo")
+
+        created = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Amsterdam"))
+        tsk = Tsk.generate("Now <now@example.com>", creation_time=created)
+        assert tsk.extract_certificate().user_ids
+        packets = list(PacketPile.from_bytes(bytes(tsk)))
+        keys = [p.key_created for p in packets if p.key_created is not None]
+        assert all(t == created.replace(microsecond=0) for t in keys)
+
     def test_expired_public_roundtrip(self):
         """Backdated expired keys should retain expiration, UID and fingerprint in public exports."""
 
