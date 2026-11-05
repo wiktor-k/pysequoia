@@ -1,16 +1,11 @@
 # Next version changes
 ## This file contains changes that will be included in the next version that is released
-v0.1.36
+v0.1.37
 
 New:
-  - Split keyrings of transferable secret keys with `Tsk.split_bytes`.
-  - Load custom cryptographic policies from Sequoia configuration files.
-  - Apply custom policies when reading certificates and secret keys and performing cryptographic operations (example: working with keys/signatures which use SHA-1 in binding signatures)
-  - Provide `system-policy-default` feature, which adopts the system Sequoia policy by default at import time. Intended for distribution package builds.
-  - Show the configuration file used by a policy in its representation.
 
 Fixed:
-  -
+  - Keep GnuPG keys usable for signing after adding a User ID. [#92] [#98]
 
 Changed:
   -
@@ -18,12 +13,8 @@ Changed:
 Removed:
   -
 
-[#73]: https://github.com/wiktor-k/pysequoia/pull/73
-[#75]: https://github.com/wiktor-k/pysequoia/pull/75
-[#77]: https://github.com/wiktor-k/pysequoia/pull/77
-[#84]: https://github.com/wiktor-k/pysequoia/pull/84
-[#85]: https://github.com/wiktor-k/pysequoia/pull/85
-[#89]: https://github.com/wiktor-k/pysequoia/pull/89
+[#92]: https://github.com/wiktor-k/pysequoia/issues/92
+[#98]: https://github.com/wiktor-k/pysequoia/pull/98
 
 ### Release checklist:
 ###  [ ] Update dependencies via `cargo upgrade --incompatible && cargo update`
