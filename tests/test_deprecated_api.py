@@ -364,6 +364,13 @@ class TestCert:
         )
         assert len(cert.user_ids) == 2
 
+    def test_add_user_id_preserves_signing_key(self, signing_key):
+        updated = signing_key.add_user_id(
+            value="Another User ID", certifier=signing_key.secrets.certifier()
+        )
+        signed = sign(updated.secrets.signer(), b"data to be signed")
+        assert verify(signed, lambda _: [updated]).bytes == b"data to be signed"
+
     def test_revoke_user_id(self):
         cert = Cert.generate("Bob <bob@example.com>")
         cert = cert.add_user_id(
@@ -607,3 +614,27 @@ class TestErrorCases:
 
         with pytest.raises(Exception):
             verify(store=store)
+
+    def test_adding_users_should_not_break_keyflags(self):
+        key = """
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+lFgEasznMhYJKwYBBAHaRw8BAQdAsFSl1Ko6MMgf3G8eWHokpuaSSmI1Z6AovAGo
+4PXdZEQAAQCe8iCvC9+QzlBSkBV5G/OFi4fSAADPlQAJ/+SGxHx2Ag9ttBl0ZXN0
+IHRlc3QgPHRlc3RAdGVzdC5jb20+iJAEExYKADgCGwMFCwkIBwIGFQoJCAsCBBYC
+AwECHgECF4AWIQReDmnIKOk1eRjmj6ffVmN4JlDHOwUCaszqEgAKCRDfVmN4JlDH
+O0tSAPkBgpsezhjkyDKSy31YnwbPC+Q3ameU7fRzBBCXNUIXKQD9G4IacljQtP9v
+wa6HfDRJXiQxlGl/oWFdfhExz/fEvwacXQRqzOcyEgorBgEEAZdVAQUBAQdAZQjd
+vDjOXWVrCqHTV5fbHCNW4jVVJAOUy5JJkwSdjTwDAQgHAAD/eU664W5ZdQG2wMqb
+AKV2/s7/u5wBdPWitNr7bxvPAQASpYh4BBgWCgAgAhsMFiEEXg5pyCjpNXkY5o+n
+31ZjeCZQxzsFAmrM6gwACgkQ31ZjeCZQxzunjgEAiDNBA0Q90pbdsK//TzyWX1PK
+KslL33ZJxywtAszIeXwBANJrIN8sxM1fe0rI8vNsb5SA9U1eMdrcvmcrapCdSZoC
+=URkP
+-----END PGP PRIVATE KEY BLOCK-----
+"""
+
+        cert = Cert.from_bytes(key.encode())
+
+        encrypt(b"", recipients=[cert], signer=cert.secrets.signer())
+        cert = cert.add_user_id(value="someuserid", certifier=cert.secrets.certifier())
+        encrypt(b"", recipients=[cert], signer=cert.secrets.signer())
