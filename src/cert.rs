@@ -182,6 +182,7 @@ impl Cert {
             None,
             None,
             None,
+            None,
         )?;
         tsk.extract_certificate()
     }

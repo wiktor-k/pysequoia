@@ -1,10 +1,11 @@
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::SystemTime;
 
 use pyo3::prelude::*;
 use sequoia_openpgp::cert::prelude::CertParser;
 use sequoia_openpgp::parse::Parse as _;
-use sequoia_openpgp::types::KeyFlags;
+use sequoia_openpgp::types::{KeyFlags, Timestamp};
 use sequoia_openpgp::{cert, policy::Policy, serialize::SerializeInto};
 
 use crate::cert::{DEFAULT_POLICY, Profile, policy_arc};
@@ -100,12 +101,16 @@ impl Tsk {
     /// a signing subkey, and an encryption subkey.
     ///
     /// The generated certificate does not expire unless explicitly instructed.
+    /// creation_time requires a timezone-aware datetime in OpenPGP's timestamp
+    /// range (1970 through 2106). Offsets are normalized to UTC and fractional
+    /// seconds discarded. Validity is measured from this time, not from now.
+    /// Omitting creation_time uses Sequoia's default (60 seconds before now).
     #[staticmethod]
     #[expect(
         clippy::too_many_arguments,
         reason = "API mainly for Python consumption"
     )]
-    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None, policy=None))]
+    #[pyo3(signature = (user_id=None, user_ids=None, profile=None, cipher_suite=None, validity_seconds=None, *, signing_algorithm=None, encryption_algorithm=None, creation_time=None, policy=None))]
     pub fn generate(
         user_id: Option<&str>,
         user_ids: Option<Vec<String>>,
@@ -114,6 +119,7 @@ impl Tsk {
         validity_seconds: Option<u64>,
         signing_algorithm: Option<crate::types::SigningAlgorithm>,
         encryption_algorithm: Option<crate::types::EncryptionAlgorithm>,
+        creation_time: Option<SystemTime>,
         policy: Option<&PyPolicy>,
     ) -> PyResult<Self> {
         let mut builder = cert::CertBuilder::new()
@@ -145,7 +151,11 @@ impl Tsk {
                 builder = builder.add_userid(user_id);
             }
         }
-
+        if let Some(creation_time) = creation_time {
+            let creation_time = Timestamp::try_from(creation_time)
+                .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
+            builder = builder.set_creation_time(SystemTime::from(creation_time));
+        }
         Ok(Self::new(builder.generate()?.0, &policy_arc(policy)))
     }
 
