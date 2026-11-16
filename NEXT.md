@@ -7,6 +7,7 @@ New:
 
 Fixed:
   - Keep GnuPG keys usable for signing after adding a User ID. [#92] [#98]
+  - Verify signatures when decrypting messages that are compressed inside the encryption layer, e.g. the ones produced by `gpg --sign --encrypt`. [#100]
 
 Changed:
   -
@@ -17,6 +18,7 @@ Removed:
 [#92]: https://github.com/wiktor-k/pysequoia/issues/92
 [#94]: https://github.com/wiktor-k/pysequoia/pull/94
 [#98]: https://github.com/wiktor-k/pysequoia/pull/98
+[#100]: https://github.com/wiktor-k/pysequoia/issues/100
 
 ### Release checklist:
 ###  [ ] Update dependencies via `cargo upgrade --incompatible && cargo update`
