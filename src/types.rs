@@ -407,7 +407,10 @@ impl From<SigningAlgorithm> for SqPublicKeyAlgorithmSpecification {
 /// `Profile.RFC9580` for PQC algorithms (except `MLKEM768_X25519`).
 #[pyclass(from_py_object, eq)]
 #[derive(Clone, PartialEq, Eq)]
-#[allow(non_camel_case_types)]
+#[expect(
+    non_camel_case_types,
+    reason = "type names aligned with the specification"
+)]
 pub enum EncryptionAlgorithm {
     /// Composite ML-KEM-768 + X25519 (post-quantum)
     MLKEM768_X25519,
