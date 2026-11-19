@@ -3,7 +3,6 @@ name = "pysequoia"
 version = "0.1.36"
 edition = "2024"
 description = "Python bindings for Sequoia PGP"
-homepage = "https://github.com/wiktor-k/pysequoia"
 repository = "https://github.com/wiktor-k/pysequoia"
 license = "Apache-2.0"
 
@@ -16,10 +15,12 @@ publish = false
 name = "pysequoia"
 crate-type = ["cdylib"]
 
+[lints]
+workspace = true
+
 [workspace]
 members = [".", "xtask"]
 resolver = "3"
-package.edition = "2024"
 
 [dependencies]
 anyhow = "1"

@@ -283,6 +283,42 @@ class TestEncryptDecrypt:
             == sender.extract_certificate().fingerprint
         )
 
+    def test_decrypt_gnupg_signed_compressed_message(self):
+        # Created with `gpg --sign --encrypt`: GnuPG compresses by default,
+        # so the signature is nested as encryption -> compression -> signature.
+        # See: https://github.com/wiktor-k/pysequoia/issues/100
+        sender = Cert.from_file(fixture_path("gnupg-signer-cert.asc"))
+        receiver = Tsk.from_file(fixture_path("gnupg-recipient-key.asc"))
+        encrypted = open(
+            fixture_path("gnupg-signed-encrypted-compressed.asc"), "rb"
+        ).read()
+
+        decrypted = decrypt(decryptor=receiver.decryptor(), bytes=encrypted)
+        assert decrypted.bytes == b"Hello from GnuPG\n"
+        assert len(decrypted.valid_sigs) == 0
+
+        def store(key_ids):
+            return [sender]
+
+        decrypted = decrypt(
+            decryptor=receiver.decryptor(),
+            bytes=encrypted,
+            store=store,
+        )
+        assert decrypted.bytes == b"Hello from GnuPG\n"
+        assert len(decrypted.valid_sigs) == 1
+        assert decrypted.valid_sigs[0].certificate == sender.fingerprint
+
+        def wrong_store(key_ids):
+            return [receiver.extract_certificate()]
+
+        with pytest.raises(Exception, match="no valid signatures"):
+            decrypt(
+                decryptor=receiver.decryptor(),
+                bytes=encrypted,
+                store=wrong_store,
+            )
+
     def test_symmetric_encrypt_decrypt(self):
         content = "content to encrypt"
         encrypted = encrypt(passwords=["sekrit"], bytes=content.encode("utf8"))

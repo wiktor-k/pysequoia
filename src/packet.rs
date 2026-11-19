@@ -130,7 +130,7 @@ impl PyPacket {
             Packet::Unknown(p) => Marshal::serialize(p, &mut buf)?,
             Packet::Marker(p) => Marshal::serialize(p, &mut buf)?,
             Packet::Trust(p) => Marshal::serialize(p, &mut buf)?,
-            #[expect(deprecated)]
+            #[expect(deprecated, reason = "The API supports deprecated packets too")]
             Packet::MDC(p) => Marshal::serialize(p, &mut buf)?,
             Packet::Padding(p) => Marshal::serialize(p, &mut buf)?,
             _ => Err(runtime_err("Unsupported packet type"))?,

@@ -7,3 +7,6 @@ edition = "2024"
 clap = { version = "4.6.7", features = ["derive", "env"] }
 testresult = "0.4.2"
 pyo3-introspection = "0.30"
+
+[lints]
+workspace = true
