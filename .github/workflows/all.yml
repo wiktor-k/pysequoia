@@ -7,6 +7,9 @@ jobs:
   allchecks:
     name: All checks pass
     runs-on: ubuntu-latest
+    # Run this job 8 minutes after the other ones
+    # needs config at https://github.com/wiktor-k/pysequoia/settings/environments
+    environment: delay
     permissions:
       checks: read
       contents: read
